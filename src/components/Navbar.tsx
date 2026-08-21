@@ -1,50 +1,43 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export const Navbar = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Searching for:', searchQuery);
-  };
-
   return (
-    <nav className="bg-[#1a1a2e] text-white py-3 px-6 shadow-md">
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-          <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">O</div>
-          Optracard
-        </Link>
-        
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl mx-8">
-          <input 
-            type="text" 
-            placeholder="Search by card game or card name..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#2a2a40] text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-        </form>
+    <nav className="bg-[#0b0f19] text-white py-3 px-6 md:px-10 flex justify-between items-center font-sans border-b border-gray-800">
+      <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-wide">
+        <div className="w-7 h-7 bg-[#2f65ff] rounded flex items-center justify-center text-sm">O</div>
+        <span>Optracard</span>
+      </Link>
 
-        <div className="flex items-center space-x-6 text-sm">
-          <div className="hidden lg:flex space-x-4">
-            <Link to="/sell" className="hover:text-blue-400">Start Selling</Link>
-            <Link to="/orders" className="hover:text-blue-400">Order history</Link>
-            <Link to="/about" className="hover:text-blue-400">About Us</Link>
-            <Link to="/team" className="hover:text-blue-400">Our Team</Link>
-          </div>
-          
-          <Link to="/cart" className="relative">
-            <span className="text-2xl">🛒</span>
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">1</span>
+      <div className="hidden md:flex flex-1 max-w-xl mx-8">
+        <div className="relative w-full">
+          <span className="absolute left-3 top-2 text-gray-400">🔍</span>
+          <input
+            type="text"
+            placeholder="Search by card game or card name..."
+            className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-6 text-sm font-medium">
+        <div className="hidden lg:flex gap-5 text-gray-300">
+          <Link to="/about" className="hover:text-white transition">About Us</Link>
+          <Link to="/team" className="hover:text-white transition">Our Team</Link>
+        </div>
+
+        <div className="flex items-center gap-5 border-l border-gray-700 pl-5">
+          <Link to="/cart" className="relative flex items-center">
+            <span className="text-xl">🛒</span>
+            <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              1
+            </span>
           </Link>
-          
-          <Link to="/login" className="w-8 h-8 rounded-full overflow-hidden border border-gray-500">
-             <img src="https://via.placeholder.com/32" alt="Profile" className="w-full h-full object-cover" />
+          <Link to="/profile" className="w-8 h-8 rounded-full overflow-hidden border border-gray-500">
+            <img src="https://ui-avatars.com/api/?name=User&background=random" alt="Profile" className="w-full h-full object-cover" />
           </Link>
         </div>
       </div>
     </nav>
   );
 };
+
