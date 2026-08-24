@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 export const Login = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
   const [formData, setFormData] = useState({
     usernameOrEmail: '',
     password: ''
@@ -14,31 +11,9 @@ export const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        login(data.user, data.token);
-        
-        if (data.user.role === 'ADMIN' || data.user.role === 'SUPER_ADMIN') {
-          navigate('/admin-dashboard');
-        } else {
-          navigate('/');
-        }
-      } else {
-        alert(data.message || 'Login failed');
-      }
-    } catch (error) {
-      console.error('Error connecting to backend server', error);
-    }
+    console.log('Login Payload:', formData);
   };
 
   return (

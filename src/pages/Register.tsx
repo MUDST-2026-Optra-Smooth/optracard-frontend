@@ -14,34 +14,13 @@ export const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    
-    try {
-      const response = await fetch('http://localhost:8080/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password
-        })
-      });
-
-      if (response.ok) {
-        alert("Registration successful! Please login.");
-        navigate('/login');
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || 'Registration failed');
-      }
-    } catch (error) {
-      console.error('Error connecting to backend server', error);
-    }
+    console.log('Register Payload:', formData);
   };
 
   return (
