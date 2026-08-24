@@ -1,4 +1,5 @@
 import { ProductCard } from '../components/ProductCard';
+import { Link } from 'react-router-dom';
 
 export const Home = () => {
   return (
@@ -10,7 +11,9 @@ export const Home = () => {
       <section className="max-w-7xl mx-auto py-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-blue-600">Marketplace & Trading</h2>
-          <button className="text-blue-500">View All →</button>
+          <Link to="/marketplace" className="text-blue-500 hover:text-blue-700 transition-colors">
+            View All →
+          </Link>
         </div>
         <div className="grid grid-cols-4 gap-4">
           <ProductCard title="Placeholder 1" price={298} />
@@ -22,7 +25,12 @@ export const Home = () => {
         <h2 className="text-3xl font-bold text-blue-600 mb-8">Optracard Official Store</h2>
         
         <div className="text-left mb-8">
-          <h3 className="text-xl font-bold mb-4">Single</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold">Single</h3>
+            <Link to="/single" className="text-blue-500 hover:text-blue-700 transition-colors">
+              View All →
+            </Link>
+          </div>
           <div className="grid grid-cols-4 gap-4">
             <ProductCard title="พี่หน่วง พิธีกรผมสวย" price={3000} />
             <ProductCard title="Raichu & Alolan Raichu GX" price={9600} />
