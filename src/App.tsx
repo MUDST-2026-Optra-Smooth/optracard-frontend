@@ -6,7 +6,8 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { OurTeam } from './pages/OurTeam';
 import { AboutUs } from './pages/Aboutus';
-import { SearchResult } from './pages/SearchResult';
+import { Single } from './pages/Single';
+import { Marketplace } from './pages/Marketplace'; 
 
 export function App() {
   return (
@@ -19,7 +20,8 @@ export function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/team" element={<OurTeam />} />
-          <Route path="/search" element={<SearchResult />} />
+          <Route path="/single" element={<Single />} />
+          <Route path="/marketplace" element={<Marketplace />} />
 
         </Routes>
       </main>
