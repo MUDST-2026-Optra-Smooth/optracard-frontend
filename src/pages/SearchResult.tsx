@@ -85,8 +85,10 @@ export const SearchResult = () => {
 
       <section className="mb-12">
         <div className="relative flex items-center justify-center mb-6">
-          <h2 className="text-2xl font-bold text-blue-600">Marketplace &amp; Trading</h2>
-          <button className="absolute right-0 bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 transition">
+          {/* ปรับขนาดเป็น text-3xl */}
+          <h2 className="text-3xl font-bold text-blue-600">Marketplace &amp; Trading</h2>
+          {/* อัปเดตปุ่ม View All */}
+          <button className="absolute right-0 bg-[#1e5bff] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition-colors border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
             View All →
           </button>
         </div>
@@ -101,7 +103,13 @@ export const SearchResult = () => {
         <h2 className="text-3xl font-bold text-blue-600 mb-8">Optracard Official Store</h2>
 
         <div className="text-left mb-10">
-          <h3 className="text-xl font-bold mb-4">Single</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold">Single</h3>
+            {/* เพิ่มปุ่ม View All พร้อมดีไซน์ใหม่ */}
+            <button className="bg-[#1e5bff] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition-colors border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              View All →
+            </button>
+          </div>
           <div className="grid grid-cols-4 gap-4">
             {singleCards.map((card, i) => <ProductCard key={i} {...card} />)}
           </div>
@@ -110,7 +118,10 @@ export const SearchResult = () => {
         <div className="text-left mb-10">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold">Booster</h3>
-            <button className="text-blue-500 text-sm">View All →</button>
+            {/* อัปเดตปุ่ม View All ให้ดีไซน์ตรงกัน */}
+            <button className="bg-[#1e5bff] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition-colors border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              View All →
+            </button>
           </div>
           <div className="grid grid-cols-4 gap-4">
             {boosterCards.map((card, i) => <ProductCard key={i} {...card} />)}
@@ -118,7 +129,13 @@ export const SearchResult = () => {
         </div>
 
         <div className="text-left">
-          <h3 className="text-xl font-bold mb-4">Booster Box</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold">Booster Box</h3>
+            {/* เพิ่มปุ่ม View All พร้อมดีไซน์ใหม่ */}
+            <button className="bg-[#1e5bff] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition-colors border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+              View All →
+            </button>
+          </div>
           <div className="grid grid-cols-3 gap-4">
             {boosterBoxCards.map((card, i) => <ProductCard key={i} {...card} />)}
           </div>
