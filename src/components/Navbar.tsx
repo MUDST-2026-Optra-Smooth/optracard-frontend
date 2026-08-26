@@ -1,9 +1,17 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import logoIcon from '../assets/logo-icon.png';
 import searchIcon from '../assets/search.png';
-import avatarIcon from '../assets/Generic avatar.png'; // 1. Import รูปโปรไฟล์เข้ามา
+import avatarIcon from '../assets/Generic avatar.png';
 
 export const Navbar = () => {
+  const [query, setQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+  };
+
   return (
     <nav className="bg-[#0b0f19] text-white py-3 px-6 md:px-10 flex justify-between items-center font-sans border-b border-gray-800">
       <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-wide">
@@ -18,6 +26,9 @@ export const Navbar = () => {
           </div>
           <input
             type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search by card game or card name..."
             className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
           />

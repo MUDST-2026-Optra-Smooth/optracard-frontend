@@ -14,8 +14,6 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-=======
-
 
 ## 👥 User Stories
 
@@ -42,4 +40,3 @@ If you are developing a production application, we recommend using TypeScript wi
 * **Order Management:**
   * As an admin, I want to view all customer orders so that I can process them for shipping.
   * As an admin, I want to update order statuses to 'pending' or 'fulfilled' so that customers are informed about their deliveries.
->>>>>>> 5514fea2f145f374592acb52c81dbcffc8a01c6d
