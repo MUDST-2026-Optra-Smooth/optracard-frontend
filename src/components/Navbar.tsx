@@ -36,21 +36,21 @@ export const Navbar = () => {
       </div>
 
       <div className="flex items-center gap-6 text-sm font-medium">
-        <div className="hidden lg:flex gap-5 text-gray-300">
+        <div className="hidden lg:flex gap-5 text-gray-300 items-center">
           <Link to="/start-selling" className="hover:text-white transition">Start Selling</Link>
-          <Link to="/Order-History" className="hover:text-white transition">Order History</Link>
+          <Link to="/order-history" className="hover:text-white transition">Order history</Link>
           <Link to="/about" className="hover:text-white transition">About Us</Link>
           <Link to="/team" className="hover:text-white transition">Our Team</Link>
         </div>
 
-        <div className="flex items-center gap-5 border-l border-gray-700 pl-5">
-          <Link to="/cart" className="relative flex items-center">
-            <span className="text-xl">🛒</span>
-            <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+        <div className="flex items-center gap-5 pl-2">
+          <Link to="/cart" className="relative flex items-center justify-center w-10 h-10 bg-[#1a1f2b] rounded-full hover:bg-gray-800 transition cursor-pointer">
+            <span className="text-lg">🛒</span>
+            <span className="absolute -top-1 -right-1 bg-[#ff4757] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full">
               3
             </span>
           </Link>
-          <Link to="/profile" className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-600 hover:border-[#2f65ff] transition">
+          <Link to="/profile" className="w-10 h-10 rounded-full overflow-hidden border-2 border-transparent hover:border-[#2f65ff] transition cursor-pointer bg-gray-300">
             <img src={avatarIcon} alt="Profile" className="w-full h-full object-cover" />
           </Link>
         </div>

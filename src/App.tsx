@@ -10,6 +10,8 @@ import { ViewAllOOS } from './pages/ViewAllOOS';
 import { ViewAllTrading } from './pages/ViewAllTrading'; 
 import { SearchResult } from './pages/SearchResult'; 
 import { Profile } from './pages/Profile';
+import { StartSelling } from './pages/StartSelling';
+import { OrderHistory } from './pages/OrderHistory';
 
 export function App() {
   return (
@@ -26,6 +28,10 @@ export function App() {
           <Route path="/ViewAllTrading" element={<ViewAllTrading />} />
           <Route path="/search" element={<SearchResult />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/start-selling" element={<StartSelling />} />
+          <Route path="/order-history" element={<OrderHistory />} />
+          
+          <Route path="/cart" element={<div className="p-10 text-center text-2xl font-bold">Cart Page (Coming Soon)</div>} />
         </Routes>
       </main>
       <Footer />

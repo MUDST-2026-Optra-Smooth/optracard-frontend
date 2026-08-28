@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+//import { useAuth } from '../context/AuthContext';
 
 export const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  //const { login } = useAuth();
   const [formData, setFormData] = useState({
     usernameOrEmail: '',
     password: ''
@@ -26,7 +26,7 @@ export const Login = () => {
       const data = await response.json();
       
       if (response.ok) {
-        login(data.user, data.token);
+        //login(data.user, data.token);
         
         if (data.user.role === 'ADMIN' || data.user.role === 'SUPER_ADMIN') {
           navigate('/admin-dashboard');

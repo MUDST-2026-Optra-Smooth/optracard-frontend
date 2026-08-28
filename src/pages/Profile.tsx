@@ -34,8 +34,13 @@ export const Profile = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Frontend only for now — no backend endpoint wired up yet.
     console.log('Profile update submitted:', formData);
+  };
+
+  const handleLogout = () => {
+    // จำลองการเคลียร์ข้อมูลและพากลับไปหน้า Login
+    alert("Logged out successfully");
+    navigate('/login');
   };
 
   return (
@@ -134,9 +139,17 @@ export const Profile = () => {
 
           <button
             type="submit"
-            className="w-full bg-[#2f65ff] text-white font-medium py-2.5 rounded-full hover:bg-blue-700 transition duration-200 text-sm"
+            className="w-full bg-[#2f65ff] text-white font-medium py-2.5 rounded-full hover:bg-blue-700 transition duration-200 text-sm mb-3"
           >
-            Submit
+            Save Changes
+          </button>
+          
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full bg-red-500 text-white font-medium py-2.5 rounded-full hover:bg-red-600 transition duration-200 text-sm"
+          >
+            Logout
           </button>
         </form>
       </div>
