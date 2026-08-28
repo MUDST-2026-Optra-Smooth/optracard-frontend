@@ -47,7 +47,7 @@ export const Navbar = () => {
           <Link to="/cart" className="relative flex items-center">
             <span className="text-xl">🛒</span>
             <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-              0
+              3
             </span>
           </Link>
           <Link to="/profile" className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-600 hover:border-[#2f65ff] transition">
