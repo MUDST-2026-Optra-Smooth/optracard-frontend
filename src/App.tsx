@@ -9,6 +9,7 @@ import { AboutUs } from './pages/Aboutus';
 import { ViewAllOOS } from './pages/ViewAllOOS';
 import { ViewAllTrading } from './pages/ViewAllTrading'; 
 import { SearchResult } from './pages/SearchResult'; 
+import { Profile } from './pages/Profile';
 
 export function App() {
   return (
@@ -24,6 +25,7 @@ export function App() {
           <Route path="/ViewAllOOS" element={<ViewAllOOS />} />
           <Route path="/ViewAllTrading" element={<ViewAllTrading />} />
           <Route path="/search" element={<SearchResult />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </main>
       <Footer />
