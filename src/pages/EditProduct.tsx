@@ -1,13 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Package, 
-  ClipboardList, 
-  LayoutDashboard, 
-  ArrowLeft, 
-  ChevronLeft, 
-  Pencil 
-} from 'lucide-react';
+import { ChevronLeft, Pencil } from 'lucide-react';
+import Sidebar from '../components/Sidebar';
 
 interface ProductData {
   id?: string;
@@ -86,61 +80,13 @@ const EditProduct: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Updated Product Data:', { ...formData, imageUrl: previewImage });
-    // ยิง API อัปเดตข้อมูลสินค้า
     navigate(-1);
   };
 
   return (
     <div className="flex min-h-screen bg-white font-sans antialiased text-slate-800">
-      {/* Sidebar */}
-      <aside className="w-64 bg-[#182132] text-white flex flex-col justify-between shrink-0">
-        <div>
-          <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-700/40">
-            <div className="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center font-bold text-sm">
-              O
-            </div>
-            <span className="font-semibold text-base tracking-wide text-white">Optracard</span>
-          </div>
-
-          <div className="px-6 py-5 border-b border-slate-700/40">
-            <h2 className="text-lg font-bold tracking-tight text-white">AAA-Trading</h2>
-          </div>
-
-          <nav className="py-4 space-y-1">
-            <button 
-              type="button"
-              className="w-full flex items-center gap-3 px-6 py-3 bg-[#232f48] text-white font-medium border-l-4 border-blue-500 text-left"
-            >
-              <Package size={20} className="text-slate-300" />
-              <span>Stocks Management</span>
-            </button>
-            <button 
-              type="button"
-              className="w-full flex items-center gap-3 px-6 py-3 text-slate-400 hover:text-slate-200 hover:bg-[#1d293d] transition-colors text-left"
-            >
-              <ClipboardList size={20} />
-              <span>Orders Management</span>
-            </button>
-            <button 
-              type="button"
-              className="w-full flex items-center gap-3 px-6 py-3 text-slate-400 hover:text-slate-200 hover:bg-[#1d293d] transition-colors text-left"
-            >
-              <LayoutDashboard size={20} />
-              <span>Dashboard</span>
-            </button>
-          </nav>
-        </div>
-
-        <div className="p-6 border-t border-slate-700/40">
-          <button 
-            type="button"
-            className="flex items-center gap-3 text-sm font-medium text-slate-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft size={18} />
-            <span>Back to Website</span>
-          </button>
-        </div>
-      </aside>
+      {/* ใช้งาน Sidebar Component */}
+      <Sidebar currentTab="stocks" />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">

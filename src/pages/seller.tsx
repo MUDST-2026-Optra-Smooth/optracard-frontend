@@ -82,7 +82,8 @@ export const Seller: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleEditProduct = (item: ProductItem) => {
-    navigate('/edit-product', {
+    // เปลี่ยนจาก '/edit-product' เป็น `/edit-product/${item.id}`
+    navigate(`/edit-product/${item.id}`, {
       state: {
         product: {
           productId: item.id,
@@ -103,27 +104,28 @@ export const Seller: React.FC = () => {
     });
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-gray-800">
-      {/* Top Navbar */}
-      <header className="bg-[#0f172a] text-white flex items-center justify-between px-8 py-3.5 h-16 shrink-0">
-        <div className="flex items-center space-x-2">
-          <div className="bg-blue-600 rounded p-1 w-7 h-7 flex items-center justify-center font-bold text-sm">
-            O
-          </div>
-          <span className="font-bold text-lg tracking-wide">Optracard</span>
-        </div>
+return (
+    // 1. เปลี่ยนเป็น flex แนวนอน เพื่อให้ Sidebar อยู่ซ้ายสุด
+    <div className="min-h-screen flex bg-slate-50 font-sans text-gray-800">
+      
+      {/* 2. วาง Sidebar ไว้ลำดับแรก */}
+      <Sidebar currentTab="stocks" />
 
-        <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-amber-200 border-2 border-amber-300 flex items-center justify-center overflow-hidden cursor-pointer">
-            <User className="w-5 h-5 text-amber-800" />
+      {/* 3. สร้างกล่อง Container ฝั่งขวา เพื่อจัดเรียง Header ไว้บน Main */}
+      <div className="flex-1 flex flex-col min-w-0">
+        
+        {/* Top Navbar (Secondary) - คืนค่าสี bg-[#0f172a] และ text-white ให้เหมือนเดิม */}
+        <header className="bg-[#0f172a] text-white flex items-center justify-end px-8 py-3.5 h-16 shrink-0">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
+            <img
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
+              alt="Seller Profile"
+              className="w-full h-full object-cover"
+            />
           </div>
-        </div>
-      </header>
-
-      {/* Main Layout Container */}
-      <div className="flex flex-1">
-        <Sidebar currentTab="stocks" />
+          </div>
+        </header>
 
         {/* Content Area */}
         <main className="flex-1 p-8 overflow-y-auto">

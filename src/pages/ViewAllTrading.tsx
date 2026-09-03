@@ -12,7 +12,7 @@ type MarketplaceProduct = {
 };
 
 const products: MarketplaceProduct[] = [
-  { id: 1, title: 'Scarlet & Violet Booster Pack', type: 'Booster Pack', price: 120, stock: 24 },
+  { id: 1, title: 'Luffy', type: 'Single', price: 120, stock: 24 },
   { id: 2, title: 'One Piece OP-09 Booster Pack', type: 'Booster Pack', price: 145, stock: 18 },
   { id: 3, title: 'Pokemon 151 Booster Box', type: 'Booster Box', price: 4_990, stock: 8 },
   { id: 4, title: 'Lorcana Into the Inklands Pack', type: 'Booster Pack', price: 160, stock: 32 },

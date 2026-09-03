@@ -32,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
           </NavLink>
 
           {/* ปุ่ม 2: Orders Management */}
-          <NavLink to="/orders" className={navItemClass}>
+          <NavLink to="/orders-management" className={navItemClass}>
             <ClipboardList className="w-5 h-5" />
             <span>Orders Management</span>
           </NavLink>

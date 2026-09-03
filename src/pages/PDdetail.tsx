@@ -12,42 +12,7 @@ import { FiFacebook, FiInstagram, FiGithub } from 'react-icons/fi';
 
 const ProductDetail: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-white text-gray-800 font-sans">
-      {/* Navbar */}
-      <header className="bg-[#0f172a] text-white flex items-center justify-between px-8 py-4">
-        <div className="flex items-center space-x-2">
-          <div className="bg-blue-600 rounded p-1 w-8 h-8 flex items-center justify-center">
-            <span className="font-bold text-lg">O</span>
-          </div>
-          <span className="font-bold text-xl">Optracard</span>
-        </div>
-        
-        <div className="flex-1 max-w-xl px-4 hidden md:block">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search by card game or card name..."
-              className="w-full bg-[#1e293b] border border-gray-600 text-sm rounded-md py-2 pl-10 pr-4 focus:outline-none text-white placeholder-gray-400"
-            />
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-6 text-sm">
-          <a href="#" className="hover:text-gray-300 hidden sm:block">About Us</a>
-          <a href="#" className="hover:text-gray-300 hidden sm:block">Our Team</a>
-          <button className="relative">
-            <ShoppingCart className="w-5 h-5 text-gray-300 hover:text-white" />
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-              3
-            </span>
-          </button>
-          <button className="bg-purple-200 text-purple-600 rounded-full p-1.5 hover:bg-purple-300 transition">
-            <User className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
-
+    <div className="min-h-screen flex flex-col bg-white text-gray-800 font-sans"> 
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 sm:px-8 py-8">
         <button className="flex items-center text-gray-900 font-bold mb-8 hover:text-blue-600 transition">
@@ -169,40 +134,6 @@ const ProductDetail: React.FC = () => {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-[#0f172a] text-white pt-16 pb-12 mt-16 border-t border-gray-800">
-        <div className="container mx-auto px-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-          <div>
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="flex flex-col items-center justify-center bg-transparent border border-white rounded p-1 w-10 h-10">
-                {/* Minimalist representation of the crest logo */}
-                <div className="w-5 h-4 border-b-2 border-l-2 border-r-2 border-white rounded-b-sm"></div>
-                <div className="w-1 h-2 bg-white mt-1"></div>
-              </div>
-              <span className="font-bold text-2xl tracking-wide">Optracard</span>
-            </div>
-            <p className="text-gray-300 max-w-sm text-sm leading-loose font-medium">
-              Empowering Thailand's TCG community<br />
-              to push boundaries and reach the next level !
-            </p>
-          </div>
-          <div className="flex space-x-4 items-center">
-            {/* Social Icons จาก react-icons */}
-            <div className="bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition">
-              <FiFacebook className="w-8 h-8 fill-current text-white border-none" strokeWidth={0} />
-            </div>
-            <div className="rounded-2xl p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 cursor-pointer hover:opacity-90 transition">
-              <div className="bg-[#0f172a] p-2 rounded-xl">
-                <FiInstagram className="w-7 h-7 text-white" />
-              </div>
-            </div>
-            <div className="cursor-pointer hover:opacity-80 transition">
-              <FiGithub className="w-10 h-10 text-white" strokeWidth={1.5} />
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

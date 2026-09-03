@@ -1,12 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Package, 
-  ClipboardList, 
-  LayoutDashboard, 
-  ArrowLeft, 
-  ChevronLeft, 
-  Pencil 
-} from 'lucide-react';
+import { ChevronLeft, Pencil } from 'lucide-react';
+import Sidebar from '../components/Sidebar';
 
 interface ProductFormData {
   productId: string;
@@ -58,64 +52,13 @@ const AddProduct: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // ยิง API สำหรับบันทึกรายการสินค้าที่ Seller เพิ่ม
     console.log('Seller Product Submitted:', { ...formData, image: previewImage });
   };
 
   return (
     <div className="flex min-h-screen bg-white font-sans antialiased text-slate-800">
-      {/* Sidebar เมนูจัดการร้านค้า */}
-      <aside className="w-64 bg-[#182132] text-white flex flex-col justify-between shrink-0">
-        <div>
-          {/* Logo Brand */}
-          <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-700/40">
-            <div className="w-7 h-7 bg-blue-600 rounded-md flex items-center justify-center font-bold text-sm">
-              O
-            </div>
-            <span className="font-semibold text-base tracking-wide text-white">Optracard</span>
-          </div>
-
-          {/* Shop Name */}
-          <div className="px-6 py-5 border-b border-slate-700/40">
-            <h2 className="text-lg font-bold tracking-tight text-white">AAA-Trading</h2>
-          </div>
-
-          {/* Nav List */}
-          <nav className="py-4 space-y-1">
-            <button 
-              type="button"
-              className="w-full flex items-center gap-3 px-6 py-3 bg-[#232f48] text-white font-medium border-l-4 border-blue-500 text-left"
-            >
-              <Package size={20} className="text-slate-300" />
-              <span>Stocks Management</span>
-            </button>
-            <button 
-              type="button"
-              className="w-full flex items-center gap-3 px-6 py-3 text-slate-400 hover:text-slate-200 hover:bg-[#1d293d] transition-colors text-left"
-            >
-              <ClipboardList size={20} />
-              <span>Orders Management</span>
-            </button>
-            <button 
-              type="button"
-              className="w-full flex items-center gap-3 px-6 py-3 text-slate-400 hover:text-slate-200 hover:bg-[#1d293d] transition-colors text-left"
-            >
-              <LayoutDashboard size={20} />
-              <span>Dashboard</span>
-            </button>
-          </nav>
-        </div>
-
-        <div className="p-6 border-t border-slate-700/40">
-          <button 
-            type="button"
-            className="flex items-center gap-3 text-sm font-medium text-slate-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft size={18} />
-            <span>Back to Website</span>
-          </button>
-        </div>
-      </aside>
+      {/* ใช้งาน Sidebar Component โดยตั้งค่า Tab ให้ตรงกับหน้าจัดการสต๊อก */}
+      <Sidebar currentTab="stocks" />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -132,7 +75,7 @@ const AddProduct: React.FC = () => {
 
         {/* Content Form Area */}
         <main className="flex-1 p-10 max-w-7xl w-full mx-auto overflow-y-auto">
-          {/* ปุ่มย้อนกลับไปหน้าเลือกประเภท */}
+          {/* ปุ่มย้อนกลับไปหน้าก่อนหน้า */}
           <button
             type="button"
             onClick={() => window.history.back()}
