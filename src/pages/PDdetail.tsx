@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
   ShoppingCart, 
@@ -11,6 +12,8 @@ import {
 import { FiFacebook, FiInstagram, FiGithub } from 'react-icons/fi';
 
 const ProductDetail: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-gray-800 font-sans"> 
       {/* Main Content */}
@@ -43,7 +46,11 @@ const ProductDetail: React.FC = () => {
             {/* Title & Store */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mt-2">
               <h1 className="text-3xl font-bold text-blue-600">พี่หน่วง พิธีกรผมสวย</h1>
-              <button className="flex items-center border border-gray-200 rounded-full px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition w-fit whitespace-nowrap shadow-sm">
+              <button
+                type="button"
+                onClick={() => navigate('/seller-profile')}
+                className="flex items-center border border-gray-200 rounded-full px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition w-fit whitespace-nowrap shadow-sm cursor-pointer"
+              >
                 Sell By: OptraCard Official Store
                 <CheckCircle2 className="w-4 h-4 text-blue-500 ml-2 fill-current text-white bg-blue-500 rounded-full" />
                 <ChevronRight className="w-4 h-4 ml-1 text-gray-400" />
