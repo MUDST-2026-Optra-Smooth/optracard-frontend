@@ -1,158 +1,156 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiEdit2 } from 'react-icons/fi';
+import { Pencil, Eye, EyeOff } from 'lucide-react';
 import defaultAvatar from '../assets/Generic avatar.png';
+
+interface CollectionCard {
+  id: string;
+  name: string;
+  game: string;
+  imageUrl?: string;
+  hidden: boolean;
+}
+
+// TODO: replace with the logged-in user's real profile data once the backend exists
+const USER = {
+  username: 'John_Doe',
+  email: 'john@example.com',
+  phoneNumber: '089-123-4567',
+  address: '88/12 Sukhumvit Road, Khlong Toei, Bangkok 10110, Thailand',
+};
+
+// TODO: replace with the user's real purchased cards once orders/inventory are wired up
+const INITIAL_COLLECTION: CollectionCard[] = [
+  { id: '1', name: 'Charizard ex (006/165)', game: 'Pokemon', imageUrl: 'https://images.pokemontcg.io/sv3pt5/6_hires.png', hidden: false },
+  { id: '2', name: 'Blue-Eyes White Dragon', game: 'Yu-Gi-Oh', imageUrl: 'https://images.ygoprodeck.com/images/cards/89631139.jpg', hidden: false },
+  { id: '3', name: 'พี่หน่วง พิธีกรผมสวย', game: 'Battle of Talingchan', hidden: true },
+  { id: '4', name: 'Gangplank, Naval', game: 'Riftbound', hidden: false },
+  { id: '5', name: 'Dark Magician', game: 'Yu-Gi-Oh', hidden: false },
+  { id: '6', name: 'Pikachu', game: 'Pokemon', hidden: false },
+  { id: '7', name: 'Exodia the Forbidden One', game: 'Yu-Gi-Oh', hidden: true },
+];
+
+const CARD_GRADIENTS = [
+  'from-indigo-500 to-blue-600',
+];
+
+interface InfoRowProps {
+  label: string;
+  value: string;
+}
+
+const InfoRow = ({ label, value }: InfoRowProps) => (
+  <div>
+    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+    <p className="text-sm font-medium text-gray-800 break-words">{value}</p>
+  </div>
+);
 
 export const Profile = () => {
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [collection, setCollection] = useState<CollectionCard[]>(INITIAL_COLLECTION);
 
-  const [avatarPreview, setAvatarPreview] = useState<string>(defaultAvatar);
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    phoneNumber: '',
-    address: '',
-  });
+  const allHidden = collection.length > 0 && collection.every((card) => card.hidden);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const toggleCard = (id: string) => {
+    setCollection((prev) => prev.map((card) => (card.id === id ? { ...card, hidden: !card.hidden } : card)));
   };
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setAvatarPreview(previewUrl);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Profile update submitted:', formData);
-  };
-
-  const handleLogout = () => {
-    // จำลองการเคลียร์ข้อมูลและพากลับไปหน้า Login
-    alert("Logged out successfully");
-    navigate('/login');
+  const toggleAll = () => {
+    setCollection((prev) => prev.map((card) => ({ ...card, hidden: !allHidden })));
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f0f4f8] py-10 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-md relative">
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-6 left-6 text-sm text-gray-600 flex items-center hover:text-black"
-        >
-          ← Back
-        </button>
-
-        <div className="flex justify-center mt-10 mb-8">
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-[#ece7fb] flex items-center justify-center">
-              <img src={avatarPreview} alt="Profile avatar" className="w-full h-full object-cover" />
+    <div className="min-h-screen bg-[#f8fafc] py-10 px-4 sm:px-6 lg:px-10">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Profile Info */}
+        <div className="relative bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col sm:flex-row gap-12 items-center sm:items-start">
+          <div className="relative shrink-0">
+            <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-md">
+              <img src={defaultAvatar} alt="Profile" className="w-full h-full object-cover" />
             </div>
-            <button
-              type="button"
-              onClick={handleAvatarClick}
-              className="absolute bottom-0 right-0 w-7 h-7 bg-white border border-gray-300 rounded-md flex items-center justify-center shadow-sm hover:bg-gray-50 transition"
-              aria-label="Change profile picture"
-            >
-              <FiEdit2 className="w-3.5 h-3.5 text-gray-600" />
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="hidden"
-            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate('/profile/edit')}
+            className="absolute top-6 right-6 w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-md flex items-center justify-center transition cursor-pointer"
+            aria-label="Edit profile"
+          >
+            <Pencil size={16} />
+          </button>
+
+          <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+            <InfoRow label="Username" value={USER.username} />
+            <InfoRow label="Email" value={USER.email} />
+            <InfoRow label="Password" value="••••••••" />
+            <InfoRow label="Phone Number" value={USER.phoneNumber} />
+            <div className="sm:col-span-2">
+              <InfoRow label="Address" value={USER.address} />
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 text-xs font-semibold mb-1">Username</label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              placeholder="Your Username"
-              className="w-full px-3 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-            />
+        {/* Card Collection */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Card Collection</h2>
+              <p className="text-xs text-gray-400 mt-1 max-w-md">
+                Cards you hide won't be shown to other users browsing your collection.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleAll}
+              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 border border-blue-100 bg-blue-50 px-3 py-1.5 rounded-full transition cursor-pointer shrink-0"
+            >
+              {allHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+              {allHidden ? 'Unhide All' : 'Hide All'}
+            </button>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-xs font-semibold mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Your Email"
-              className="w-full px-3 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-            />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">
+            {collection.map((card, idx) => {
+              const gradient = CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
+              return (
+                <button
+                  type="button"
+                  key={card.id}
+                  onClick={() => toggleCard(card.id)}
+                  className="group text-left cursor-pointer transition duration-200 hover:-translate-y-1 hover:scale-[1.03]"
+                  aria-label={card.hidden ? `Unhide ${card.name}` : `Hide ${card.name}`}
+                >
+                  <div
+                    className={`relative aspect-[3/4] rounded-lg overflow-hidden border border-gray-200 ${
+                      card.hidden ? 'grayscale' : ''
+                    }`}
+                  >
+                    {card.imageUrl ? (
+                      <img src={card.imageUrl} alt={card.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div
+                        className={`w-full h-full flex items-center justify-center text-center px-2 bg-gradient-to-br ${gradient} text-white text-xs font-bold leading-snug`}
+                      >
+                        {card.name}
+                      </div>
+                    )}
+                    {card.hidden && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <EyeOff size={20} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs font-semibold text-gray-700 mt-2 truncate">{card.name}</p>
+                  <p className="text-[11px] text-gray-400">{card.game}</p>
+                </button>
+              );
+            })}
           </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-xs font-semibold mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Your Password"
-              className="w-full px-3 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-xs font-semibold mb-1">Phone Number</label>
-            <input
-              type="tel"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="Your Phone Number"
-              className="w-full px-3 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-            />
-          </div>
-
-          <div className="mb-8">
-            <label className="block text-gray-700 text-xs font-semibold mb-1">Address</label>
-            <textarea
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="Your Address"
-              rows={3}
-              className="w-full px-3 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm resize-none"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-[#2f65ff] text-white font-medium py-2.5 rounded-full hover:bg-blue-700 transition duration-200 text-sm mb-3"
-          >
-            Save Changes
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full bg-red-500 text-white font-medium py-2.5 rounded-full hover:bg-red-600 transition duration-200 text-sm"
-          >
-            Logout
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );
 };
+
+export default Profile;
