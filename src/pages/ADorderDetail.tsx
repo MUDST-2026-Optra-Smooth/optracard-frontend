@@ -6,10 +6,9 @@ import {
   Printer, 
   MapPin, 
   Truck, 
-  ChevronDown,
-  User
+  ChevronDown 
 } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
+import ADsidebar from '../components/ADsidebar';
 
 interface OrderItem {
   id: string;
@@ -24,7 +23,7 @@ interface OrderItem {
   imageUrl: string;
 }
 
-export const OrderDetail: React.FC = () => {
+export const ADorderDetail: React.FC = () => {
   const navigate = useNavigate();
   const { orderId = 'ORD-00001' } = useParams<{ orderId?: string }>();
   const [paymentStatus, setPaymentStatus] = useState<'Unpaid' | 'Paid'>('Unpaid');
@@ -57,34 +56,30 @@ export const OrderDetail: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] font-sans antialiased text-slate-800">
-      {/* 1. Top Navbar เต็มความกว้างตาม Figma */}
-      <header className="bg-[#0f172a] text-white flex items-center justify-between px-8 py-3.5 h-16 shrink-0 z-10">
-        <div className="flex items-center space-x-2">
-          <div className="bg-blue-600 rounded p-1 w-7 h-7 flex items-center justify-center font-bold text-sm">
-            O
-          </div>
-          <span className="font-bold text-lg tracking-wide">Optracard</span>
-        </div>
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans antialiased text-slate-800">
+      {/* ใช้งาน ADsidebar */}
+      <ADsidebar currentTab="orders" />
 
-        <div className="flex items-center">
-          <div className="w-9 h-9 rounded-full bg-amber-200 border-2 border-amber-300 flex items-center justify-center overflow-hidden cursor-pointer">
-            <User className="w-5 h-5 text-amber-800" />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Navbar สำหรับ Admin */}
+        <header className="h-16 bg-[#0e1626] flex items-center justify-end px-8 shrink-0">
+          <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
+            <img
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
+              alt="Admin Profile"
+              className="w-full h-full object-cover"
+            />
           </div>
-        </div>
-      </header>
-
-      {/* 2. Layout ด้านล่าง: Sidebar ทางซ้าย + Content ทางขวา */}
-      <div className="flex flex-1 min-h-[calc(100vh-64px)]">
-        <Sidebar currentTab="orders" />
+        </header>
 
         {/* Content View */}
         <main className="flex-1 p-8 max-w-7xl w-full mx-auto overflow-y-auto space-y-6">
-          {/* Back Button & Header Actions */}
+          {/* ปุ่ม Back ย้อนกลับไปหน้า ADordersManagement */}
           <div>
             <button
               type="button"
-              onClick={() => navigate('/orders-management')}
+              onClick={() => navigate('/ADordersManagement')}
               className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 mb-3 cursor-pointer transition"
             >
               <ChevronLeft size={16} />
@@ -93,7 +88,7 @@ export const OrderDetail: React.FC = () => {
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                Order #{orderId}
+                Order #{orderId} <span className="text-xs font-normal text-slate-400 ml-2">(Admin View)</span>
               </h1>
 
               <div className="flex items-center gap-3">
@@ -116,10 +111,10 @@ export const OrderDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Grid */}
+          {/* Grid Layout 3 คอลัมน์ */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Left Column (2 Cols wide) */}
+            {/* ฝั่งซ้าย: ข้อมูลสินค้าและยอดคำสั่งซื้อ */}
             <div className="lg:col-span-2 space-y-6">
               
               {/* Order Information Card */}
@@ -128,7 +123,7 @@ export const OrderDetail: React.FC = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-2 text-xs">
                   <div>
                     <span className="text-slate-400 block mb-1">Order ID (PK)</span>
-                    <span className="font-bold text-blue-600">ORD-00001</span>
+                    <span className="font-bold text-blue-600">{orderId}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block mb-1">User ID</span>
@@ -174,7 +169,7 @@ export const OrderDetail: React.FC = () => {
                 </div>
               </div>
 
-              {/* Product List Table Card */}
+              {/* Product List Card */}
               <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs overflow-hidden">
                 <div className="p-6 pb-2">
                   <h2 className="text-sm font-bold text-slate-900">Product List</h2>
@@ -254,10 +249,9 @@ export const OrderDetail: React.FC = () => {
 
             </div>
 
-            {/* Right Column (1 Col wide) */}
+            {/* ฝั่งขวา: ที่อยู่, ข้อมูลจัดส่ง, และ Timeline */}
             <div className="space-y-6">
               
-              {/* Shipping Address Card */}
               <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-2xs">
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin size={16} className="text-slate-600" />
@@ -271,7 +265,6 @@ export const OrderDetail: React.FC = () => {
                 </div>
               </div>
 
-              {/* Tracking Information Card */}
               <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-2xs">
                 <div className="flex items-center gap-2 mb-3">
                   <Truck size={16} className="text-slate-600" />
@@ -289,7 +282,6 @@ export const OrderDetail: React.FC = () => {
                 </div>
               </div>
 
-              {/* Order Timeline Card */}
               <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-2xs">
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Order Timeline</h3>
                 
@@ -360,4 +352,4 @@ export const OrderDetail: React.FC = () => {
   );
 };
 
-export default OrderDetail;
+export default ADorderDetail;
