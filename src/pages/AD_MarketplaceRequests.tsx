@@ -39,28 +39,18 @@ export const AD_MarketplaceRequestDetail: React.FC = () => {
       <ADsidebar currentTab="marketplace-requests" />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-[#0f172a] text-white flex items-center justify-end px-8 py-3.5 h-16 shrink-0 border-b border-slate-800">
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-                alt="Admin Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </header>
+        <header className="h-16 bg-[#0f172a] shrink-0 border-b border-slate-800" />
 
         <main className="flex-1 p-8 max-w-[1440px] w-full mx-auto overflow-y-auto space-y-6">
           <button 
-            onClick={() => navigate('/AD_MarketplacelistRequests')} 
+            onClick={() => navigate('/admin/marketplace/requests')}
             className="flex items-center text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors mb-6 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Requests
           </button>
 
           <div className="flex items-center text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-4 gap-2">
-            <span className="hover:text-blue-600 cursor-pointer transition-colors" onClick={() => navigate('/AD_MarketplacelistRequests')}>
+                  <span className="hover:text-blue-600 cursor-pointer transition-colors" onClick={() => navigate('/admin/marketplace/requests')}>
               Marketplace requests
             </span>
             <ChevronRight className="w-3 h-3" />

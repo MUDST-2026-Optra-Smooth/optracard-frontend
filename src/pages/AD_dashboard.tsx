@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Banknote, CreditCard, DollarSign } from 'lucide-react';
+import { Banknote, CreditCard, DollarSign } from 'lucide-react';
 import ADsidebar from '../components/ADsidebar';
 
 interface MonthlyData {
@@ -25,7 +24,6 @@ const chartData: MonthlyData[] = [
 ];
 
 export const ADdashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [viewBy, setViewBy] = useState<'Month' | 'Week'>('Month');
   const [timeRange, setTimeRange] = useState<'3M' | '6M' | '12M' | 'All'>('12M');
 
@@ -36,15 +34,7 @@ export const ADdashboard: React.FC = () => {
       <ADsidebar currentTab="dashboard" />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-[#0e1626] flex items-center justify-end px-8 shrink-0">
-          <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-              alt="Admin Profile"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </header>
+        <header className="h-16 bg-[#0e1626] shrink-0" />
 
         <main className="flex-1 p-8 max-w-7xl w-full mx-auto overflow-y-auto space-y-6">
           <div className="flex items-center justify-between">
@@ -54,14 +44,6 @@ export const ADdashboard: React.FC = () => {
                 Your summarizes of your stocks and orders in dashboard
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate('/ADseller')}
-              className="flex items-center gap-2 bg-[#1d4ed8] hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition cursor-pointer"
-            >
-              <Plus size={16} />
-              <span>Add new card</span>
-            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

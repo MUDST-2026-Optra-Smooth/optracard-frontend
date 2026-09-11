@@ -63,15 +63,7 @@ export const ADorderDetail: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navbar สำหรับ Admin */}
-        <header className="h-16 bg-[#0e1626] flex items-center justify-end px-8 shrink-0">
-          <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-              alt="Admin Profile"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </header>
+        <header className="h-16 bg-[#0e1626] shrink-0" />
 
         {/* Content View */}
         <main className="flex-1 p-8 max-w-7xl w-full mx-auto overflow-y-auto space-y-6">
@@ -79,7 +71,7 @@ export const ADorderDetail: React.FC = () => {
           <div>
             <button
               type="button"
-              onClick={() => navigate('/ADordersManagement')}
+              onClick={() => navigate('/admin/orders')}
               className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 mb-3 cursor-pointer transition"
             >
               <ChevronLeft size={16} />

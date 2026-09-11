@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
   Download, 
-  Plus, 
-  ChevronRight, 
-  FileText, 
-  Filter 
+  Plus
 } from 'lucide-react';
 import ADsidebar from '../components/ADsidebar';
 
@@ -138,17 +135,7 @@ export const ADstoreRequest: React.FC = () => {
       <ADsidebar currentTab="manage-requests" />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-[#0f172a] text-white flex items-center justify-end px-8 py-3.5 h-16 shrink-0 border-b border-slate-800">
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-                alt="Admin Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </header>
+        <header className="h-16 bg-[#0f172a] shrink-0 border-b border-slate-800" />
 
         <main className="flex-1 p-8 max-w-[1440px] w-full mx-auto overflow-y-auto space-y-6">
           {/* Header Title & Actions */}
@@ -423,7 +410,7 @@ export const ADstoreRequest: React.FC = () => {
                       <td className="py-4 px-6 align-middle text-center">
                         <button
                           type="button"
-                          onClick={() => navigate(`/ADstoreRequestdetail`)}
+                          onClick={() => navigate('/admin/store-requests/detail')}
                           className="px-3.5 py-1.5 bg-[#2563eb] hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition cursor-pointer"
                         >
                           View detail

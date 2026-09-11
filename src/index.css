@@ -1,1 +1,32 @@
 @import "tailwindcss";
+
+/* Keep the super-admin workspace as readable as the admin workspace. */
+.spad-shell [class~="text-[6px]"] {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
+}
+
+.spad-shell [class~="text-[7px]"] {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.spad-shell [class~="text-[8px]"] {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.spad-shell [class~="text-[9px]"] {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.spad-shell [class~="text-[10px]"] {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.spad-shell [class~="text-xs"] {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}

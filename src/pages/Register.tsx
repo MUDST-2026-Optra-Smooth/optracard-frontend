@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+
 export const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
-    tel: '',
+    phone: '',
     address: '',
     password: '',
     confirmPassword: ''
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -24,13 +26,13 @@ export const Register = () => {
     }
     
     try {
-      const response = await fetch('http://localhost:8080/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: formData.username,
           email: formData.email,
-          tel: formData.tel,
+          phone: formData.phone,
           address: formData.address,
           password: formData.password
         })
@@ -40,8 +42,8 @@ export const Register = () => {
         alert("Registration successful! Please login.");
         navigate('/login');
       } else {
-        const errorData = await response.json();
-        alert(errorData.message || 'Registration failed');
+        const errorData = await response.json().catch(() => null);
+        alert(errorData?.message || 'Registration failed');
       }
     } catch (error) {
       console.error('Error connecting to backend server', error);
@@ -88,25 +90,25 @@ export const Register = () => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-gray-700 text-xs font-semibold mb-1">Telephone</label>
-            <input 
-              type="tel" 
-              name="tel"
-              value={formData.tel}
+            <label className="block text-gray-700 text-xs font-semibold mb-1">Phone</label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm" 
-              required 
+              className="w-full px-3 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+              required
             />
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 text-xs font-semibold mb-1">Address</label>
-            <input 
-              type="text" 
+            <textarea
               name="address"
               value={formData.address}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm" 
-              required 
+              rows={3}
+              className="w-full px-3 py-2 border rounded-md bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm resize-y"
+              required
             />
           </div>
           <div className="mb-4">
@@ -135,6 +137,9 @@ export const Register = () => {
             Create an account
           </button>
         </form>
+        <p className="mt-6 text-center text-xs text-gray-500">
+          Already have an account? <Link to="/login" className="text-blue-600 font-semibold hover:underline">Login</Link>
+        </p>
       </div>
     </div>
   );
