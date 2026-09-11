@@ -5,6 +5,7 @@ import { X, Search, Check, Package } from 'lucide-react';
 interface AddProductDropdownProps {
   isOpen: boolean;
   onClose: () => void;
+  onSelectCategory?: (category: string) => void;
 }
 
 const categories = [
@@ -14,7 +15,11 @@ const categories = [
   'Accessories',
 ];
 
-export const AddProductDropdown: React.FC<AddProductDropdownProps> = ({ isOpen, onClose }) => {
+export const AddProductDropdown: React.FC<AddProductDropdownProps> = ({ 
+  isOpen, 
+  onClose,
+  onSelectCategory 
+}) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('Single Card');
@@ -25,9 +30,12 @@ export const AddProductDropdown: React.FC<AddProductDropdownProps> = ({ isOpen, 
     item.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // ฟังก์ชันย้ายหน้าเมื่อกดปุ่ม Select
   const handleSelect = () => {
-    navigate('/add-product', { state: { productType: selectedType } });
+    if (onSelectCategory) {
+      onSelectCategory(selectedType);
+    } else {
+      navigate('/add-product', { state: { productType: selectedType } });
+    }
     onClose();
   };
 
