@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { formatPrice } from '../context/formatters';
 
 interface TradingListingCardProps {
@@ -6,22 +7,42 @@ interface TradingListingCardProps {
   itemCount: number;
   startingPrice: number;
   imageUrl?: string;
+  storeName?: string;
 }
 
-export const TradingListingCard = ({ cardName, gameName, itemCount, startingPrice, imageUrl }: TradingListingCardProps) => {
+export const TradingListingCard = ({ cardName, gameName, itemCount, startingPrice, imageUrl, storeName }: TradingListingCardProps) => {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageUrl]);
+
   return (
     <div className="border rounded-lg p-4 shadow-sm flex flex-col justify-between h-full bg-white">
       <div className="flex gap-4">
         {/* ขยายรูปภาพจาก w-16 h-20 เป็น w-20 h-28 เพื่อให้สมดุลกับ ProductCard */}
         <div className="w-20 h-28 bg-gray-100 rounded-md flex items-center justify-center flex-shrink-0 overflow-hidden">
-          {imageUrl ? <img src={imageUrl} alt={cardName} className="w-full h-full object-cover" /> : <span className="text-sm text-gray-400">[Image]</span>}
+          {imageUrl && !imageFailed ? (
+            <img
+              src={imageUrl}
+              alt={cardName}
+              className="w-full h-full object-cover"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <div className="px-2 text-center text-xs text-gray-500">
+              <div className="text-2xl" aria-hidden="true">🃏</div>
+              <span className="line-clamp-3">{cardName}</span>
+            </div>
+          )}
         </div>
         
-        <div className="flex flex-col justify-start w-full">
+        <div className="flex min-w-0 flex-1 flex-col justify-start">
           {/* ปรับ Title เป็น text-base เหมือน ProductCard */}
           <p className="text-base font-semibold text-gray-900 line-clamp-2">{cardName}</p>
           {/* ปรับข้อมูลรองเป็น text-sm */}
           <p className="text-sm text-gray-500 mt-0.5">{gameName}</p>
+          {storeName && <p className="text-xs text-slate-400 mt-0.5 truncate">{storeName}</p>}
           <p className="text-sm text-gray-500 mt-1">{itemCount} items</p>
           
           {/* แยกคำว่า Starting at และเน้นตัวเลขราคาเป็น text-lg font-bold เท่ากับ ProductCard */}
