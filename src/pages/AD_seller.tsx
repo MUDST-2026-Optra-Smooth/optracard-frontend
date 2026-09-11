@@ -82,7 +82,7 @@ export const ADseller: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleEditProduct = (item: ProductItem) => {
-    navigate(`/ADeditProduct/${item.id}`, {
+    navigate(`/admin/products/${item.id}/edit`, {
       state: {
         product: {
           productId: item.id,
@@ -104,7 +104,7 @@ export const ADseller: React.FC = () => {
   };
 
   const handleSelectCategory = (categoryKey: string) => {
-    navigate(`/ADaddProduct?category=${encodeURIComponent(categoryKey)}`, {
+    navigate(`/admin/products/new?category=${encodeURIComponent(categoryKey)}`, {
       state: { productType: categoryKey },
     });
   };
@@ -114,17 +114,7 @@ export const ADseller: React.FC = () => {
       <ADsidebar currentTab="stocks" />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-[#0f172a] text-white flex items-center justify-end px-8 py-3.5 h-16 shrink-0">
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-                alt="Admin Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </header>
+        <header className="h-16 bg-[#0f172a] shrink-0" />
 
         <main className="flex-1 p-8 overflow-y-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -208,7 +198,7 @@ export const ADseller: React.FC = () => {
                 {mockProducts.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/60 transition">
                     <td 
-                      onClick={() => navigate(`/ADpddetail/${item.id}`)}
+                      onClick={() => navigate(`/admin/products/${item.id}`)}
                       className="py-4 px-4 font-semibold text-blue-600 cursor-pointer hover:underline"
                     >
                       {item.id}

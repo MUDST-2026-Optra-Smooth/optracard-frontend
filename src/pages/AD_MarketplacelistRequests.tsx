@@ -27,17 +27,7 @@ export const AD_MarketplaceRequestsList: React.FC = () => {
       <ADsidebar currentTab="marketplace-requests" />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-[#0f172a] text-white flex items-center justify-end px-8 py-3.5 h-16 shrink-0 border-b border-slate-800">
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-                alt="Admin Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </header>
+        <header className="h-16 bg-[#0f172a] shrink-0 border-b border-slate-800" />
 
         <main className="flex-1 p-8 max-w-[1440px] w-full mx-auto overflow-y-auto space-y-6">
           <div className="flex justify-between items-end mb-8">
@@ -170,7 +160,7 @@ export const AD_MarketplaceRequestsList: React.FC = () => {
                       
                       <td className="py-4 px-6 text-center">
                         <button 
-                          onClick={() => navigate(`/AD_MarketplaceRequestDetail/${req.id}`)}
+                          onClick={() => navigate(`/admin/marketplace/requests/${req.id}`)}
                           className="inline-flex items-center gap-1 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm cursor-pointer"
                         >
                           {req.status === 'Pending' ? (

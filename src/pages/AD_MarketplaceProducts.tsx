@@ -98,17 +98,7 @@ export const AD_MarketplaceProducts: React.FC = () => {
       <ADsidebar currentTab="marketplace-products" />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-[#0f172a] text-white flex items-center justify-end px-8 py-3.5 h-16 shrink-0 border-b border-slate-800">
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-                alt="Admin Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </header>
+        <header className="h-16 bg-[#0f172a] shrink-0 border-b border-slate-800" />
 
         <main className="flex-1 p-8 max-w-[1440px] w-full mx-auto overflow-y-auto space-y-6">
           <div className="flex justify-between items-end mb-8">
@@ -215,7 +205,7 @@ export const AD_MarketplaceProducts: React.FC = () => {
             {filteredAndSortedStores.map((store) => (
               <div 
                 key={store.id} 
-                onClick={() => navigate(`/AD_MarketplaceStorelist/${store.id}`)}
+                onClick={() => navigate(`/admin/marketplace/stores/${store.id}`)}
                 className="bg-white rounded-[24px] p-3 shadow-sm border border-slate-100 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
               >
                 <div className={`relative w-full h-48 rounded-[20px] bg-gradient-to-br ${store.bgGradient} overflow-hidden mb-4 flex items-center justify-center`}>

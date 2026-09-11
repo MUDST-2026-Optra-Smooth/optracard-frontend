@@ -4,8 +4,7 @@ import {
   ArrowLeft, 
   FileText, 
   ExternalLink, 
-  Check, 
-  Clock 
+  Check
 } from 'lucide-react';
 import ADsidebar from '../components/ADsidebar';
 
@@ -32,24 +31,14 @@ export const ADstoreRequestdetail: React.FC = () => {
       <ADsidebar currentTab="manage-requests" />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="bg-[#0f172a] text-white flex items-center justify-end px-8 py-3.5 h-16 shrink-0 border-b border-slate-800">
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-                alt="Admin Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </header>
+        <header className="h-16 bg-[#0f172a] shrink-0 border-b border-slate-800" />
 
         <main className="flex-1 p-8 max-w-[1440px] w-full mx-auto overflow-y-auto space-y-6">
           {/* Top Back Navigation Link */}
           <div>
             <button
               type="button"
-              onClick={() => navigate('/ADstoreRequest')}
+              onClick={() => navigate('/admin/store-requests')}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer transition"
             >
               <ArrowLeft size={14} />
@@ -85,7 +74,7 @@ export const ADstoreRequestdetail: React.FC = () => {
               </span>
               <button
                 type="button"
-                onClick={() => navigate('/ADstoreRequest')}
+                onClick={() => navigate('/admin/store-requests')}
                 className="inline-flex items-center gap-1 px-3.5 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
               >
                 <ArrowLeft size={14} />
