@@ -2,9 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
+import { loadCatalog as loadCatalogFromApi } from '../api/catalog';
 import type { CatalogProduct, CatalogSource } from '../types/catalog';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 const PRODUCT_TYPES = ['Single', 'Booster', 'Booster Box', 'Accessories'];
 
@@ -27,29 +26,24 @@ export const Home = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let isCurrent = true;
 
     const loadCatalog = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products/home`, { signal: controller.signal });
-        if (!response.ok) {
-          throw new Error(`Catalog request failed with status ${response.status}`);
+        const data = await loadCatalogFromApi();
+        if (isCurrent) {
+          setProducts(data);
+          setError(null);
         }
-        const data = (await response.json()) as CatalogProduct[];
-        setProducts(data);
-      } catch (requestError) {
-        if ((requestError as Error).name !== 'AbortError') {
-          setError('We could not load the catalog right now. Please try again shortly.');
-        }
+      } catch {
+        if (isCurrent) setError('We could not load the catalog right now. Please try again shortly.');
       } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false);
-        }
+        if (isCurrent) setIsLoading(false);
       }
     };
 
     void loadCatalog();
-    return () => controller.abort();
+    return () => { isCurrent = false; };
   }, []);
 
   const productsBySourceAndType = useMemo(() => {
@@ -77,6 +71,7 @@ export const Home = () => {
           {catalogProducts.map((product) => (
             <ProductCard
               key={product.id}
+              productId={product.id}
               title={product.name}
               price={product.price}
               game={product.game}
@@ -93,7 +88,7 @@ export const Home = () => {
   };
 
   const renderMarketplaceSection = () => {
-    const marketplaceProducts = products.filter((product) => product.source === 'MARKETPLACE');
+    const marketplaceProducts = products.filter((product) => product.source === 'MARKETPLACE').slice(0, 9);
 
     return (
       <section key="MARKETPLACE" className="mb-16">
@@ -114,12 +109,14 @@ export const Home = () => {
           {marketplaceProducts.map((product) => (
             <TradingListingCard
               key={product.id}
+              productId={product.id}
               cardName={product.name}
               gameName={product.game}
               itemCount={product.stock}
               startingPrice={product.price}
               imageUrl={product.imageUrl ?? undefined}
               storeName={product.store.name}
+              source="MARKETPLACE"
             />
           ))}
         </div>

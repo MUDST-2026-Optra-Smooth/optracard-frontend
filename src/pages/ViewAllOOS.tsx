@@ -2,9 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { FilterDropdown, type DropdownOption } from '../components/FilterDropdown';
+import { loadCatalog } from '../api/catalog';
 import type { CatalogProduct } from '../types/catalog';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 const sortOptions: DropdownOption[] = [
   { label: 'Newest Arrivals', value: 'newest' },
@@ -32,30 +31,24 @@ export function ViewAllOOS() {
   }, [productType]);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let isCurrent = true;
 
     const loadProducts = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/products/home`, { signal: controller.signal });
-        if (!response.ok) {
-          throw new Error(`Official catalog request failed with status ${response.status}`);
+        const data = await loadCatalog();
+        if (isCurrent) {
+          setProducts(data);
+          setError(null);
         }
-        const data = (await response.json()) as CatalogProduct[];
-        setProducts(data);
-        setError(null);
-      } catch (requestError) {
-        if ((requestError as Error).name !== 'AbortError') {
-          setError('We could not load the official catalog right now. Please try again shortly.');
-        }
+      } catch {
+        if (isCurrent) setError('We could not load the official catalog right now. Please try again shortly.');
       } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false);
-        }
+        if (isCurrent) setIsLoading(false);
       }
     };
 
     void loadProducts();
-    return () => controller.abort();
+    return () => { isCurrent = false; };
   }, []);
 
   const typeProducts = useMemo(
@@ -136,6 +129,7 @@ export function ViewAllOOS() {
               {visibleProducts.map((product) => (
                 <ProductCard
                   key={product.id}
+                  productId={product.id}
                   title={product.name}
                   price={product.price}
                   game={product.game}
