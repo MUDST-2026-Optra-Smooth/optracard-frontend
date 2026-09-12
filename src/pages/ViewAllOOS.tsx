@@ -1,40 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'; // เพิ่ม useSearchParams
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { FilterDropdown, type DropdownOption } from '../components/FilterDropdown';
-
-type Product = {
-  id: number;
-  title: string;
-  game: string;
-  price: number;
-  stock: number;
-};
-
-const products: Product[] = [
-  { id: 1, title: 'Charizard ex', game: 'Pokemon', price: 890, stock: 0 },
-  { id: 2, title: 'Blue-Eyes White Dragon', game: 'Yu-Gi-Oh!', price: 1290, stock: 5 },
-  { id: 3, title: 'Monkey D. Luffy', game: 'One Piece', price: 720, stock: 12 },
-  { id: 4, title: 'Pikachu VMAX', game: 'Pokemon', price: 540, stock: 3 },
-  { id: 5, title: 'Mewtwo VSTAR', game: 'Pokemon', price: 640, stock: 0 },
-  { id: 6, title: 'Roronoa Zoro', game: 'One Piece', price: 460, stock: 8 },
-  { id: 7, title: 'Dark Magician', game: 'Yu-Gi-Oh!', price: 980, stock: 2 },
-  { id: 8, title: 'Gengar VMAX', game: 'Pokemon', price: 780, stock: 15 },
-  { id: 9, title: 'Eevee Heroes', game: 'Pokemon', price: 390, stock: 20 },
-  { id: 10, title: 'Trafalgar Law', game: 'One Piece', price: 520, stock: 6 },
-  { id: 11, title: 'Red-Eyes B. Dragon', game: 'Yu-Gi-Oh!', price: 860, stock: 0 },
-  { id: 12, title: 'Sylveon V', game: 'Pokemon', price: 430, stock: 4 },
-  { id: 13, title: 'Snorlax Special Art', game: 'Pokemon', price: 610, stock: 9 },
-  { id: 14, title: 'Nami Character Rare', game: 'One Piece', price: 690, stock: 7 },
-  { id: 15, title: 'Exodia the Forbidden One', game: 'Yu-Gi-Oh!', price: 1450, stock: 1 },
-  { id: 16, title: 'Umbreon VMAX', game: 'Pokemon', price: 1180, stock: 0 },
-];
-
-const gameOptionsData = Array.from(new Set(products.map((product) => product.game))).sort();
-const gameOptions: DropdownOption[] = [
-  { label: 'All games', value: 'All', shortLabel: 'All' },
-  ...gameOptionsData.map((game) => ({ label: game, value: game }))
-];
+import { loadCatalog } from '../api/catalog';
+import type { CatalogProduct } from '../types/catalog';
 
 const sortOptions: DropdownOption[] = [
   { label: 'Newest Arrivals', value: 'newest' },
@@ -48,29 +17,65 @@ const sortOptions: DropdownOption[] = [
 export function ViewAllOOS() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
-  // ดึงค่า type จาก URL ถ้าไม่มีค่าให้แสดงเป็น 'Single' เป็นค่าเริ่มต้น
   const productType = searchParams.get('type') || 'Single';
 
-  const [selectedGame, setSelectedGame] = useState<DropdownOption>(gameOptions[0]);
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [selectedGame, setSelectedGame] = useState<DropdownOption>({ label: 'All games', value: 'All', shortLabel: 'All' });
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
+    setSelectedGame({ label: 'All games', value: 'All', shortLabel: 'All' });
+  }, [productType]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    const loadProducts = async () => {
+      try {
+        const data = await loadCatalog();
+        if (isCurrent) {
+          setProducts(data);
+          setError(null);
+        }
+      } catch {
+        if (isCurrent) setError('We could not load the official catalog right now. Please try again shortly.');
+      } finally {
+        if (isCurrent) setIsLoading(false);
+      }
+    };
+
+    void loadProducts();
+    return () => { isCurrent = false; };
   }, []);
+
+  const typeProducts = useMemo(
+    () => products.filter((product) => product.source === 'OFFICIAL' && product.type === productType),
+    [products, productType],
+  );
+
+  const gameOptions = useMemo<DropdownOption[]>(() => {
+    const games = Array.from(new Set(typeProducts.map((product) => product.game))).sort();
+    return [
+      { label: 'All games', value: 'All', shortLabel: 'All' },
+      ...games.map((game) => ({ label: game, value: game })),
+    ];
+  }, [typeProducts]);
 
   const visibleProducts = useMemo(() => {
     const filtered = selectedGame.value === 'All' 
-      ? [...products] 
-      : products.filter((product) => product.game === selectedGame.value);
+      ? [...typeProducts]
+      : typeProducts.filter((product) => product.game === selectedGame.value);
 
     if (selectedSort.value === 'stock') return filtered.sort((a, b) => b.stock - a.stock);
     if (selectedSort.value === 'price-low') return filtered.sort((a, b) => a.price - b.price);
     if (selectedSort.value === 'price-high') return filtered.sort((a, b) => b.price - a.price);
-    if (selectedSort.value === 'a-z') return filtered.sort((a, b) => a.title.localeCompare(b.title));
-    if (selectedSort.value === 'z-a') return filtered.sort((a, b) => b.title.localeCompare(a.title));
+    if (selectedSort.value === 'a-z') return filtered.sort((a, b) => a.name.localeCompare(b.name));
+    if (selectedSort.value === 'z-a') return filtered.sort((a, b) => b.name.localeCompare(a.name));
     return filtered;
-  }, [selectedGame, selectedSort]);
+  }, [selectedGame, selectedSort, typeProducts]);
 
   return (
     <section className="min-h-full bg-[#f8f9fb] font-sans text-[#20242b]">
@@ -88,11 +93,9 @@ export function ViewAllOOS() {
             <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 text-xs font-medium text-[#9198a3]">
               <Link className="transition hover:text-[#2f65ff]" to="/">Home</Link>
               <span>/</span>
-              {/* เปลี่ยน Breadcrumb ให้ตรงตาม URL */}
               <span className="text-[#59616d]">{productType}</span>
             </nav>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#2f65ff]">Card collection</p>
-            {/* เปลี่ยน Title (H1) ให้ตรงตาม URL */}
             <h1 className="mt-1 text-3xl font-black tracking-tight text-[#171a20] sm:text-4xl">{productType}</h1>
             <p className="mt-2 text-sm text-[#777f8b]">Find the perfect {productType.toLowerCase()} to complete your collection.</p>
           </div>
@@ -118,16 +121,31 @@ export function ViewAllOOS() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
-          {visibleProducts.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              title={product.title} 
-              price={product.price}
-              game={product.game} 
-            />
-          ))}
-        </div>
+        {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading official products...</p>}
+        {error && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-red-700">{error}</p>}
+        {!isLoading && !error && (
+          <>
+            <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+              {visibleProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  productId={product.id}
+                  title={product.name}
+                  price={product.price}
+                  game={product.game}
+                  imageUrl={product.imageUrl ?? undefined}
+                  type={product.type}
+                  source={product.source}
+                  storeName={product.store.name}
+                  stock={product.stock}
+                />
+              ))}
+            </div>
+            {visibleProducts.length === 0 && (
+              <p className="py-16 text-center text-base text-slate-500">No official products found for this category.</p>
+            )}
+          </>
+        )}
       </div>
     </section>
   );

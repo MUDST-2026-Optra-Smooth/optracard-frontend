@@ -9,6 +9,7 @@ export interface OrderItem {
   detail: string;
   price: number;
   quantity: number;
+  imageUrl?: string;
   imageTone: 'orange' | 'red' | 'blue' | 'purple' | 'green';
 }
 
@@ -79,8 +80,8 @@ export const OrderHistoryCard = ({
           {items.map((item) => (
             <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 py-3">
               <div className="flex min-w-0 items-center gap-3">
-                <div className={`flex h-11 w-9 flex-shrink-0 items-center justify-center rounded-sm ${imageToneStyles[item.imageTone]}`}>
-                  <span className="text-[8px] font-bold text-gray-400">[Image]</span>
+                <div className={`flex h-11 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-sm ${imageToneStyles[item.imageTone]}`}>
+                  {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain" /> : <span className="text-[8px] font-bold text-gray-400">[Image]</span>}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-[11px] font-bold text-[#303844]">{item.name}</p>

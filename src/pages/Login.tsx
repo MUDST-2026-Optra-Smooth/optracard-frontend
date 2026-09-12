@@ -37,7 +37,7 @@ export const Login = () => {
       
       if (response.ok) {
         login(
-          { username: data.username, email: formData.email, role: data.role },
+          { userId: data.userId, username: data.username, email: data.email ?? formData.email, role: data.role },
           data.token,
         );
         const requestedPath =

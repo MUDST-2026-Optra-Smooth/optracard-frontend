@@ -1,14 +1,40 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import logoIcon from '../assets/logo-icon.png';
 import searchIcon from '../assets/search.png';
 import avatarIcon from '../assets/Generic avatar.png';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+
 export const Navbar = () => {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    const loadCount = async () => {
+      if (!user) { setCartCount(0); return; }
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      let userId = user.userId;
+      try {
+        if (!userId) {
+          const profile = await fetch(`${API_BASE_URL}/api/profile`, { headers: { Authorization: `Bearer ${token}` } });
+          if (!profile.ok) return;
+          userId = (await profile.json()).userId;
+        }
+        if (!userId) return;
+        const response = await fetch(`${API_BASE_URL}/api/cart/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (response.ok) setCartCount(Number((await response.json()).totalItemCount ?? 0));
+      } catch { /* count is non-critical to navigation */ }
+    };
+    void loadCount();
+    const refresh = () => { void loadCount(); };
+    window.addEventListener('cart-updated', refresh);
+    return () => window.removeEventListener('cart-updated', refresh);
+  }, [user]);
 
   const handleProtectedNavigation = (path: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (!user) {
@@ -46,7 +72,7 @@ export const Navbar = () => {
 
       <div className="flex items-center gap-6 text-sm font-medium">
         <div className="hidden lg:flex gap-5 text-gray-300 items-center">
-          <Link to="/start-selling" onClick={handleProtectedNavigation('/start-selling')} className="hover:text-white transition">Start Selling</Link>
+          <Link to="/start-selling" onClick={handleProtectedNavigation('/start-selling')} className="hover:text-white transition">My Shop</Link>
           <Link to="/order-history" onClick={handleProtectedNavigation('/order-history')} className="hover:text-white transition">Order history</Link>
           <Link to="/about" className="hover:text-white transition">About Us</Link>
           <Link to="/team" className="hover:text-white transition">Our Team</Link>
@@ -56,7 +82,7 @@ export const Navbar = () => {
           <Link to="/cart" className="relative flex items-center justify-center w-10 h-10 bg-[#1a1f2b] rounded-full hover:bg-gray-800 transition cursor-pointer">
             <span className="text-lg">🛒</span>
             <span className="absolute -top-1 -right-1 bg-[#ff4757] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full">
-              3
+              {cartCount}
             </span>
           </Link>
           {user ? (

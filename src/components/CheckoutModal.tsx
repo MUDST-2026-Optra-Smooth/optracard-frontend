@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Truck, Store, Package, MapPin, Wallet, CreditCard, QrCode, Check } from 'lucide-react';
 import { formatPrice } from '../context/formatters';
 
@@ -8,12 +8,28 @@ export interface SavedAddress {
   address: string;
 }
 
+export interface CheckoutDetails {
+  shippingMethod: 'pickup' | 'standard';
+  paymentMethod: 'cash' | 'credit-card' | 'qr';
+  recipientName: string;
+  recipientPhone: string;
+  shippingAddress: string;
+}
+
+export interface CheckoutSellerGroup {
+  key: string;
+  storeName: string;
+  source: 'OFFICIAL' | 'MARKETPLACE';
+  itemCount: number;
+}
+
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   subtotal: number;
+  sellerGroups: CheckoutSellerGroup[];
   savedAddress: SavedAddress;
-  onConfirm: () => void;
+  onConfirm: (details: CheckoutDetails) => void;
 }
 
 const SHIPPING_OPTIONS = [
@@ -58,23 +74,32 @@ const PAYMENT_OPTIONS = [
 
 type PaymentId = (typeof PAYMENT_OPTIONS)[number]['id'];
 
-export const CheckoutModal = ({ isOpen, onClose, subtotal, savedAddress, onConfirm }: CheckoutModalProps) => {
+export const CheckoutModal = ({ isOpen, onClose, subtotal, sellerGroups, savedAddress, onConfirm }: CheckoutModalProps) => {
   const [shippingMethod, setShippingMethod] = useState<ShippingId>('pickup');
   const [paymentMethod, setPaymentMethod] = useState<PaymentId>('cash');
   const [addressMode, setAddressMode] = useState<'saved' | 'new'>('saved');
   const [newAddress, setNewAddress] = useState({ name: '', phone: '', address: '' });
   const [cardDetails, setCardDetails] = useState({ number: '', name: '', expiry: '', cvc: '' });
 
+  const sellerCount = Math.max(sellerGroups.length, 1);
+  const hasMultipleSellers = sellerCount > 1;
+
+  useEffect(() => {
+    if (hasMultipleSellers) setShippingMethod('standard');
+  }, [hasMultipleSellers]);
+
   if (!isOpen) return null;
 
   const needsAddress = shippingMethod !== 'pickup';
   const selectedShipping = SHIPPING_OPTIONS.find((opt) => opt.id === shippingMethod)!;
-  const shippingFee = selectedShipping.fee;
+  const shippingFee = selectedShipping.fee * sellerCount;
   const total = subtotal + shippingFee;
 
   const isNewAddressValid =
     newAddress.name.trim() !== '' && newAddress.phone.trim() !== '' && newAddress.address.trim() !== '';
-  const canConfirm = !needsAddress || addressMode === 'saved' || isNewAddressValid;
+  const isSavedAddressValid =
+    savedAddress.name.trim() !== '' && savedAddress.phone.trim() !== '' && savedAddress.address.trim() !== '';
+  const canConfirm = !needsAddress || (addressMode === 'saved' ? isSavedAddressValid : isNewAddressValid);
 
   const handleNewAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setNewAddress({ ...newAddress, [e.target.name]: e.target.value });
@@ -86,7 +111,14 @@ export const CheckoutModal = ({ isOpen, onClose, subtotal, savedAddress, onConfi
 
   const handleConfirm = () => {
     if (!canConfirm) return;
-    onConfirm();
+    const address = addressMode === 'new' ? newAddress : savedAddress;
+    onConfirm({
+      shippingMethod,
+      paymentMethod,
+      recipientName: address.name,
+      recipientPhone: address.phone,
+      shippingAddress: address.address,
+    });
   };
 
   return (
@@ -115,6 +147,25 @@ export const CheckoutModal = ({ isOpen, onClose, subtotal, savedAddress, onConfi
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-700">Orders by seller</p>
+            <div className="mt-2 space-y-1.5">
+              {sellerGroups.map((seller) => (
+                <div key={seller.key} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate font-semibold text-gray-800">{seller.storeName}</span>
+                  <span className={`shrink-0 text-[10px] font-bold uppercase tracking-wide ${seller.source === 'MARKETPLACE' ? 'text-orange-600' : 'text-blue-600'}`}>
+                    {seller.itemCount} item{seller.itemCount === 1 ? '' : 's'}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {hasMultipleSellers && (
+              <p className="mt-3 border-t border-gray-200 pt-3 text-xs leading-relaxed text-gray-500">
+                Your cart contains {sellerCount} sellers. We will create one order per seller, and Standard Delivery is required.
+              </p>
+            )}
+          </div>
+
           {/* Shipping Method */}
           <div>
             <h4 className="flex items-center gap-2 text-xs font-bold text-gray-900 uppercase tracking-wide mb-3">
@@ -122,13 +173,15 @@ export const CheckoutModal = ({ isOpen, onClose, subtotal, savedAddress, onConfi
             </h4>
             <div className="space-y-2">
               {SHIPPING_OPTIONS.map((opt) => {
-                const isSelected = shippingMethod === opt.id;
+                const isUnavailable = hasMultipleSellers && opt.id === 'pickup';
+                const isSelected = shippingMethod === opt.id && !isUnavailable;
                 return (
                   <button
                     type="button"
                     key={opt.id}
-                    onClick={() => setShippingMethod(opt.id)}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition text-left cursor-pointer ${
+                    disabled={isUnavailable}
+                    onClick={() => !isUnavailable && setShippingMethod(opt.id)}
+                    className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition text-left ${isUnavailable ? 'cursor-not-allowed opacity-50 bg-gray-50 border border-gray-200' : 'cursor-pointer'} ${
                       isSelected
                         ? 'border-2 border-blue-600 bg-blue-50/40'
                         : 'border border-gray-200 hover:bg-gray-50'
@@ -140,11 +193,11 @@ export const CheckoutModal = ({ isOpen, onClose, subtotal, savedAddress, onConfi
                         <p className={`text-sm font-semibold ${isSelected ? 'text-blue-600' : 'text-gray-800'}`}>
                           {opt.label}
                         </p>
-                        <p className="text-xs text-gray-400">{opt.description}</p>
+                        <p className="text-xs text-gray-400">{isUnavailable ? 'Available when all items are from one seller' : opt.description}</p>
                       </div>
                     </div>
                     <span className={`text-sm font-bold shrink-0 ${isSelected ? 'text-blue-600' : 'text-gray-700'}`}>
-                      {opt.fee === 0 ? 'Free' : formatPrice(opt.fee)}
+                      {opt.fee === 0 ? 'Free' : hasMultipleSellers ? `${formatPrice(opt.fee)} × ${sellerCount}` : formatPrice(opt.fee)}
                     </span>
                   </button>
                 );
@@ -322,7 +375,7 @@ export const CheckoutModal = ({ isOpen, onClose, subtotal, savedAddress, onConfi
               <span className="font-semibold text-gray-800">{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Shipping Fee</span>
+              <span className="text-gray-500">{hasMultipleSellers ? `Shipping Fee (${sellerCount} sellers)` : 'Shipping Fee'}</span>
               <span className="font-semibold text-gray-800">
                 {shippingFee === 0 ? 'Free' : formatPrice(shippingFee)}
               </span>

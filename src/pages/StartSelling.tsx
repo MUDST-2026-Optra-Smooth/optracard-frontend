@@ -1,371 +1,119 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+
+type StoreForm = {
+  storeName: string; storeDescription: string; physicalStore: boolean;
+  ownerFirstName: string; ownerLastName: string; ownerEmail: string; ownerPhone: string;
+  bankName: string; bankBranch: string; bankAccountName: string; bankAccountNumber: string;
+  storeAddress: string; province: string; district: string; subdistrict: string; postalCode: string;
+  storeProfileImage: string; bankPassbookImage: string; termsAccepted: boolean;
+};
+
+const emptyForm: StoreForm = {
+  storeName: '', storeDescription: '', physicalStore: true,
+  ownerFirstName: '', ownerLastName: '', ownerEmail: '', ownerPhone: '',
+  bankName: '', bankBranch: '', bankAccountName: '', bankAccountNumber: '',
+  storeAddress: '', province: '', district: '', subdistrict: '', postalCode: '',
+  storeProfileImage: '', bankPassbookImage: '', termsAccepted: false,
+};
+
+const StepTitle = ({ step, current, title }: { step: number; current: number; title: string }) => (
+  <div className="flex flex-col items-center relative">
+    <div className={`w-12 h-12 rounded-full flex items-center justify-center z-10 ${current >= step ? 'bg-[#2f65ff] text-white' : 'bg-gray-200 text-gray-500'}`}><span className="font-bold">{step}</span></div>
+    <span className={`text-xs mt-2 absolute top-12 whitespace-nowrap ${current >= step ? 'font-bold text-black' : 'text-gray-500'}`}>{title}</span>
+  </div>
+);
 
 export const StartSelling = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
-  const [hasPhysicalStore, setHasPhysicalStore] = useState('have');
+  const [form, setForm] = useState<StoreForm>(emptyForm);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // ฟังก์ชันไปขั้นตอนถัดไป และ Submit
-  const handleNext = () => {
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      // โค้ดสำหรับส่งข้อมูล Back-end เมื่อกด Submit ใน Step 4 จะอยู่ตรงนี้
-      console.log('Submit Data!');
-      
-      // หลังจาก Submit เสร็จ ให้พากลับไปที่หน้า Home ("/")
-      navigate('/'); 
-    }
+  useEffect(() => {
+    const loadApplication = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) { setIsLoading(false); return; }
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/stores/my`, { headers: { Authorization: `Bearer ${token}` } });
+        if (response.ok && response.status !== 204) {
+          const data = await response.json();
+          setForm((previous) => ({
+            ...previous,
+            storeName: data.storeName ?? '', storeDescription: data.storeDescription ?? '', physicalStore: Boolean(data.physicalStore),
+            ownerFirstName: data.ownerFirstName ?? '', ownerLastName: data.ownerLastName ?? '', ownerEmail: data.ownerEmail ?? '', ownerPhone: data.ownerPhone ?? '',
+            bankName: data.bankName ?? '', bankBranch: data.bankBranch ?? '', bankAccountName: data.bankAccountName ?? '', bankAccountNumber: data.bankAccountNumber ?? '',
+            storeAddress: data.storeAddress ?? '', province: data.province ?? '', district: data.district ?? '', subdistrict: data.subdistrict ?? '', postalCode: data.postalCode ?? '',
+            storeProfileImage: data.storeProfileImage ?? '', bankPassbookImage: data.bankPassbookImage ?? '', termsAccepted: Boolean(data.termsAccepted),
+          }));
+        }
+      } catch { setMessage({ type: 'error', text: 'Unable to load your seller application.' }); }
+      finally { setIsLoading(false); }
+    };
+    void loadApplication();
+  }, []);
+
+  const update = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
+    setForm((previous) => ({ ...previous, [name]: value }));
   };
 
-  // ฟังก์ชันย้อนกลับสำหรับปุ่ม Previous ด้านล่าง
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+  const readFile = (name: 'storeProfileImage' | 'bankPassbookImage', file?: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setMessage({ type: 'error', text: 'Each image must be smaller than 5 MB.' }); return; }
+    const reader = new FileReader();
+    reader.onload = () => setForm((previous) => ({ ...previous, [name]: String(reader.result ?? '') }));
+    reader.readAsDataURL(file);
   };
 
-  // ฟังก์ชันสำหรับปุ่ม Back มุมซ้ายบน
-  const handleTopBack = () => {
-    if (currentStep === 1) {
-      navigate(-1); // ถ้าอยู่ Step 1 ให้ออกจากหน้านี้ไปหน้าที่ User กดมา
-    } else {
-      setCurrentStep(currentStep - 1); // ถ้าอยู่ Step อื่น ให้ถอยกลับ 1 Step
-    }
+  const validateStep = () => {
+    const requiredByStep: Record<number, Array<keyof StoreForm>> = {
+      1: ['storeName', 'storeDescription'], 2: ['ownerFirstName', 'ownerLastName', 'ownerEmail', 'ownerPhone'],
+      3: ['bankName', 'bankBranch', 'bankAccountName', 'bankAccountNumber'], 4: ['storeAddress', 'province', 'district', 'subdistrict', 'postalCode'],
+    };
+    if (requiredByStep[currentStep].some((key) => !String(form[key] ?? '').trim())) { setMessage({ type: 'error', text: 'Please complete all required fields before continuing.' }); return false; }
+    if (currentStep === 4 && !form.termsAccepted) { setMessage({ type: 'error', text: 'Please accept the Terms and Conditions.' }); return false; }
+    setMessage(null); return true;
   };
 
+  const handleNext = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!validateStep()) return;
+    if (currentStep < 4) { setCurrentStep((step) => step + 1); return; }
+    const token = localStorage.getItem('token');
+    if (!token || !user) { navigate('/login'); return; }
+    setIsSaving(true); setMessage(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/stores/my`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(form) });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.message || 'Could not submit your seller application.');
+      setMessage({ type: 'success', text: 'Your shop information was saved. Status: Pending admin approval.' });
+      window.setTimeout(() => navigate('/'), 1800);
+    } catch (error) { setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Could not save your application.' }); }
+    finally { setIsSaving(false); }
+  };
+
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">Loading your seller application…</div>;
+  const inputClass = 'w-full border border-gray-300 rounded-md p-3 outline-none focus:border-[#2f65ff] transition';
   return (
-    <div className="min-h-screen bg-[#f9fafb] font-sans pb-20">
-      {/* Main Container */}
-      <div className="max-w-5xl mx-auto px-6 pt-10">
-        
-        {/* Back Button (Top Left) */}
-        <button 
-          onClick={handleTopBack}
-          className="flex items-center text-sm font-bold text-black mb-4 hover:underline transition-opacity hover:opacity-70"
-        >
-          <span className="mr-2 text-lg">←</span> Back
-        </button>
-
-        {/* Page Title */}
-        <h1 className="text-[32px] font-normal text-center mb-12 text-black">
-          Start Selling
-        </h1>
-
-        {/* Stepper */}
-        <div className="flex justify-center items-center mb-16 px-4">
-          {/* Step 1: Store Detail */}
-          <div className="flex flex-col items-center relative">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center z-10 transition-colors ${currentStep >= 1 ? 'bg-[#2f65ff] text-white' : 'bg-[#e5e7eb] text-gray-700'}`}>
-              <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-              </svg>
-            </div>
-            <span className={`text-sm mt-3 absolute top-14 whitespace-nowrap ${currentStep >= 1 ? 'font-bold text-black' : 'font-medium text-gray-500'}`}>
-              Store Detail
-            </span>
-          </div>
-
-          <div className="w-12 md:w-20 h-[1px] bg-gray-400 mx-2 -mt-6"></div>
-
-          {/* Step 2: Personal Detail */}
-          <div className="flex flex-col items-center relative">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center z-10 transition-colors ${currentStep >= 2 ? 'bg-[#2f65ff] text-white' : 'bg-[#e5e7eb] text-gray-700'}`}>
-              <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            <span className={`text-sm mt-3 absolute top-14 whitespace-nowrap ${currentStep >= 2 ? 'font-bold text-black' : 'font-medium text-gray-500'}`}>
-              Personal Detail
-            </span>
-          </div>
-
-          <div className="w-12 md:w-20 h-[1px] bg-gray-400 mx-2 -mt-6"></div>
-
-          {/* Step 3: Billing Detail */}
-          <div className="flex flex-col items-center relative">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center z-10 transition-colors ${currentStep >= 3 ? 'bg-[#2f65ff] text-white' : 'bg-[#e5e7eb] text-gray-700'}`}>
-              <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
-              </svg>
-            </div>
-            <span className={`text-sm mt-3 absolute top-14 whitespace-nowrap ${currentStep >= 3 ? 'font-bold text-black' : 'font-medium text-gray-500'}`}>
-              Billing Detail
-            </span>
-          </div>
-
-          <div className="w-12 md:w-20 h-[1px] bg-gray-400 mx-2 -mt-6"></div>
-
-          {/* Step 4: Location */}
-          <div className="flex flex-col items-center relative">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center z-10 transition-colors ${currentStep >= 4 ? 'bg-[#2f65ff] text-white' : 'bg-[#e5e7eb] text-gray-700'}`}>
-              <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-            </div>
-            <span className={`text-sm mt-3 absolute top-14 whitespace-nowrap ${currentStep >= 4 ? 'font-bold text-black' : 'font-medium text-gray-500'}`}>
-              Location
-            </span>
-          </div>
-        </div>
-
-        {/* Dynamic Form Content */}
-        <div className="max-w-xl mx-auto mt-20">
-          
-          {/* ----- STEP 1: Store Detail ----- */}
-          {currentStep === 1 && (
-            <div>
-              <h2 className="text-xl font-bold mb-6 text-black">Store Detail</h2>
-
-              <div className="mb-5">
-                <label className="block text-sm text-gray-800 mb-2 font-medium">Store Name</label>
-                <input 
-                  type="text" 
-                  placeholder="Enter Store Name" 
-                  className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                />
-              </div>
-
-              <div className="mb-5">
-                <label className="block text-sm text-gray-800 mb-2 font-medium">Store Detail</label>
-                <textarea 
-                  placeholder="Enter Detail/ Store Description" 
-                  rows={4} 
-                  className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition resize-none"
-                ></textarea>
-              </div>
-
-              <div className="mb-8 flex items-center gap-4 text-sm">
-                <span className="text-gray-500">Have a physical store?</span>
-                <label className="flex items-center gap-1.5 cursor-pointer text-black">
-                  <input 
-                    type="radio" 
-                    name="physicalStore" 
-                    checked={hasPhysicalStore === 'have'} 
-                    onChange={() => setHasPhysicalStore('have')} 
-                    className="w-4 h-4 accent-[#2f65ff] cursor-pointer"
-                  />
-                  Have
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer text-black">
-                  <input 
-                    type="radio" 
-                    name="physicalStore" 
-                    checked={hasPhysicalStore === 'dont_have'} 
-                    onChange={() => setHasPhysicalStore('dont_have')} 
-                    className="w-4 h-4 accent-[#2f65ff] cursor-pointer"
-                  />
-                  Don't have
-                </label>
-              </div>
-
-              <div className="mb-10">
-                <label className="block text-sm text-gray-500 mb-4 font-medium">
-                  Upload Store Profile Picture (Optional)
-                </label>
-                <div className="w-[140px] h-[140px] border-[1.5px] border-dashed border-gray-400 rounded-full flex flex-col items-center justify-center bg-transparent">
-                  <svg width="24" height="24" fill="none" stroke="black" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="mb-2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  <span className="text-[11px] text-gray-500 mb-2">Drag and drop here</span>
-                  <button className="border border-[#2f65ff] text-[#2f65ff] rounded-full px-4 py-1 text-xs hover:bg-blue-50 transition">
-                    Select File
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ----- STEP 2: Personal Detail ----- */}
-          {currentStep === 2 && (
-            <div>
-              <h2 className="text-xl font-bold mb-6 text-black">Personal Detail</h2>
-              
-              <div className="flex flex-col gap-5 mb-8">
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter Your Name" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Surname</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter Your Surname" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Email</label>
-                  <input 
-                    type="email" 
-                    placeholder="Enter Your Email" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Tel.</label>
-                  <input 
-                    type="tel" 
-                    placeholder="Enter Your Phone Number" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ----- STEP 3: Billing Detail ----- */}
-          {currentStep === 3 && (
-            <div>
-              <h2 className="text-xl font-bold mb-6 text-black">Bank Account</h2>
-              
-              <div className="flex flex-col gap-5 mb-8">
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Bank</label>
-                  <input 
-                    type="text" 
-                    placeholder="Select Bank" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Branch</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter Bank Branch" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Account Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter Account Name" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Account Number</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter Account Number" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-
-                {/* Upload Square Box */}
-                <div className="mt-2">
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">
-                    Upload Bank Passbook Copy
-                  </label>
-                  <div className="w-32 h-36 border border-gray-400 rounded-md flex flex-col items-center justify-center bg-transparent">
-                    <svg width="28" height="28" fill="none" stroke="black" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" className="mb-4">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="17 8 12 3 7 8"></polyline>
-                      <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <button className="border border-[#2f65ff] text-[#2f65ff] rounded-full px-4 py-1 text-xs hover:bg-blue-50 transition">
-                      Select File
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ----- STEP 4: Location ----- */}
-          {currentStep === 4 && (
-            <div>
-              <h2 className="text-xl font-bold mb-6 text-black">Shop Address Form</h2>
-              
-              <div className="flex flex-col gap-5 mb-6">
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Address</label>
-                  <textarea 
-                    placeholder="Enter address" 
-                    rows={4}
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition resize-none"
-                  ></textarea>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Province</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter province" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">District</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter District" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Sub-district</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter Sub-district" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-800 mb-2 font-medium">Postal Code</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter postal code" 
-                    className="w-full border border-gray-400 rounded-md p-3 outline-none focus:border-[#2f65ff] transition"
-                  />
-                </div>
-                
-                {/* Checkbox with terms and conditions */}
-                <div className="flex items-center gap-3 mt-2 mb-4">
-                  <input 
-                    type="checkbox" 
-                    id="acceptTerms"
-                    className="w-5 h-5 border-gray-400 rounded text-[#2f65ff] focus:ring-[#2f65ff] cursor-pointer"
-                  />
-                  <label htmlFor="acceptTerms" className="text-sm text-gray-800 cursor-pointer select-none">
-                    I accept the Terms and Conditions and Privacy Policy
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons (Previous & Next/Submit) */}
-          <div className="flex gap-4 mt-8">
-            {currentStep > 1 && (
-              <button 
-                onClick={handleBack}
-                className="w-1/2 border border-black text-black py-3.5 rounded-full text-lg font-medium hover:bg-gray-50 transition"
-              >
-                Previous
-              </button>
-            )}
-            <button 
-              onClick={handleNext}
-              className={`${currentStep > 1 ? 'w-1/2' : 'w-full'} bg-[#0b0f19] text-white py-3.5 rounded-full text-lg font-medium hover:bg-black transition shadow-sm`}
-            >
-              {currentStep === 4 ? 'Submit' : 'Next'}
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </div>
+    <div className="min-h-screen bg-[#f9fafb] font-sans pb-20"><div className="max-w-5xl mx-auto px-6 pt-10">
+      <button type="button" onClick={() => currentStep === 1 ? navigate(-1) : setCurrentStep((step) => step - 1)} className="text-sm font-bold text-black mb-4 hover:underline">← Back</button>
+      <h1 className="text-[32px] font-normal text-center mb-12 text-black">My Shop</h1>
+      <div className="flex justify-center items-center mb-16 px-4"><StepTitle step={1} current={currentStep} title="Store Detail" /><div className="w-12 md:w-20 h-px bg-gray-300 mx-2 -mt-6" /><StepTitle step={2} current={currentStep} title="Personal Detail" /><div className="w-12 md:w-20 h-px bg-gray-300 mx-2 -mt-6" /><StepTitle step={3} current={currentStep} title="Billing Detail" /><div className="w-12 md:w-20 h-px bg-gray-300 mx-2 -mt-6" /><StepTitle step={4} current={currentStep} title="Location" /></div>
+      <form onSubmit={handleNext} className="max-w-xl mx-auto mt-20">
+        {currentStep === 1 && <div className="space-y-5"><h2 className="text-xl font-bold mb-6">Store Detail</h2><label className="block text-sm font-medium">Store Name<input name="storeName" value={form.storeName} onChange={update} className={inputClass} placeholder="Enter Store Name" required /></label><label className="block text-sm font-medium">Store Detail<textarea name="storeDescription" value={form.storeDescription} onChange={update} rows={4} className={inputClass} placeholder="Enter Detail / Store Description" required /></label><div className="flex items-center gap-4 text-sm"><span className="text-gray-500">Have a physical store?</span><label className="flex items-center gap-1.5"><input type="radio" checked={form.physicalStore} onChange={() => setForm((p) => ({ ...p, physicalStore: true }))} />Have</label><label className="flex items-center gap-1.5"><input type="radio" checked={!form.physicalStore} onChange={() => setForm((p) => ({ ...p, physicalStore: false }))} />Don't have</label></div><label className="block text-sm font-medium">Store Profile Picture (optional)<input type="file" accept="image/*" onChange={(e) => readFile('storeProfileImage', e.target.files?.[0])} className="mt-2 block w-full text-sm" /></label></div>}
+        {currentStep === 2 && <div className="space-y-5"><h2 className="text-xl font-bold mb-6">Personal Detail</h2><label className="block text-sm font-medium">Name<input name="ownerFirstName" value={form.ownerFirstName} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">Surname<input name="ownerLastName" value={form.ownerLastName} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">Email<input type="email" name="ownerEmail" value={form.ownerEmail} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">Tel.<input type="tel" name="ownerPhone" value={form.ownerPhone} onChange={update} className={inputClass} required /></label></div>}
+        {currentStep === 3 && <div className="space-y-5"><h2 className="text-xl font-bold mb-6">Bank Account</h2><label className="block text-sm font-medium">Bank<input name="bankName" value={form.bankName} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">Branch<input name="bankBranch" value={form.bankBranch} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">Account Name<input name="bankAccountName" value={form.bankAccountName} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">Account Number<input name="bankAccountNumber" value={form.bankAccountNumber} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">Bank Passbook Copy (optional)<input type="file" accept="image/*,.pdf" onChange={(e) => readFile('bankPassbookImage', e.target.files?.[0])} className="mt-2 block w-full text-sm" /></label></div>}
+        {currentStep === 4 && <div className="space-y-5"><h2 className="text-xl font-bold mb-6">Shop Address</h2><label className="block text-sm font-medium">Address<textarea name="storeAddress" value={form.storeAddress} onChange={update} rows={4} className={inputClass} required /></label><label className="block text-sm font-medium">Province<input name="province" value={form.province} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">District<input name="district" value={form.district} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">Sub-district<input name="subdistrict" value={form.subdistrict} onChange={update} className={inputClass} required /></label><label className="block text-sm font-medium">Postal Code<input name="postalCode" value={form.postalCode} onChange={update} className={inputClass} required /></label><label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={form.termsAccepted} onChange={(e) => setForm((p) => ({ ...p, termsAccepted: e.target.checked }))} className="w-5 h-5" />I accept the Terms and Conditions and Privacy Policy</label></div>}
+        {message && <p role="status" className={`mt-5 rounded-md px-3 py-2 text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{message.text}</p>}
+        <div className="flex gap-4 mt-8">{currentStep > 1 && <button type="button" onClick={() => setCurrentStep((step) => step - 1)} className="w-1/2 border border-black text-black py-3.5 rounded-full">Previous</button>}<button type="submit" disabled={isSaving} className={`${currentStep > 1 ? 'w-1/2' : 'w-full'} bg-[#0b0f19] disabled:opacity-50 text-white py-3.5 rounded-full font-medium`}>{isSaving ? 'Saving…' : currentStep === 4 ? 'Submit for approval' : 'Next'}</button></div>
+      </form>
+    </div></div>
   );
 };

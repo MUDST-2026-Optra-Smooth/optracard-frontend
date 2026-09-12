@@ -1,39 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { TradingListingCard } from '../components/TradingListingCard'; // เปลี่ยนมา import TradingListingCard
+import { TradingListingCard } from '../components/TradingListingCard';
 import { FilterDropdown, type DropdownOption } from '../components/FilterDropdown';
-
-type MarketplaceProduct = {
-  id: number;
-  title: string;
-  type: string;
-  price: number;
-  stock: number;
-};
-
-const products: MarketplaceProduct[] = [
-  { id: 1, title: 'Luffy', type: 'Single', price: 120, stock: 24 },
-  { id: 2, title: 'One Piece OP-09 Booster Pack', type: 'Booster Pack', price: 145, stock: 18 },
-  { id: 3, title: 'Pokemon 151 Booster Box', type: 'Booster Box', price: 4_990, stock: 8 },
-  { id: 4, title: 'Lorcana Into the Inklands Pack', type: 'Booster Pack', price: 160, stock: 32 },
-  { id: 5, title: 'Yu-Gi-Oh! Duelist Nexus Box', type: 'Booster Box', price: 2_490, stock: 11 },
-  { id: 6, title: 'Dragon Shield Matte Sleeves', type: 'Accessories', price: 290, stock: 46 },
-  { id: 7, title: 'Magic: The Gathering Playmat', type: 'Accessories', price: 850, stock: 15 },
-  { id: 8, title: 'Pokemon 3-Pocket Binder', type: 'Accessories', price: 590, stock: 21 },
-  { id: 9, title: 'Weiss Schwarz Trial Deck', type: 'Booster Box', price: 1_290, stock: 9 },
-  { id: 10, title: 'Digimon Card Game Starter Deck', type: 'Booster Box', price: 690, stock: 17 },
-  { id: 11, title: 'Top Loader 35 Pack', type: 'Accessories', price: 180, stock: 64 },
-  { id: 12, title: 'Card Storage Box 800 Count', type: 'Accessories', price: 390, stock: 27 },
-  { id: 13, title: 'Flesh and Blood Booster Pack', type: 'Booster Pack', price: 135, stock: 19 },
-  { id: 14, title: 'Pokemon Premium Collection Box', type: 'Booster Box', price: 1_890, stock: 6 },
-  { id: 15, title: 'TCG Tabletop Playmat', type: 'Accessories', price: 720, stock: 13 },
-];
-
-const typeOptionsData = Array.from(new Set(products.map((product) => product.type))).sort();
-const typeOptions: DropdownOption[] = [
-  { label: 'All types', value: 'All', shortLabel: 'All' },
-  ...typeOptionsData.map((type) => ({ label: type, value: type }))
-];
+import { loadCatalog } from '../api/catalog';
+import type { CatalogProduct } from '../types/catalog';
 
 const sortOptions: DropdownOption[] = [
   { label: 'Newest Arrivals', value: 'newest' },
@@ -46,8 +16,46 @@ const sortOptions: DropdownOption[] = [
 
 export function ViewAllTrading() {
   const navigate = useNavigate();
-  const [selectedType, setSelectedType] = useState<DropdownOption>(typeOptions[0]);
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<DropdownOption>({ label: 'All types', value: 'All', shortLabel: 'All' });
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
+
+  const typeOptions = useMemo<DropdownOption[]>(() => {
+    const types = Array.from(new Set(products.map((product) => product.type))).sort((a, b) => a.localeCompare(b));
+    return [
+      { label: 'All types', value: 'All', shortLabel: 'All' },
+      ...types.map((type) => ({ label: type, value: type })),
+    ];
+  }, [products]);
+
+  useEffect(() => {
+    if (!typeOptions.some((option) => option.value === selectedType.value)) {
+      setSelectedType(typeOptions[0]);
+    }
+  }, [selectedType.value, typeOptions]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    const loadMarketplace = async () => {
+      try {
+        const data = await loadCatalog();
+        if (isCurrent) {
+          setProducts(data.filter((product) => product.source === 'MARKETPLACE'));
+          setError(null);
+        }
+      } catch {
+        if (isCurrent) setError('We could not load marketplace listings right now. Please try again shortly.');
+      } finally {
+        if (isCurrent) setIsLoading(false);
+      }
+    };
+
+    void loadMarketplace();
+    return () => { isCurrent = false; };
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -61,10 +69,10 @@ export function ViewAllTrading() {
     if (selectedSort.value === 'stock') return filtered.sort((a, b) => b.stock - a.stock);
     if (selectedSort.value === 'price-low') return filtered.sort((a, b) => a.price - b.price);
     if (selectedSort.value === 'price-high') return filtered.sort((a, b) => b.price - a.price);
-    if (selectedSort.value === 'a-z') return filtered.sort((a, b) => a.title.localeCompare(b.title));
-    if (selectedSort.value === 'z-a') return filtered.sort((a, b) => b.title.localeCompare(a.title));
+    if (selectedSort.value === 'a-z') return filtered.sort((a, b) => a.name.localeCompare(b.name));
+    if (selectedSort.value === 'z-a') return filtered.sort((a, b) => b.name.localeCompare(a.name));
     return filtered;
-  }, [selectedType, selectedSort]);
+  }, [products, selectedType.value, selectedSort.value]);
 
   return (
     <section className="min-h-full bg-[#f8f9fb] font-sans text-[#20242b]">
@@ -111,17 +119,28 @@ export function ViewAllTrading() {
         </div>
 
         {/* ปรับ Grid เป็น lg:grid-cols-3 และลบ xl:grid-cols-4 ออก เพื่อให้การ์ดแนวนอนไม่แคบเกินไป */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {visibleProducts.map((product) => (
-            <TradingListingCard 
-              key={product.id} 
-              cardName={product.title} 
-              gameName={product.type} 
-              itemCount={product.stock}
-              startingPrice={product.price}
-            />
-          ))}
-        </div>
+        {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading marketplace listings...</p>}
+        {error && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-red-700">{error}</p>}
+        {!isLoading && !error && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {visibleProducts.map((product) => (
+              <TradingListingCard
+                key={product.id}
+                productId={product.id}
+                cardName={product.name}
+                gameName={product.game}
+                itemCount={product.stock}
+                startingPrice={product.price}
+                imageUrl={product.imageUrl ?? undefined}
+                storeName={product.store.name}
+                source="MARKETPLACE"
+              />
+            ))}
+            {visibleProducts.length === 0 && (
+              <p className="col-span-full py-16 text-center text-slate-500">No marketplace listings match this filter.</p>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
