@@ -43,3 +43,11 @@ export function invalidateCatalogCache(): void {
   cachedCatalog = null;
   cachedAt = 0;
 }
+
+export const searchCatalog = async (query: string): Promise<CatalogProduct[]> => {
+  const response = await fetch(`${API_BASE_URL}/api/products/search?q=${encodeURIComponent(query)}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch search results');
+  }
+  return response.json();
+};
