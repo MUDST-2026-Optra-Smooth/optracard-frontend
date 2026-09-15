@@ -1,33 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
 import { FilterDropdown, type DropdownOption } from '../components/FilterDropdown';
-
-// Placeholder data — swap for real API results once search backend exists
-const marketplaceListings = [
-  { cardName: 'พลทหารหิมะ', gameName: 'Battle of Talingchan', itemCount: 20, startingPrice: 298 },
-  { cardName: 'พลทหารหิมะ', gameName: 'Battle of Talingchan', itemCount: 20, startingPrice: 298 },
-  { cardName: 'พลทหารหิมะ', gameName: 'Battle of Talingchan', itemCount: 23, startingPrice: 298 },
-];
-
-const singleCards = [
-  { title: 'Charizard ex (SVP) SIR', price: 250, game: 'Pokemon' },
-  { title: 'Charizard & Reshiram GX (SM) SCR', price: 3900, game: 'Pokemon' },
-];
-
-const boosterCards = [
-  { title: 'Pokemon MEGA "Dialga ex" JP 1 Pack', price: 250, game: 'Pokemon' },
-  { title: 'MEGA "Miraidon ex" (JP) 1 Pack', price: 250, game: 'Pokemon' },
-  { title: 'MEGA "Ninja Splinter" (JP) 1 Pack', price: 180, game: 'Pokemon' },
-  { title: 'Mega "Symphonia" (JP) 1 Pack', price: 250, game: 'Pokemon' },
-];
-
-const boosterBoxCards = [
-  { title: 'Pokemon [en/id] "Twilight Fortune ex" 1 Box', price: 17990, game: 'Pokemon' },
-  { title: 'Pokemon [en] MEGA "Miraidon ex" 1 Box', price: 8090, game: 'Pokemon' },
-  { title: 'Pokemon [en] MEGA "Ninja Splinter" 1 Box', price: 3288, game: 'Pokemon' },
-];
+import { searchCatalog } from '../api/catalog';
+import type { CatalogProduct } from '../types/catalog';
 
 const gameOptions: DropdownOption[] = [
   { label: 'All Games', value: 'all', shortLabel: 'All' },
@@ -38,11 +15,8 @@ const gameOptions: DropdownOption[] = [
 
 const sortOptions: DropdownOption[] = [
   { label: 'Newest Arrivals', value: 'newest' },
-  { label: 'In Stock First', value: 'instock' },
   { label: 'Price: High to Low', value: 'price_desc' },
   { label: 'Price: Low to High', value: 'price_asc' },
-  { label: 'A-Z', value: 'az' },
-  { label: 'Z-A', value: 'za' },
 ];
 
 export const SearchResult = () => {
@@ -52,6 +26,37 @@ export const SearchResult = () => {
 
   const [selectedGame, setSelectedGame] = useState<DropdownOption>(gameOptions[0]);
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
+  
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isCurrent = true;
+    setIsLoading(true);
+
+    const fetchResults = async () => {
+      try {
+        const data = await searchCatalog(query);
+        if (isCurrent) {
+          setProducts(data);
+          setError(null);
+        }
+      } catch (err) {
+        if (isCurrent) setError('ไม่สามารถโหลดข้อมูลการค้นหาได้ในขณะนี้');
+      } finally {
+        if (isCurrent) setIsLoading(false);
+      }
+    };
+
+    void fetchResults();
+    return () => { isCurrent = false; };
+  }, [query]);
+
+  const marketplaceListings = products.filter(p => p.source === 'MARKETPLACE');
+  const singleCards = products.filter(p => p.source === 'OFFICIAL' && p.type === 'Single');
+  const boosterCards = products.filter(p => p.source === 'OFFICIAL' && p.type === 'Booster');
+  const boosterBoxCards = products.filter(p => p.source === 'OFFICIAL' && p.type === 'Booster Box');
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
@@ -59,88 +64,80 @@ export const SearchResult = () => {
         <h1 className="text-3xl font-bold text-blue-600">
           Search Result{query && ` : ${query}`}
         </h1>
-        <button
-          onClick={() => navigate(-1)}
-          className="text-sm text-gray-700 hover:text-black font-medium"
-        >
+        <button onClick={() => navigate(-1)} className="text-sm text-gray-700 hover:text-black font-medium">
           ← Back
         </button>
       </div>
 
       <div className="flex justify-between items-center mb-10">
-        <FilterDropdown
-          label="Game:"
-          options={gameOptions}
-          selected={selectedGame}
-          onSelect={setSelectedGame}
-        />
-        <FilterDropdown
-          label="Sort by :"
-          options={sortOptions}
-          selected={selectedSort}
-          onSelect={setSelectedSort}
-          align="right"
-        />
+        <FilterDropdown label="Game:" options={gameOptions} selected={selectedGame} onSelect={setSelectedGame} />
+        <FilterDropdown label="Sort by :" options={sortOptions} selected={selectedSort} onSelect={setSelectedSort} align="right" />
       </div>
 
-      <section className="mb-12">
-        <div className="relative flex items-center justify-center mb-6">
-          {/* ปรับขนาดเป็น text-3xl */}
-          <h2 className="text-3xl font-bold text-blue-600">Marketplace &amp; Trading</h2>
-          {/* อัปเดตปุ่ม View All */}
-          <button className="absolute right-0 bg-[#1e5bff] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition-colors border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-            View All →
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          {marketplaceListings.map((listing, i) => (
-            <TradingListingCard key={i} {...listing} />
-          ))}
-        </div>
-      </section>
+      {isLoading && <p className="text-center py-10">กำลังค้นหาสินค้า...</p>}
+      {error && <p className="text-center text-red-600 py-10">{error}</p>}
 
-      <section className="text-center">
-        <h2 className="text-3xl font-bold text-blue-600 mb-8">Optracard Official Store</h2>
+      {!isLoading && !error && products.length === 0 && (
+        <p className="text-center text-gray-500 py-10">ไม่พบสินค้าที่ตรงกับคำค้นหา "{query}"</p>
+      )}
 
-        <div className="text-left mb-10">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold">Single</h3>
-            {/* เพิ่มปุ่ม View All พร้อมดีไซน์ใหม่ */}
-            <button className="bg-[#1e5bff] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition-colors border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-              View All →
-            </button>
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            {singleCards.map((card, i) => <ProductCard key={i} {...card} />)}
-          </div>
-        </div>
+      {!isLoading && !error && products.length > 0 && (
+        <>
+          {marketplaceListings.length > 0 && (
+            <section className="mb-12">
+              <div className="relative flex items-center justify-center mb-6">
+                <h2 className="text-3xl font-bold text-blue-600">Marketplace & Trading</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {marketplaceListings.map(listing => (
+                  <TradingListingCard 
+                    key={listing.id}
+                    productId={listing.id}
+                    cardName={listing.name}
+                    gameName={listing.game}
+                    itemCount={listing.stock}
+                    startingPrice={listing.price}
+                    imageUrl={listing.imageUrl}
+                    storeName={listing.store?.name}
+                    source="MARKETPLACE"
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
-        <div className="text-left mb-10">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold">Booster</h3>
-            {/* อัปเดตปุ่ม View All ให้ดีไซน์ตรงกัน */}
-            <button className="bg-[#1e5bff] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition-colors border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-              View All →
-            </button>
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            {boosterCards.map((card, i) => <ProductCard key={i} {...card} />)}
-          </div>
-        </div>
+          <section className="text-center">
+            <h2 className="text-3xl font-bold text-blue-600 mb-8">Optracard Official Store</h2>
+            
+            {singleCards.length > 0 && (
+              <div className="text-left mb-10">
+                <h3 className="text-xl font-bold mb-4">Single</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {singleCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} />)}
+                </div>
+              </div>
+            )}
 
-        <div className="text-left">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold">Booster Box</h3>
-            {/* เพิ่มปุ่ม View All พร้อมดีไซน์ใหม่ */}
-            <button className="bg-[#1e5bff] text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-blue-700 transition-colors border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-              View All →
-            </button>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            {boosterBoxCards.map((card, i) => <ProductCard key={i} {...card} />)}
-          </div>
-        </div>
-      </section>
+            {boosterCards.length > 0 && (
+              <div className="text-left mb-10">
+                <h3 className="text-xl font-bold mb-4">Booster</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {boosterCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} />)}
+                </div>
+              </div>
+            )}
+
+            {boosterBoxCards.length > 0 && (
+              <div className="text-left">
+                <h3 className="text-xl font-bold mb-4">Booster Box</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {boosterBoxCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} />)}
+                </div>
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 };
