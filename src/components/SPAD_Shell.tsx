@@ -32,15 +32,15 @@ export const SPAD_Shell = ({ children }: SPAD_ShellProps) => {
   };
 
   return <div className="spad-shell min-h-screen bg-[#f3f7fb] font-sans antialiased text-[#20242b]">
-    <AdminHeader />
+    <AdminHeader workspaceName="Optracard Super Admin" />
 
     <div className="flex min-h-[calc(100vh-64px)]">
       <aside className="hidden min-h-[calc(100vh-64px)] w-64 shrink-0 flex-col bg-[#182234] text-white lg:flex">
         <div className="px-6 py-5">
-          <h2 className="whitespace-nowrap text-sm font-bold tracking-wide text-white">OPTRACARD SUPER ADMIN</h2>
+          <h2 className="whitespace-nowrap text-xl font-bold tracking-wide text-white">{user?.username ?? 'Super Admin'}</h2>
         </div>
 
-        <nav className="flex-1 p-3">
+        <nav className="flex-1 px-3 pb-3 pt-2">
           <div className="space-y-1">
             {mainLinks.map(({ icon: Icon, ...item }) => (
               <NavLink key={item.to} to={item.to} className={({ isActive }) => linkClass(isActive)}>
@@ -56,10 +56,17 @@ export const SPAD_Shell = ({ children }: SPAD_ShellProps) => {
               <UsersRound className="h-5 w-5" strokeWidth={1.8} />
               <span>Manage Staff</span>
             </NavLink>
-          </div>
+            </div>
         </nav>
 
         <div className="border-t border-gray-700/60 p-4">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="mb-3 w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-gray-300 transition-colors hover:bg-slate-800 hover:text-white"
+          >
+            Back to Website
+          </button>
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2f65ff] text-xs font-black">S</div>
             <div>

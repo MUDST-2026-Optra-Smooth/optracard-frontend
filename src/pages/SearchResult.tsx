@@ -42,7 +42,7 @@ export const SearchResult = () => {
           setProducts(data);
           setError(null);
         }
-      } catch (err) {
+      } catch {
         if (isCurrent) setError('ไม่สามารถโหลดข้อมูลการค้นหาได้ในขณะนี้');
       } finally {
         if (isCurrent) setIsLoading(false);
@@ -113,7 +113,7 @@ export const SearchResult = () => {
               <div className="text-left mb-10">
                 <h3 className="text-xl font-bold mb-4">Single</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {singleCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} />)}
+                  {singleCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} storeName={card.store.name} stock={card.stock} />)}
                 </div>
               </div>
             )}
@@ -122,7 +122,7 @@ export const SearchResult = () => {
               <div className="text-left mb-10">
                 <h3 className="text-xl font-bold mb-4">Booster</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {boosterCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} />)}
+                  {boosterCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} storeName={card.store.name} stock={card.stock} />)}
                 </div>
               </div>
             )}
@@ -131,7 +131,7 @@ export const SearchResult = () => {
               <div className="text-left">
                 <h3 className="text-xl font-bold mb-4">Booster Box</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {boosterBoxCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} />)}
+                  {boosterBoxCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} storeName={card.store.name} stock={card.stock} />)}
                 </div>
               </div>
             )}

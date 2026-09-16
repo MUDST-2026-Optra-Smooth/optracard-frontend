@@ -43,6 +43,7 @@ import { SPAD_StoreDetail } from './pages/SPAD_StoreDetail';
 import { SPAD_Stores } from './pages/SPAD_Stores';
 import { SPAD_Transactions } from './pages/SPAD_Transactions';
 import { SPAD_Users } from './pages/SPAD_Users';
+import {SellerProfile} from './pages/SellerProfile';
 
 const LegacyAdminRedirect = ({ to }: { to: string }) => {
   const location = useLocation();
@@ -125,13 +126,14 @@ export function App() {
           <Route path="/superadmin/users" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_Users /></ProtectedRoute>} />
           <Route path="/superadmin/staff" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_Staff /></ProtectedRoute>} />
           <Route path="/superadmin/staff/add" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_AddAdmin /></ProtectedRoute>} />
-          <Route path="/orders-management" element={<OrdersManagement />} />
-          <Route path="/seller" element={<Seller />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/orders-management" element={<ProtectedRoute allowedRoles={['SELLER']}><OrdersManagement /></ProtectedRoute>} />
+          <Route path="/seller" element={<ProtectedRoute allowedRoles={['SELLER']}><Seller /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['SELLER']}><Dashboard /></ProtectedRoute>} />
           <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/edit-product/:id" element={<EditProduct />} />
-          <Route path="/add-product" element={<AddProduct />} />
+          <Route path="/edit-product/:id" element={<ProtectedRoute allowedRoles={['SELLER']}><EditProduct /></ProtectedRoute>} />
+          <Route path="/add-product" element={<ProtectedRoute allowedRoles={['SELLER']}><AddProduct /></ProtectedRoute>} />
           <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+          <Route path="/seller-profile/:sellerId" element={<SellerProfile />} />
         </Routes>
       </main>
       

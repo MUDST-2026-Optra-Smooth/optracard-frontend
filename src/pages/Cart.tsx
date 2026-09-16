@@ -61,7 +61,7 @@ export const Cart = () => {
   const [isOrdering, setIsOrdering] = useState(false);
 
   const token = localStorage.getItem('token');
-  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+  const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
 
   const applyCart = (data: CartResponse) => {
     setCartItems(data.items.map((item) => ({
@@ -100,8 +100,9 @@ export const Cart = () => {
         } else {
           const profileResponse = await fetch(`${API_BASE_URL}/api/profile`, { headers: authHeaders });
           if (profileResponse.ok) {
-            profile = await profileResponse.json();
-            setSavedAddress({ name: profile.username || '', phone: profile.phone || '', address: profile.address || '' });
+            const loadedProfile = await profileResponse.json() as ProfileData;
+            profile = loadedProfile;
+            setSavedAddress({ name: loadedProfile.username || '', phone: loadedProfile.phone || '', address: loadedProfile.address || '' });
           }
         }
         if (!id) throw new Error('Could not identify the logged-in user.');
@@ -129,6 +130,15 @@ export const Cart = () => {
     if (!userId) return;
     const current = cartItems.find((item) => item.id === id);
     const quantity = (current?.qty ?? 1) + delta;
+
+    // Give immediate, specific feedback instead of waiting for an older
+    // backend instance to return a generic error response.
+    if (current && quantity > current.stock) {
+      setError(`Stock is insufficient. Only ${current.stock} item${current.stock === 1 ? '' : 's'} of ${current.name} are available.`);
+      return;
+    }
+
+    setError(null);
     try {
       await refresh(await fetch(`${API_BASE_URL}/api/cart/update?userId=${userId}&productId=${id}&quantity=${quantity}`, {
         method: 'PUT', headers: authHeaders,

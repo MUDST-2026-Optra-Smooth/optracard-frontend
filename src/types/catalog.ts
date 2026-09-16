@@ -8,7 +8,6 @@ export interface CatalogStore {
 
 export interface CatalogProduct {
   id: number;
-  sku: string | null;
   name: string;
   type: string;
   game: string;
@@ -16,6 +15,18 @@ export interface CatalogProduct {
   stock: number;
   imageUrl: string | null;
   description: string | null;
+  productSet: string | null;
+  language: string | null;
   source: CatalogSource;
   store: CatalogStore;
+}
+
+export interface MarketplaceStoreProfile {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  location: string | null;
+  profileImage: string | null;
+  products: CatalogProduct[];
 }

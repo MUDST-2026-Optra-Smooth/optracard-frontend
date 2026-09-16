@@ -12,6 +12,8 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [cartCount, setCartCount] = useState(0);
+  const isAdminUser = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const dashboardPath = user?.role === 'SUPER_ADMIN' ? '/superadmin/overview' : '/admin/dashboard';
 
   useEffect(() => {
     const loadCount = async () => {
@@ -47,13 +49,46 @@ export const Navbar = () => {
     navigate(`/search?q=${encodeURIComponent(query.trim())}`);
   };
 
+  const shopPath = user?.role === 'SELLER' ? '/dashboard' : '/start-selling';
+
   return (
     <nav className="bg-[#0b0f19] text-white py-3 px-6 md:px-10 flex justify-between items-center font-sans border-b border-gray-800">
-      <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-wide">
-        <img src={logoIcon} alt="Optracard Logo" className="w-7 h-7 object-contain" />
-        <span>Optracard</span>
-      </Link>
+      {isAdminUser ? (
+        <div className="flex items-center gap-2 text-xl font-bold tracking-wide">
+          <img src={logoIcon} alt="Optracard Logo" className="w-7 h-7 object-contain" />
+          <span>Optracard</span>
+        </div>
+      ) : (
+        <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-wide">
+          <img src={logoIcon} alt="Optracard Logo" className="w-7 h-7 object-contain" />
+          <span>Optracard</span>
+        </Link>
+      )}
 
+      {isAdminUser ? (
+        <>
+        <div className="hidden flex-1 md:flex md:max-w-xl md:mx-8">
+          <div className="relative w-full">
+            <div className="absolute left-3 top-1/2 flex -translate-y-1/2 items-center justify-center pointer-events-none">
+              <img src={searchIcon} alt="Search" className="h-4 w-4 object-contain opacity-50" />
+            </div>
+            <input
+              type="text"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => event.key === 'Enter' && handleSearch()}
+              placeholder="Search by card game or card name..."
+              className="w-full rounded-md bg-[#1a1f2b] py-2 pl-10 pr-4 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-5 text-sm font-medium">
+          <Link to={dashboardPath} className="text-gray-300 transition hover:text-white">Back to Dashboard</Link>
+          <button type="button" onClick={() => { logout(); navigate('/'); }} className="text-xs text-gray-300 hover:text-white">Logout</button>
+        </div>
+        </>
+      ) : (
+        <>
       <div className="hidden md:flex flex-1 max-w-xl mx-8">
         <div className="relative w-full">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
@@ -72,7 +107,7 @@ export const Navbar = () => {
 
       <div className="flex items-center gap-6 text-sm font-medium">
         <div className="hidden lg:flex gap-5 text-gray-300 items-center">
-          <Link to="/start-selling" onClick={handleProtectedNavigation('/start-selling')} className="hover:text-white transition">My Shop</Link>
+          <Link to={shopPath} onClick={handleProtectedNavigation(shopPath)} className="hover:text-white transition">My Shop</Link>
           <Link to="/order-history" onClick={handleProtectedNavigation('/order-history')} className="hover:text-white transition">Order history</Link>
           <Link to="/about" className="hover:text-white transition">About Us</Link>
           <Link to="/team" className="hover:text-white transition">Our Team</Link>
@@ -99,6 +134,8 @@ export const Navbar = () => {
           )}
         </div>
       </div>
+        </>
+      )}
     </nav>
   );
 };
