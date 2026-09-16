@@ -1,48 +1,44 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye } from 'lucide-react';
-import { SPAD_ExportButton, SPAD_FilterBar, SPAD_FilterField, SPAD_Input, SPAD_Pagination, SPAD_Panel, SPAD_SectionHeading, SPAD_StatCard, SPAD_StatusBadge } from '../components/SPAD_Widgets';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Trash2 } from 'lucide-react';
+import { deleteSuperAdminUser, loadSuperAdminUsers } from '../api/superadmin';
+import { SPAD_Error, SPAD_Loading, formatDate, statusTone } from '../components/SPAD_DataState';
+import { SPAD_DeleteAccountDialog } from '../components/SPAD_DeleteAccountDialog';
 import { SPAD_Shell } from '../components/SPAD_Shell';
-
-const users = [
-  { id: 'USR-05112', name: 'Narin K.', email: 'narin.k@example.com', type: 'Verified Seller', orders: '124 Orders', trades: '12 Trades', joined: '12 Jan\n2025', status: 'Active', tone: 'green' as const, color: 'bg-[#e7e7e7]' },
-  { id: 'USR-05113', name: 'TCG Player', email: 'player@gmail.com', type: 'Regular User', orders: '5 Orders', trades: '0 Trades', joined: '15 Feb\n2025', status: 'Active', tone: 'green' as const, color: 'bg-[#e7e7e7]' },
-  { id: 'USR-05114', name: 'Scream Alert', email: 'alert@gmail.com', type: 'Regular User', orders: '0 Orders', trades: '2 Trades', joined: '20 Aug\n2025', status: 'Suspended', tone: 'red' as const, color: 'bg-[#e7e7e7]' },
-];
+import { SPAD_ExportButton, SPAD_FilterBar, SPAD_FilterField, SPAD_Input, SPAD_Panel, SPAD_SectionHeading, SPAD_StatCard, SPAD_StatusBadge } from '../components/SPAD_Widgets';
+import type { SuperAdminUser } from '../types/superadmin';
 
 export function SPAD_Users() {
+  const [users, setUsers] = useState<SuperAdminUser[] | null>(null);
   const [query, setQuery] = useState('');
-  const [appliedQuery, setAppliedQuery] = useState('');
-  const [accountType, setAccountType] = useState('');
-  const [status, setStatus] = useState('');
-  const [selectedUser, setSelectedUser] = useState<(typeof users)[number] | null>(null);
-  const visibleUsers = useMemo(() => users.filter((user) => {
-    const matchesQuery = `${user.name} ${user.email} ${user.id}`.toLowerCase().includes(appliedQuery.toLowerCase());
-    const matchesType = !accountType || user.type.toLowerCase().includes(accountType.toLowerCase());
-    const matchesStatus = !status || user.status.toLowerCase().includes(status.toLowerCase());
-    return matchesQuery && matchesType && matchesStatus;
-  }), [accountType, appliedQuery, status]);
+  const [role, setRole] = useState('ALL');
+  const [error, setError] = useState('');
+  const [deletingUser, setDeletingUser] = useState<SuperAdminUser | null>(null);
+  const load = useCallback(async () => {
+    setError('');
+    try { setUsers(await loadSuperAdminUsers()); } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unable to load platform users.'); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  const visible = useMemo(() => (users ?? []).filter((user) => {
+    const text = `${user.username} ${user.email} ${user.phone ?? ''} ${user.storeName ?? ''}`.toLowerCase();
+    return text.includes(query.trim().toLowerCase()) && (role === 'ALL' || user.role === role);
+  }), [users, query, role]);
+  const sellers = (users ?? []).filter((user) => user.role === 'SELLER').length;
+  const buyers = (users ?? []).filter((user) => user.role === 'USER').length;
+  const roleOptions = [...new Set((users ?? []).map((user) => user.role))].sort();
+  const removeUser = async (confirmation: string) => {
+    if (!deletingUser) return;
+    await deleteSuperAdminUser(deletingUser.id, confirmation);
+    setUsers((current) => current?.filter((user) => user.id !== deletingUser.id) ?? null);
+    setDeletingUser(null);
+  };
 
-  return (
-    <SPAD_Shell>
-      <div className="mx-auto max-w-[1440px] space-y-4">
-        <SPAD_SectionHeading eyebrow="06 / User & Staff Management / Manage Users" title="Platform Users" description="Manage registered users, verified sellers, and account statuses" action={<><Link to="/superadmin/staff" className="text-[8px] font-bold text-[#2f65ff]">← View Staff &amp; Admins</Link><SPAD_ExportButton label="Export users" fileName="optracard-users.csv" rows={users.map((user) => ({ User: user.name, Email: user.email, 'User ID': user.id, Type: user.type, Orders: user.orders, Status: user.status }))} /></>} />
-
-        <div className="grid gap-3 md:grid-cols-3"><SPAD_StatCard label="Total users" value="1,240" detail="+150 this month" /><SPAD_StatCard label="Verified sellers" value="342" detail="27.5% of users" tone="teal" /><SPAD_StatCard label="Banned / suspended" value="12" detail="1.0% of users" tone="orange" /></div>
-
-        <SPAD_FilterBar>
-          <SPAD_FilterField label="Search users"><SPAD_Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by username, email, or user ID" /></SPAD_FilterField>
-          <SPAD_FilterField label="Account type filter"><SPAD_Input value={accountType} onChange={(event) => setAccountType(event.target.value)} placeholder="Type an account type" /></SPAD_FilterField>
-          <SPAD_FilterField label="Status filter"><SPAD_Input value={status} onChange={(event) => setStatus(event.target.value)} placeholder="Type a status" /></SPAD_FilterField>
-          <button type="button" onClick={() => setAppliedQuery(query.trim())} className="self-end rounded bg-[#2f65ff] px-4 py-2 text-[9px] font-bold text-white hover:bg-[#1647c4]">⌕ Search</button>
-        </SPAD_FilterBar>
-
-        <SPAD_Panel title="All platform users · 1,240 results" subtitle="View and manage registered buyers, sellers, and account status." action={<span className="text-[8px] text-[#a1a8b3]">Showing first 3</span>}>
-          <div className="overflow-x-auto"><table className="w-full min-w-[900px] text-left"><thead className="border-b border-[#edf0f4] bg-[#f4f7fb] text-[8px] font-bold text-[#687486]"><tr><th className="px-3 py-2.5">User / Email</th><th className="px-3 py-2.5">User ID</th><th className="px-3 py-2.5">Account Type</th><th className="px-3 py-2.5 text-right">Total Orders / Trades</th><th className="px-3 py-2.5 text-right">Joined Date</th><th className="px-3 py-2.5">Status</th><th className="px-3 py-2.5" /></tr></thead><tbody className="divide-y divide-[#f0f2f5] text-[9px]">{visibleUsers.map((user) => <tr key={user.id} className="hover:bg-[#fafbfd]"><td className="px-3 py-2.5"><div className="flex items-center gap-2"><span className={`flex h-6 w-6 items-center justify-center rounded ${user.color}`} /><span><span className="block font-bold text-[#303844]">{user.name}</span><span className="text-[8px] text-[#a1a8b3]">{user.email}</span></span></div></td><td className="px-3 py-2.5 font-bold text-[#303844]">{user.id}</td><td className="px-3 py-2.5 text-[#687486]">{user.type}</td><td className="px-3 py-2.5 text-right"><p className="font-bold text-[#159568]">{user.orders}</p><p className="text-[8px] text-[#dc4c4c]">{user.trades}</p></td><td className="whitespace-pre-line px-3 py-2.5 text-right text-[8px] text-[#687486]">{user.joined}</td><td className="px-3 py-2.5"><SPAD_StatusBadge label={user.status} tone={user.tone} /></td><td className="px-3 py-2.5 text-right"><button type="button" onClick={() => setSelectedUser(user)} aria-label={`View ${user.name}`} title="View user" className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#dbe3ee] bg-white text-[#2f65ff] shadow-[0_1px_2px_rgba(27,39,63,0.04)] transition hover:border-[#2f65ff] hover:bg-[#edf4ff]"><Eye size={12} /></button></td></tr>)}</tbody></table></div>
-          <SPAD_Pagination count={`Showing ${visibleUsers.length ? '1–3' : '0'} of 1,240 users`} />
-        </SPAD_Panel>
-        {selectedUser && <SPAD_Panel title={selectedUser.name} subtitle="Read-only user profile" action={<button type="button" onClick={() => setSelectedUser(null)} className="text-[9px] font-bold text-[#2f65ff]">Close</button>}><div className="grid gap-3 px-4 py-4 text-[9px] sm:grid-cols-4"><div><p className="text-[#a1a8b3]">Email</p><p className="mt-1 font-bold text-[#303844]">{selectedUser.email}</p></div><div><p className="text-[#a1a8b3]">User ID</p><p className="mt-1 font-bold text-[#303844]">{selectedUser.id}</p></div><div><p className="text-[#a1a8b3]">Account type</p><p className="mt-1 font-bold text-[#303844]">{selectedUser.type}</p></div><div><p className="text-[#a1a8b3]">Status</p><div className="mt-1"><SPAD_StatusBadge label={selectedUser.status} tone={selectedUser.tone} /></div></div></div></SPAD_Panel>}
-      </div>
-    </SPAD_Shell>
-  );
+  return <SPAD_Shell><div className="mx-auto max-w-[1440px] space-y-4">
+    <SPAD_SectionHeading title="Manage User" description="Customer and seller accounts from the platform database. Staff accounts are managed separately." action={users ? <SPAD_ExportButton label="Export users" fileName="optracard-users.csv" rows={visible.map((user) => ({ id: user.id, username: user.username, email: user.email, role: user.role, phone: user.phone ?? '', store: user.storeName ?? '', store_status: user.storeStatus ?? '', joined_at: user.createdAt ?? '' }))} /> : undefined} />
+    {error ? <SPAD_Error message={error} onRetry={() => void load()} /> : !users ? <SPAD_Loading /> : <>
+      <div className="grid gap-3 md:grid-cols-3"><SPAD_StatCard label="Platform users" value={String(users.length)} /><SPAD_StatCard label="Buyer accounts" value={String(buyers)} tone="blue" /><SPAD_StatCard label="Seller accounts" value={String(sellers)} detail="Based on their current account role" tone="teal" /></div>
+      <SPAD_FilterBar><SPAD_FilterField label="Search users"><SPAD_Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, email, phone, or store" /></SPAD_FilterField><SPAD_FilterField label="Account role"><select value={role} onChange={(event) => setRole(event.target.value)} className="h-8 w-full rounded border border-[#dfe4eb] bg-white px-2.5 text-[9px] text-[#687486]"><option value="ALL">All roles</option>{roleOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></SPAD_FilterField><div className="self-end text-[9px] text-[#8e99aa]">{visible.length} matching users</div></SPAD_FilterBar>
+      <SPAD_Panel title={`Users · ${visible.length} results`} subtitle="Only persisted profile fields are displayed; passwords are never returned by the API."><div className="overflow-x-auto"><table className="w-full min-w-[1020px] text-left"><thead className="bg-[#f4f7fb] text-[8px] uppercase tracking-wide text-[#687486]"><tr><th className="px-4 py-3">User</th><th className="px-4 py-3">Contact</th><th className="px-4 py-3">Role</th><th className="px-4 py-3">Store</th><th className="px-4 py-3">Created</th><th className="px-4 py-3 text-right">Actions</th></tr></thead><tbody className="divide-y divide-[#edf0f4] text-[10px]">{visible.length === 0 ? <tr><td colSpan={6} className="px-4 py-10 text-center text-[#8e99aa]">No users match the selected filters.</td></tr> : visible.map((user) => <tr key={user.id} className="hover:bg-[#fafbfd]"><td className="px-4 py-3"><p className="font-bold text-[#303844]">{user.username}</p><p className="mt-1 text-[8px] text-[#8e99aa]">User ID: {user.id}</p></td><td className="px-4 py-3"><p className="text-[#303844]">{user.email}</p><p className="mt-1 text-[8px] text-[#8e99aa]">{user.phone ?? 'No phone recorded'}</p></td><td className="px-4 py-3"><SPAD_StatusBadge label={user.role} tone={user.role === 'SELLER' ? 'blue' : 'neutral'} /></td><td className="px-4 py-3">{user.storeName ? <><p className="font-medium text-[#303844]">{user.storeName}</p><div className="mt-1"><SPAD_StatusBadge label={user.storeStatus ?? 'Unknown'} tone={statusTone(user.storeStatus)} /></div></> : <span className="text-[#8e99aa]">No store</span>}</td><td className="px-4 py-3 text-[#687486]">{formatDate(user.createdAt)}</td><td className="px-4 py-3 text-right"><button type="button" onClick={() => setDeletingUser(user)} className="inline-flex h-8 w-8 items-center justify-center rounded border border-red-200 text-red-600 hover:bg-red-50" aria-label={`Delete ${user.username}`} title="Delete user"><Trash2 size={14} /></button></td></tr>)}</tbody></table></div></SPAD_Panel>
+    </>}
+    {deletingUser && <SPAD_DeleteAccountDialog accountName={deletingUser.username} accountType="user" includesStoreData={deletingUser.storeId !== null} onClose={() => setDeletingUser(null)} onConfirm={removeUser} />}
+  </div></SPAD_Shell>;
 }

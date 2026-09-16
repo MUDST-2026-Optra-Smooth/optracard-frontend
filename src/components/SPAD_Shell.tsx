@@ -77,7 +77,7 @@ export const SPAD_Shell = ({ children }: SPAD_ShellProps) => {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 overflow-x-hidden p-8">{children}</main>
+      <main className="min-w-0 flex-1 overflow-x-hidden px-8 py-8">{children}</main>
     </div>
   </div>;
 };

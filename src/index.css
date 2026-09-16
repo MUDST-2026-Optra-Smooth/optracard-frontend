@@ -31,7 +31,7 @@
   line-height: 1.25rem;
 }
 
-/* The shared workspace header is positioned above the sidebar and scrolls away. */
+/* The shared seller workspace header is positioned above the sidebar and scrolls away. */
 main.min-w-0.flex-1.p-8 {
   padding-top: 6rem;
 }
