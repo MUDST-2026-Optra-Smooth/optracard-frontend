@@ -1,140 +1,16 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // 1. นำเข้า useNavigate
-import { Search, ChevronDown, Eye } from 'lucide-react';
-import ADsidebar from '../components/ADsidebar';
+import { useEffect, useMemo, useState } from 'react';
+import { Eye, RefreshCcw, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { loadAdminOrders } from '../api/admin';
+import { AdminError, AdminLoading, AdminWorkspace, formatCurrency, formatDate, StatusBadge } from '../components/AdminWorkspace';
+import type { AdminOrder } from '../types/admin';
 
-interface OrderItem {
-  orderId: string;
-  customerName: string;
-  date: string;
-  totalAmount: string;
-  paymentStatus: 'Paid' | 'Pending' | 'Failed';
-  orderStatus: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-}
-
-const mockOrders: OrderItem[] = [
-  {
-    orderId: 'ORD-2026-001',
-    customerName: 'Somchai Jaidee',
-    date: '06 Sep 2026',
-    totalAmount: '฿3,800.00',
-    paymentStatus: 'Paid',
-    orderStatus: 'Processing',
-  },
-  {
-    orderId: 'ORD-2026-002',
-    customerName: 'John Doe',
-    date: '05 Sep 2026',
-    totalAmount: '฿800.00',
-    paymentStatus: 'Paid',
-    orderStatus: 'Shipped',
-  },
-  {
-    orderId: 'ORD-2026-003',
-    customerName: 'Apirak S.',
-    date: '04 Sep 2026',
-    totalAmount: '฿1,500.00',
-    paymentStatus: 'Pending',
-    orderStatus: 'Processing',
-  },
-];
-
-export const ADordersManagement: React.FC = () => {
-  const navigate = useNavigate(); // 2. เรียกใช้งาน navigate
-  const [searchTerm, setSearchTerm] = useState('');
-
-  return (
-    <div className="min-h-screen flex bg-slate-50 font-sans text-gray-800">
-      <ADsidebar currentTab="orders" />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-[#0f172a] shrink-0" />
-
-        <main className="flex-1 p-8 overflow-y-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Orders Management</h1>
-              <p className="text-gray-500 text-sm mt-0.5">
-                Monitor and manage all customer orders across the platform
-              </p>
-            </div>
-          </div>
-
-          {/* Search & Filter Bar */}
-          <div className="bg-white p-5 rounded-xl border border-gray-200/80 shadow-sm mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search Order ID, Customer Name..."
-                  className="w-full pl-10 pr-4 py-2 text-sm bg-gray-100 rounded-lg border-transparent focus:bg-white focus:border-blue-500 focus:outline-none transition"
-                />
-              </div>
-              <div className="flex gap-3">
-                <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition">
-                  Status: All <ChevronDown className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Orders Table */}
-          <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-600 bg-slate-50/80">
-                  <th className="py-3 px-4 font-semibold">Order ID</th>
-                  <th className="py-3 px-4 font-semibold">Customer</th>
-                  <th className="py-3 px-4 font-semibold">Date</th>
-                  <th className="py-3 px-4 font-semibold">Total Amount</th>
-                  <th className="py-3 px-4 font-semibold text-center">Payment</th>
-                  <th className="py-3 px-4 font-semibold text-center">Order Status</th>
-                  <th className="py-3 px-4 font-semibold text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {mockOrders.map((order) => (
-                  <tr key={order.orderId} className="hover:bg-slate-50/60 transition">
-                    <td className="py-4 px-4 font-semibold text-blue-600">{order.orderId}</td>
-                    <td className="py-4 px-4 font-medium text-gray-900">{order.customerName}</td>
-                    <td className="py-4 px-4 text-gray-500">{order.date}</td>
-                    <td className="py-4 px-4 font-semibold text-gray-900">{order.totalAmount}</td>
-                    <td className="py-4 px-4 text-center">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
-                        order.paymentStatus === 'Paid' 
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'bg-amber-50 text-amber-600'
-                      }`}>
-                        {order.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-600">
-                        {order.orderStatus}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      {/* 3. ผูกคำสั่ง onClick ส่ง orderId ไปหน้า ADorderDetail */}
-                      <button 
-                        type="button"
-                        onClick={() => navigate(`/admin/orders/${order.orderId}`)}
-                        className="p-1 text-gray-500 hover:text-blue-600 transition cursor-pointer"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+export const ADordersManagement = () => {
+  const navigate = useNavigate(); const [orders, setOrders] = useState<AdminOrder[]>([]); const [query, setQuery] = useState(''); const [status, setStatus] = useState('ALL'); const [loading, setLoading] = useState(true); const [error, setError] = useState<string | null>(null);
+  const load = async () => { setLoading(true); setError(null); try { setOrders(await loadAdminOrders()); } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Could not load orders.'); } finally { setLoading(false); } };
+  useEffect(() => { void load(); }, []);
+  const visible = useMemo(() => { const text = query.trim().toLowerCase(); return orders.filter((order) => (status === 'ALL' || order.status.toUpperCase() === status) && (!text || `${order.orderNumber} ${order.buyerName} ${order.storeName ?? ''}`.toLowerCase().includes(text))); }, [orders, query, status]);
+  return <AdminWorkspace currentTab="orders"><div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-3xl font-bold text-slate-900">Orders Management</h1><p className="mt-1 text-sm text-slate-500">All customer orders across Official Store and Marketplace.</p></div><button type="button" onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold"><RefreshCcw className="h-4 w-4" />Refresh</button></div>{error && <div className="mb-5"><AdminError message={error} onRetry={() => void load()} /></div>}<div className="mb-5 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search order, customer, or store" className="w-full rounded-lg bg-slate-100 py-2.5 pl-10 pr-3 text-sm outline-none focus:bg-white" /></div><select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-lg bg-slate-100 px-3 py-2.5 text-sm outline-none"><option value="ALL">All statuses</option><option value="PROCESSING">Processing</option><option value="SHIPPED">Shipped</option><option value="DELIVERED">Delivered</option><option value="CANCELED">Canceled</option></select></div>{loading ? <AdminLoading label="Loading orders…" /> : <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm"><table className="w-full min-w-[920px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4">Order</th><th className="px-5 py-4">Customer</th><th className="px-5 py-4">Store</th><th className="px-5 py-4">Created</th><th className="px-5 py-4 text-right">Total</th><th className="px-5 py-4">Payment</th><th className="px-5 py-4">Status</th><th className="px-5 py-4 text-right">View</th></tr></thead><tbody className="divide-y divide-slate-100">{visible.map((order) => <tr key={order.id} className="hover:bg-slate-50"><td className="px-5 py-4 font-bold text-blue-600">{order.orderNumber}</td><td className="px-5 py-4"><p className="font-semibold">{order.buyerName}</p><p className="text-xs text-slate-500">Buyer ID: {order.buyerId}</p></td><td className="px-5 py-4 text-slate-600">{order.storeName ?? 'Optracard Official Store'}</td><td className="px-5 py-4 text-slate-500">{formatDate(order.createdAt)}</td><td className="px-5 py-4 text-right font-bold">{formatCurrency(order.total)}</td><td className="px-5 py-4"><StatusBadge status={order.paymentStatus} /></td><td className="px-5 py-4"><StatusBadge status={order.status} /></td><td className="px-5 py-4 text-right"><button type="button" onClick={() => navigate(`/admin/orders/${order.id}`)} className="rounded p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600"><Eye className="h-4 w-4" /></button></td></tr>)}{visible.length === 0 && <tr><td colSpan={8} className="px-5 py-12 text-center text-slate-500">No orders found.</td></tr>}</tbody></table></div>}</AdminWorkspace>;
 };
 
 export default ADordersManagement;

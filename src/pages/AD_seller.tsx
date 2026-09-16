@@ -1,274 +1,104 @@
-import React, { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Eye, Pencil, Plus, RefreshCcw, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus } from 'lucide-react';
-import ADsidebar from '../components/ADsidebar';
-import AddProductDropdown from '../components/AddProductDropdown';
+import { deactivateAdminProduct, loadAdminProducts } from '../api/admin';
+import { AdminError, AdminLoading, AdminWorkspace, formatCurrency, StatusBadge } from '../components/AdminWorkspace';
+import type { AdminProduct } from '../types/admin';
 
-interface ProductItem {
-  id: string;
-  name: string;
-  category: string;
-  stocks: number;
-  cost: string;
-  price: string;
-  profit: string;
-  cardCode?: string;
-  set?: string;
-  setCode?: string;
-  productType?: string;
-  language?: string;
-  description?: string;
-  imageUrl?: string;
-}
-
-const mockProducts: ProductItem[] = [
-  {
-    id: 'PD-0001',
-    name: 'Charizard ex',
-    category: 'Pokémon',
-    stocks: 5,
-    cost: '฿1,000',
-    price: '฿1,500',
-    profit: '฿500',
-    cardCode: '006/165',
-    set: 'Scarlet & Violet 151',
-    setCode: 'sv3pt5',
-    productType: 'Pokémon',
-    language: 'English',
-    imageUrl: 'https://images.pokemontcg.io/sv3pt5/6_hires.png',
-    description: `[Type] Fire
-[HP] 330
-[Stage] Stage 2 – Evolves from Charmeleon
-[Rarity] Double Rare
-[Brave Wing] 60+ If this Pokémon has any damage counters on it, this attack does 100 more damage.
-[Explosive Vortex] 330 Discard 3 Energy from this Pokémon.
-[Pokémon ex Rule] When your Pokémon ex is Knocked Out, your opponent takes 2 Prize cards.
-[Weakness] Water ×2
-[Resistance] None
-[Retreat Cost] 2
-[Illustrator] PLANETA Mochizuki`,
-  },
-  {
-    id: 'BT-0001',
-    name: 'Bandai One Piece OP-13 Jp',
-    category: 'One Piece',
-    stocks: 12,
-    cost: '฿600',
-    price: '฿800',
-    profit: '฿200',
-  },
-  {
-    id: 'BOX-0001',
-    name: 'One Piece [OP-13] "Carrying On His Will"',
-    category: 'One Piece',
-    stocks: 12,
-    cost: '฿600',
-    price: '฿800',
-    profit: '฿200',
-  },
-  {
-    id: 'AC-0001',
-    name: '100 Ultra Pro Penny Sleeves',
-    category: 'Sleeves',
-    stocks: 12,
-    cost: '฿600',
-    price: '฿800',
-    profit: '฿200',
-  },
-];
-
-export const ADseller: React.FC = () => {
+export const ADseller = () => {
   const navigate = useNavigate();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleEditProduct = (item: ProductItem) => {
-    navigate(`/admin/products/${item.id}/edit`, {
-      state: {
-        product: {
-          productId: item.id,
-          cardName: item.name,
-          cardGame: item.category,
-          cardCode: item.cardCode || '',
-          set: item.set || '',
-          setCode: item.setCode || '',
-          productType: item.productType || item.category,
-          language: item.language || 'English',
-          cost: item.cost.replace('฿', '').replace(',', ''),
-          priceOfSell: item.price.replace('฿', '').replace(',', ''),
-          stocks: item.stocks.toString(),
-          description: item.description || '',
-          imageUrl: item.imageUrl,
-        },
-      },
-    });
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setProducts(await loadAdminProducts());
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Could not load official stock.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSelectCategory = (categoryKey: string) => {
-    navigate(`/admin/products/new?category=${encodeURIComponent(categoryKey)}`, {
-      state: { productType: categoryKey },
-    });
+  useEffect(() => { void load(); }, []);
+
+  const productTypes = useMemo(() => [...new Set(products.map((product) => product.type).filter(Boolean))]
+    .sort((first, second) => first.localeCompare(second)), [products]);
+
+  const filtered = useMemo(() => {
+    const value = query.trim().toLowerCase();
+    return products.filter((product) => (typeFilter === 'ALL' || product.type === typeFilter)
+      && (!value || `${product.id} ${product.name} ${product.game} ${product.type}`.toLowerCase().includes(value)));
+  }, [products, query, typeFilter]);
+
+  const deactivate = async (product: AdminProduct) => {
+    if (!window.confirm(`Hide “${product.name}” from the official store?`)) return;
+    try {
+      await deactivateAdminProduct(product.id);
+      setProducts((current) => current.map((item) => item.id === product.id ? { ...item, active: false } : item));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Could not deactivate product.');
+    }
   };
 
-  return (
-    <div className="min-h-screen flex bg-slate-50 font-sans text-gray-800">
-      <ADsidebar currentTab="stocks" />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-[#0f172a] shrink-0" />
-
-        <main className="flex-1 p-8 overflow-y-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Stocks Management</h1>
-              <p className="text-gray-500 text-sm mt-0.5">
-                Manage stocks and set selling prices to calculate profit
-              </p>
-            </div>
-            
-            <button
-              type="button"
-              onClick={() => setIsDropdownOpen(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add new product</span>
-            </button>
-          </div>
-
-          <div className="bg-white p-5 rounded-xl border border-gray-200/80 shadow-sm mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Product id
-                </label>
-                <input
-                  type="text"
-                  placeholder="Product id"
-                  className="w-full px-3.5 py-2 text-sm bg-gray-100 rounded-lg border-transparent focus:bg-white focus:border-blue-500 focus:outline-none transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Product name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Product name"
-                  className="w-full px-3.5 py-2 text-sm bg-gray-100 rounded-lg border-transparent focus:bg-white focus:border-blue-500 focus:outline-none transition"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Card game
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Card game"
-                    className="w-full px-3.5 py-2 text-sm bg-gray-100 rounded-lg border-transparent focus:bg-white focus:border-blue-500 focus:outline-none transition"
-                  />
-                </div>
-                <button 
-                  type="button"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-2 rounded-lg border border-transparent transition flex items-center justify-center cursor-pointer"
-                >
-                  <Search className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-600 bg-slate-50/80">
-                  <th className="py-3 px-4 font-semibold">Product ID</th>
-                  <th className="py-3 px-4 font-semibold text-center">Picture</th>
-                  <th className="py-3 px-4 font-semibold">Product Name</th>
-                  <th className="py-3 px-4 font-semibold text-center">Stocks</th>
-                  <th className="py-3 px-4 font-semibold text-center bg-amber-50/40 text-amber-700">Cost</th>
-                  <th className="py-3 px-4 font-semibold text-center bg-blue-50/40 text-blue-700">Price</th>
-                  <th className="py-3 px-4 font-semibold text-center bg-emerald-50/40 text-emerald-700">Profit</th>
-                  <th className="py-3 px-4 font-semibold text-center">Manage</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {mockProducts.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/60 transition">
-                    <td 
-                      onClick={() => navigate(`/admin/products/${item.id}`)}
-                      className="py-4 px-4 font-semibold text-blue-600 cursor-pointer hover:underline"
-                    >
-                      {item.id}
-                    </td>
-                    
-                    <td className="py-4 px-4 text-center">
-                      {item.imageUrl ? (
-                        <div className="w-10 h-14 rounded mx-auto overflow-hidden border border-gray-200">
-                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-14 bg-gray-200 rounded mx-auto flex items-center justify-center border border-gray-300">
-                          <span className="text-[10px] text-gray-400 font-medium">No Img</span>
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="py-4 px-4">
-                      <div className="font-semibold text-gray-900">{item.name}</div>
-                      <div className="text-[11px] text-gray-400">{item.category}</div>
-                    </td>
-
-                    <td className="py-4 px-4 text-center">
-                      <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded-full bg-emerald-50 text-emerald-600">
-                        {item.stocks} left
-                      </span>
-                    </td>
-
-                    <td className="py-4 px-4 text-center font-medium bg-amber-50/20 text-gray-800">
-                      {item.cost}
-                    </td>
-
-                    <td className="py-4 px-4 text-center font-medium bg-blue-50/20 text-blue-600">
-                      {item.price}
-                    </td>
-
-                    <td className="py-4 px-4 text-center font-semibold bg-emerald-50/20 text-emerald-600">
-                      {item.profit}
-                    </td>
-
-                    <td className="py-4 px-4 text-center space-x-3 whitespace-nowrap">
-                      <button 
-                        type="button"
-                        onClick={() => handleEditProduct(item)}
-                        className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        type="button"
-                        className="text-red-500 hover:text-red-600 font-medium cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </main>
+  return <AdminWorkspace currentTab="stocks">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-900">Stocks Management</h1>
+        <p className="mt-1 text-sm text-slate-500">Official Store inventory, selling prices, and availability.</p>
       </div>
-
-      <AddProductDropdown
-        isOpen={isDropdownOpen}
-        onClose={() => setIsDropdownOpen(false)}
-        onSelectCategory={handleSelectCategory}
-      />
+      <div className="flex gap-2">
+        <button type="button" onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold"><RefreshCcw className="h-4 w-4" />Refresh</button>
+        <button type="button" onClick={() => navigate('/admin/products/new')} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"><Plus className="h-4 w-4" />Add product</button>
+      </div>
     </div>
-  );
+
+    {error && <div className="mb-5"><AdminError message={error} onRetry={() => void load()} /></div>}
+
+    <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search product ID, name, card game, or type"
+            className="w-full rounded-lg bg-slate-100 py-2.5 pl-10 pr-3 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20"
+          />
+        </div>
+        <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="rounded-lg bg-slate-100 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 md:w-56">
+          <option value="ALL">Type: All</option>
+          {productTypes.map((type) => <option key={type} value={type}>Type: {type}</option>)}
+        </select>
+      </div>
+    </div>
+
+    {loading ? <AdminLoading label="Loading official products…" /> : <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table className="w-full min-w-[920px] text-left text-sm">
+        <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <tr><th className="px-5 py-4">Product</th><th className="px-5 py-4">Card game / Type</th><th className="px-5 py-4 text-right">Stock</th><th className="px-5 py-4 text-right">Cost</th><th className="px-5 py-4 text-right">Sell price</th><th className="px-5 py-4 text-right">Margin</th><th className="px-5 py-4">Status</th><th className="px-5 py-4 text-right">Actions</th></tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {filtered.map((product) => <tr key={product.id} className="hover:bg-slate-50">
+            <td className="px-5 py-4"><div className="flex items-center gap-3">{product.imageUrl ? <img src={product.imageUrl} alt="" className="h-12 w-10 rounded bg-slate-100 object-cover" /> : <div className="h-12 w-10 rounded bg-slate-100" />}<div><p className="font-bold text-slate-900">{product.name}</p><p className="text-xs text-slate-500">ID: {product.id}</p></div></div></td>
+            <td className="px-5 py-4"><p className="font-semibold">{product.game}</p><p className="text-xs text-slate-500">{product.type}</p></td>
+            <td className="px-5 py-4 text-right font-bold">{product.stock ?? 0}</td>
+            <td className="px-5 py-4 text-right text-orange-700">{formatCurrency(product.cost)}</td>
+            <td className="px-5 py-4 text-right text-blue-700">{formatCurrency(product.price)}</td>
+            <td className="px-5 py-4 text-right font-bold text-emerald-700">{formatCurrency((product.price ?? 0) - (product.cost ?? 0))}</td>
+            <td className="px-5 py-4"><StatusBadge status={product.active ? 'Active' : 'Inactive'} /></td>
+            <td className="px-5 py-4"><div className="flex justify-end gap-1"><button type="button" onClick={() => navigate(`/admin/products/${product.id}`)} title="View" className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600"><Eye className="h-4 w-4" /></button><button type="button" onClick={() => navigate(`/admin/products/${product.id}/edit`)} title="Edit" className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600"><Pencil className="h-4 w-4" /></button>{product.active && <button type="button" onClick={() => void deactivate(product)} title="Deactivate" className="rounded p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>}</div></td>
+          </tr>)}
+          {filtered.length === 0 && <tr><td colSpan={8} className="px-5 py-12 text-center text-slate-500">No official products found.</td></tr>}
+        </tbody>
+      </table>
+    </div>}
+  </AdminWorkspace>;
 };
 
 export default ADseller;

@@ -47,7 +47,7 @@ export const ADsidebar: React.FC<ADsidebarProps> = ({ currentTab }) => {
     },
     { 
       id: 'manage-requests', 
-      name: 'Manage Requests', 
+      name: 'Store Verification',
       path: '/admin/store-requests',
       icon: Sparkles 
     },

@@ -35,3 +35,30 @@
 main.min-w-0.flex-1.p-8 {
   padding-top: 6rem;
 }
+
+/* Tailwind's bare border/divide utilities inherit the text colour in the admin UI. */
+.admin-workspace [class~="border"]:not([class*="border-"]) {
+  border-color: #cbd5e1;
+}
+
+.admin-workspace .divide-y > :not(:last-child) {
+  border-color: #cbd5e1;
+}
+
+/* Make financial values in administration tables brighter and easier to scan. */
+.admin-workspace td.text-orange-700 {
+  color: #f97316;
+}
+
+.admin-workspace td.text-blue-700 {
+  color: #3b82f6;
+}
+
+.admin-workspace td.text-emerald-700 {
+  color: #10b981;
+}
+
+/* These three admin list pages do not need an eyebrow label above the title. */
+.admin-workspace p[class*="tracking-[0.2em]"] {
+  display: none;
+}
