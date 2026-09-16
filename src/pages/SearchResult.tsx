@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
@@ -6,11 +6,11 @@ import { FilterDropdown, type DropdownOption } from '../components/FilterDropdow
 import { searchCatalog } from '../api/catalog';
 import type { CatalogProduct } from '../types/catalog';
 
-const gameOptions: DropdownOption[] = [
+const defaultGameOptions: DropdownOption[] = [
   { label: 'All Games', value: 'all', shortLabel: 'All' },
-  { label: 'Pokémon', value: 'pokemon' },
-  { label: 'Battle of Talingchan', value: 'talingchan' },
-  { label: 'One Piece', value: 'onepiece' },
+  { label: 'Pokemon', value: 'Pokemon' },
+  { label: 'Battle of Talingchan', value: 'Battle of Talingchan' },
+  { label: 'One Piece', value: 'One Piece' },
 ];
 
 const sortOptions: DropdownOption[] = [
@@ -24,7 +24,7 @@ export const SearchResult = () => {
   const navigate = useNavigate();
   const query = searchParams.get('q') ?? '';
 
-  const [selectedGame, setSelectedGame] = useState<DropdownOption>(gameOptions[0]);
+  const [selectedGame, setSelectedGame] = useState<DropdownOption>(defaultGameOptions[0]);
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
   
   const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -42,7 +42,7 @@ export const SearchResult = () => {
           setProducts(data);
           setError(null);
         }
-      } catch (err) {
+      } catch {
         if (isCurrent) setError('ไม่สามารถโหลดข้อมูลการค้นหาได้ในขณะนี้');
       } finally {
         if (isCurrent) setIsLoading(false);
@@ -53,10 +53,57 @@ export const SearchResult = () => {
     return () => { isCurrent = false; };
   }, [query]);
 
-  const marketplaceListings = products.filter(p => p.source === 'MARKETPLACE');
-  const singleCards = products.filter(p => p.source === 'OFFICIAL' && p.type === 'Single');
-  const boosterCards = products.filter(p => p.source === 'OFFICIAL' && p.type === 'Booster');
-  const boosterBoxCards = products.filter(p => p.source === 'OFFICIAL' && p.type === 'Booster Box');
+  const gameOptions = useMemo<DropdownOption[]>(() => {
+    const games = Array.from(new Set(products.map((p) => p.game).filter(Boolean))).sort();
+    if (games.length === 0) return defaultGameOptions;
+    return [
+      { label: 'All Games', value: 'all', shortLabel: 'All' },
+      ...games.map((g) => ({ label: g, value: g })),
+    ];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    let result = products;
+
+    if (selectedGame.value !== 'all') {
+      result = result.filter(
+        (p) => p.game.toLowerCase() === selectedGame.value.toLowerCase() || p.game === selectedGame.label
+      );
+    }
+
+    if (selectedSort.value === 'price_asc') {
+      result = [...result].sort((a, b) => a.price - b.price);
+    } else if (selectedSort.value === 'price_desc') {
+      result = [...result].sort((a, b) => b.price - a.price);
+    } else if (selectedSort.value === 'newest') {
+      result = [...result].sort((a, b) => b.id - a.id);
+    }
+
+    return result;
+  }, [products, selectedGame, selectedSort]);
+
+  const marketplaceListings = useMemo(
+    () => filteredProducts.filter((p) => p.source === 'MARKETPLACE'),
+    [filteredProducts]
+  );
+
+  const officialProducts = useMemo(
+    () => filteredProducts.filter((p) => p.source === 'OFFICIAL'),
+    [filteredProducts]
+  );
+
+  const officialCategories = useMemo(() => {
+    const types = Array.from(new Set(officialProducts.map((p) => p.type).filter(Boolean)));
+    const preferredOrder = ['Single', 'Booster', 'Booster Box', 'Accessories'];
+    return types.sort((a, b) => {
+      const idxA = preferredOrder.indexOf(a);
+      const idxB = preferredOrder.indexOf(b);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }, [officialProducts]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
@@ -64,7 +111,7 @@ export const SearchResult = () => {
         <h1 className="text-3xl font-bold text-blue-600">
           Search Result{query && ` : ${query}`}
         </h1>
-        <button onClick={() => navigate(-1)} className="text-sm text-gray-700 hover:text-black font-medium">
+        <button onClick={() => navigate(-1)} className="text-sm text-gray-700 hover:text-black font-medium cursor-pointer">
           ← Back
         </button>
       </div>
@@ -77,11 +124,11 @@ export const SearchResult = () => {
       {isLoading && <p className="text-center py-10">กำลังค้นหาสินค้า...</p>}
       {error && <p className="text-center text-red-600 py-10">{error}</p>}
 
-      {!isLoading && !error && products.length === 0 && (
+      {!isLoading && !error && filteredProducts.length === 0 && (
         <p className="text-center text-gray-500 py-10">ไม่พบสินค้าที่ตรงกับคำค้นหา "{query}"</p>
       )}
 
-      {!isLoading && !error && products.length > 0 && (
+      {!isLoading && !error && filteredProducts.length > 0 && (
         <>
           {marketplaceListings.length > 0 && (
             <section className="mb-12">
@@ -89,7 +136,7 @@ export const SearchResult = () => {
                 <h2 className="text-3xl font-bold text-blue-600">Marketplace & Trading</h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {marketplaceListings.map(listing => (
+                {marketplaceListings.map((listing) => (
                   <TradingListingCard 
                     key={listing.id}
                     productId={listing.id}
@@ -97,7 +144,7 @@ export const SearchResult = () => {
                     gameName={listing.game}
                     itemCount={listing.stock}
                     startingPrice={listing.price}
-                    imageUrl={listing.imageUrl}
+                    imageUrl={listing.imageUrl ?? undefined}
                     storeName={listing.store?.name}
                     source="MARKETPLACE"
                   />
@@ -106,36 +153,38 @@ export const SearchResult = () => {
             </section>
           )}
 
-          <section className="text-center">
-            <h2 className="text-3xl font-bold text-blue-600 mb-8">Optracard Official Store</h2>
-            
-            {singleCards.length > 0 && (
-              <div className="text-left mb-10">
-                <h3 className="text-xl font-bold mb-4">Single</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {singleCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} />)}
-                </div>
-              </div>
-            )}
+          {officialProducts.length > 0 && (
+            <section className="text-center">
+              <h2 className="text-3xl font-bold text-blue-600 mb-8">Optracard Official Store</h2>
+              
+              {officialCategories.map((type) => {
+                const items = officialProducts.filter((p) => p.type === type);
+                if (items.length === 0) return null;
 
-            {boosterCards.length > 0 && (
-              <div className="text-left mb-10">
-                <h3 className="text-xl font-bold mb-4">Booster</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {boosterCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} />)}
-                </div>
-              </div>
-            )}
-
-            {boosterBoxCards.length > 0 && (
-              <div className="text-left">
-                <h3 className="text-xl font-bold mb-4">Booster Box</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {boosterBoxCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} />)}
-                </div>
-              </div>
-            )}
-          </section>
+                return (
+                  <div key={type} className="text-left mb-10">
+                    <h3 className="text-xl font-bold mb-4">{type}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {items.map((card) => (
+                        <ProductCard
+                          key={card.id}
+                          productId={card.id}
+                          title={card.name}
+                          price={card.price}
+                          game={card.game}
+                          imageUrl={card.imageUrl ?? undefined}
+                          type={card.type}
+                          source={card.source}
+                          storeName={card.store?.name}
+                          stock={card.stock}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+          )}
         </>
       )}
     </div>
