@@ -44,12 +44,101 @@ export function invalidateCatalogCache(): void {
   cachedAt = 0;
 }
 
+interface RawBackendProduct {
+  id?: number;
+  proId?: number;
+  sku?: string | null;
+  proSku?: string | null;
+  name?: string;
+  proName?: string;
+  type?: string;
+  proType?: string;
+  game?: string;
+  cardGame?: { gameName?: string };
+  price?: number;
+  proPriceOfSell?: number;
+  stock?: number;
+  proQuantity?: number;
+  imageUrl?: string | null;
+  proImageUrl?: string | null;
+  description?: string | null;
+  proDescription?: string | null;
+  source?: string;
+  listingSource?: string;
+  store?: {
+    id?: number | null;
+    storeId?: number | null;
+    name?: string;
+    storeName?: string;
+    slug?: string | null;
+    storeSlug?: string | null;
+  } | null;
+}
+
+function normalizeProduct(raw: RawBackendProduct): CatalogProduct {
+  const id = raw.id ?? raw.proId ?? 0;
+  const sku = raw.sku ?? raw.proSku ?? null;
+  const name = raw.name ?? raw.proName ?? '';
+  const type = raw.type ?? raw.proType ?? 'Single';
+  const game = raw.game ?? raw.cardGame?.gameName ?? 'Uncategorized';
+  const price = Number(raw.price ?? raw.proPriceOfSell ?? 0);
+  const stock = Number(raw.stock ?? raw.proQuantity ?? 0);
+  const imageUrl = raw.imageUrl ?? raw.proImageUrl ?? null;
+  const description = raw.description ?? raw.proDescription ?? null;
+  const rawSource = (raw.source ?? raw.listingSource ?? 'OFFICIAL').toUpperCase();
+  const source = rawSource === 'MARKETPLACE' ? 'MARKETPLACE' : 'OFFICIAL';
+
+  const storeRaw = raw.store;
+  const storeId = storeRaw?.id ?? storeRaw?.storeId ?? null;
+  const storeName = storeRaw?.name ?? storeRaw?.storeName ?? (source === 'OFFICIAL' ? 'Optracard Official Store' : 'Marketplace seller');
+  const storeSlug = storeRaw?.slug ?? storeRaw?.storeSlug ?? null;
+
+  return {
+    id,
+    sku,
+    name,
+    type,
+    game,
+    price,
+    stock,
+    imageUrl,
+    description,
+    source,
+    store: {
+      id: storeId,
+      name: storeName,
+      slug: storeSlug,
+    },
+  };
+}
+
 export const searchCatalog = async (query: string): Promise<CatalogProduct[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/products/search?q=${encodeURIComponent(query)}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch search results');
+  const trimmed = query.trim().toLowerCase();
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/products/search?q=${encodeURIComponent(query)}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        return data.map(normalizeProduct);
+      }
+    }
+  } catch {
+    // API request failed or was rejected; gracefully fall back to local catalog search
   }
-  return response.json();
+
+  // Fallback: search over all available products from loadCatalog()
+  const allProducts = await loadCatalog();
+  if (!trimmed) return allProducts;
+
+  return allProducts.filter((product) => {
+    const matchesName = product.name?.toLowerCase().includes(trimmed);
+    const matchesGame = product.game?.toLowerCase().includes(trimmed);
+    const matchesType = product.type?.toLowerCase().includes(trimmed);
+    const matchesDesc = product.description?.toLowerCase().includes(trimmed);
+    const matchesStore = product.store?.name?.toLowerCase().includes(trimmed);
+    return Boolean(matchesName || matchesGame || matchesType || matchesDesc || matchesStore);
+  });
 };
 
 export const loadProduct = async (productId: number): Promise<CatalogProduct> => {

@@ -99,6 +99,7 @@ export const ProductCard = ({
   const soldOut = stock === 0;
 
   return (
+    <div className="flex h-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-blue-400">
     <div
       className={`flex h-full flex-col justify-between rounded-lg border bg-white p-4 shadow-sm transition-shadow ${productId ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500' : ''}`}
       onClick={handleOpenDetails}
@@ -109,7 +110,7 @@ export const ProductCard = ({
     >
       <div className="relative mb-4 flex h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
         {imageUrl && !imageFailed ? (
-          <img src={imageUrl} alt={title} className="max-h-full object-contain" onError={() => setImageFailed(true)} />
+          <img src={imageUrl} alt={title} className="max-h-full object-contain transition-transform duration-200 hover:scale-105" onError={() => setImageFailed(true)} />
         ) : (
           <div className="px-4 text-center">
             <div className="text-3xl" aria-hidden="true">🃏</div>
@@ -148,7 +149,7 @@ export const ProductCard = ({
           disabled={isAdding || soldOut}
           title={soldOut ? 'This product is out of stock' : 'Add to cart'}
           aria-label="Add to cart"
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-transparent bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 w-9 items-center justify-center rounded-md border border-transparent bg-blue-50 text-blue-600 transition-all duration-150 hover:bg-blue-600 hover:text-white hover:scale-110 hover:shadow-md active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-50 disabled:hover:text-blue-600 disabled:hover:scale-100"
         >
           {added ? '✓' : '🛒'}
         </button>
