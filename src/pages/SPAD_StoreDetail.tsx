@@ -1,42 +1,28 @@
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Eye } from 'lucide-react';
-import { SPAD_ExportButton, SPAD_Panel, SPAD_StatCard, SPAD_StatusBadge } from '../components/SPAD_Widgets';
+import { loadSuperAdminStore } from '../api/superadmin';
+import { SPAD_Error, SPAD_Loading, formatCurrency, formatDate, statusTone } from '../components/SPAD_DataState';
 import { SPAD_Shell } from '../components/SPAD_Shell';
-
-const inventory = [
-  { name: 'Charizard ex · 223/197', code: 'SV03-223/197', game: 'Pokémon', set: 'Scarlet & Violet · 151', stock: '12', price: '฿2,800', sold: '8', color: 'bg-[#f08a35]' },
-  { name: 'Blue-Eyes White Dragon', code: 'QCCP-EN001', game: 'Yu-Gi-Oh!', set: 'Quarter Century', stock: '8', price: '฿1,450', sold: '6', color: 'bg-[#4e79d9]' },
-  { name: 'Pikachu VMAX · Rainbow', code: 'SWSH-188', game: 'Pokémon', set: 'Vivid Voltage', stock: '24', price: '฿980', sold: '14', color: 'bg-[#38a679]' },
-  { name: 'Monkey D. Luffy · SEC', code: 'OP05-119', game: 'One Piece', set: 'Romance Dawn', stock: '3', price: '฿3,200', sold: '3', color: 'bg-[#805cc3]' },
-];
+import { SPAD_ExportButton, SPAD_Panel, SPAD_SectionHeading, SPAD_StatCard, SPAD_StatusBadge } from '../components/SPAD_Widgets';
+import type { SuperAdminStore } from '../types/superadmin';
 
 export function SPAD_StoreDetail() {
   const { storeId } = useParams();
-  const storeName = storeId === 'card-realm' ? 'Card Realm' : storeId === 'meta-tcg' ? 'Meta TCG' : 'Pokemon Center TH';
+  const [store, setStore] = useState<SuperAdminStore | null>(null);
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    if (!storeId || Number.isNaN(Number(storeId))) { setError('This store ID is invalid.'); return; }
+    setError('');
+    try { setStore(await loadSuperAdminStore(Number(storeId))); } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unable to load the store.'); }
+  }, [storeId]);
+  useEffect(() => { void load(); }, [load]);
 
-  return (
-    <SPAD_Shell>
-      <div className="mx-auto max-w-[1440px] space-y-4">
-        <Link to="/superadmin/stores" className="inline-flex text-[8px] font-bold text-[#2f65ff] hover:text-[#1647c4]">← Back to stores</Link>
-
-        <div className="rounded-lg border border-[#e1e6ee] bg-white px-4 py-3 shadow-[0_2px_8px_rgba(27,39,63,0.04)]">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2.5"><div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#f59b32] text-[10px] font-black text-white">PC</div><div><h1 className="text-sm font-black text-[#263142]">{storeName}</h1><p className="text-[8px] text-[#a1a8b3]">ST-000124 · Bangkok, Thailand · Storefront active since 12 Jan 2025</p><div className="mt-1 flex gap-1.5"><SPAD_StatusBadge label="Active" tone="green" /><SPAD_StatusBadge label="Public data only" tone="blue" /></div></div></div>
-            <div className="flex items-center gap-3 sm:text-right"><p className="hidden text-[8px] text-[#a1a8b3] sm:block">Last activity: Today, 14:12</p><SPAD_ExportButton label="Export snapshot" fileName={`${storeId ?? 'store'}-snapshot.csv`} rows={inventory.map((item) => ({ Product: item.name, Code: item.code, Game: item.game, Stock: item.stock, Price: item.price, 'Sold · 30d': item.sold }))} /></div>
-          </div>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><SPAD_StatCard label="Products listed" value="2,842" detail="+184 this month" /><SPAD_StatCard label="In-stock products" value="2,418" detail="85.1% of catalog" tone="teal" /><SPAD_StatCard label="GMV · 30 days" value="฿1.21M" detail="+22.0% vs previous" tone="orange" /><SPAD_StatCard label="Orders · 30 days" value="184" detail="Average ฿6,582 / order" tone="purple" /></div>
-
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.9fr)]">
-          <SPAD_Panel title="Public inventory" subtitle="Products currently listed by this store · View-only" action={<Link to="/superadmin/catalog" className="text-[8px] font-bold text-[#2f65ff]">Open catalog →</Link>}>
-            <div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left"><thead className="border-b border-[#edf0f4] bg-[#f4f7fb] text-[8px] font-bold text-[#687486]"><tr><th className="px-3 py-2.5">Product</th><th className="px-3 py-2.5">Game / set</th><th className="px-3 py-2.5 text-center">Stock</th><th className="px-3 py-2.5 text-right">Price</th><th className="px-3 py-2.5 text-right">Sold · 30d</th><th className="px-3 py-2.5" /></tr></thead><tbody className="divide-y divide-[#f0f2f5] text-[9px]">{inventory.map((item) => <tr key={item.code}><td className="px-3 py-2.5"><div className="flex items-center gap-2"><span className={`flex h-6 w-5 items-center justify-center rounded text-[6px] font-black text-white ${item.color}`}>{item.name.slice(0, 3).toUpperCase()}</span><span><span className="block font-bold text-[#303844]">{item.name}</span><span className="text-[8px] text-[#a1a8b3]">{item.code}</span></span></div></td><td className="px-3 py-2.5 text-[#687486]"><p>{item.game}</p><p className="text-[8px] text-[#a1a8b3]">{item.set}</p></td><td className="px-3 py-2.5 text-center"><span className={`rounded px-1.5 py-1 text-[8px] font-bold ${item.stock === '3' ? 'bg-[#fff4dc] text-[#b47a00]' : 'bg-[#e8f8f1] text-[#159568]'}`}>● {item.stock}</span></td><td className="px-3 py-2.5 text-right font-bold text-[#303844]">{item.price}</td><td className="px-3 py-2.5 text-right font-bold text-[#303844]">{item.sold}</td><td className="px-3 py-2.5 text-right"><Link to={`/superadmin/catalog?store=${encodeURIComponent(storeName)}`} aria-label={`View ${item.name} in catalog`} title="View product in catalog" className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#dbe3ee] bg-white text-[#2f65ff] shadow-[0_1px_2px_rgba(27,39,63,0.04)] transition hover:border-[#2f65ff] hover:bg-[#edf4ff]"><Eye size={12} /></Link></td></tr>)}</tbody></table></div>
-            <div className="border-t border-[#edf0f4] px-3 py-3 text-[8px] text-[#a1a8b3]">Showing 4 of 2,842 products · sorted by recent sales <Link to="/superadmin/catalog" className="float-right font-bold text-[#2f65ff]">View full inventory →</Link></div>
-          </SPAD_Panel>
-
-          <div className="space-y-4"><SPAD_Panel title="Store sales trend" subtitle="Last 12 months" action={<span className="text-[9px] font-bold text-[#2f65ff]">+22%</span>}><div className="px-3 pb-3 pt-2"><svg viewBox="0 0 420 150" className="h-36 w-full" role="img" aria-label="Store sales trend chart"><path d="M8 130H412M8 95H412M8 60H412M8 25H412" stroke="#edf0f4" strokeWidth="1" /><path d="M8 115 C55 105 68 112 98 90 S150 92 176 80 S226 105 258 66 S300 78 332 42 S378 52 412 18" fill="none" stroke="#347cff" strokeWidth="3" strokeLinecap="round" /><path d="M8 115 C55 105 68 112 98 90 S150 92 176 80 S226 105 258 66 S300 78 332 42 S378 52 412 18 V150 H8Z" fill="url(#salesFillDetail)" opacity="0.14" /><defs><linearGradient id="salesFillDetail" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#347cff" /><stop offset="1" stopColor="#ffffff" /></linearGradient></defs></svg><div className="flex justify-between text-[8px] text-[#a1a8b3]"><span>Feb</span><span>May</span><span>Aug</span><span>Jan</span></div></div></SPAD_Panel><SPAD_Panel title="Store profile" subtitle="Read-only store information"><div className="space-y-2.5 px-4 pb-4 pt-3 text-[9px]"><div className="flex justify-between gap-3"><span className="text-[#a1a8b3]">Owner</span><span className="font-bold text-[#303844]">Narin Kittisak</span></div><div className="flex justify-between gap-3"><span className="text-[#a1a8b3]">Member since</span><span className="font-bold text-[#303844]">12 Jan 2025</span></div><div className="flex justify-between gap-3"><span className="text-[#a1a8b3]">Primary games</span><span className="font-bold text-[#303844]">Pokémon · One Piece</span></div><div className="flex justify-between gap-3"><span className="text-[#a1a8b3]">Public rating</span><span className="font-bold text-[#303844]">4.9 / 5.0 ★</span></div></div></SPAD_Panel></div>
-        </div>
-      </div>
-    </SPAD_Shell>
-  );
+  return <SPAD_Shell><div className="mx-auto max-w-[1440px] space-y-4">
+    <SPAD_SectionHeading title={store?.storeName ?? 'Store details'} description={store ? `Owner: ${store.ownerName} · ${store.location ?? 'Location not recorded'}` : 'Loading the selected marketplace store.'} action={<Link to="/superadmin/stores" className="rounded border border-[#dfe4eb] bg-white px-3 py-2 text-[9px] font-semibold text-[#687486]">← Back to stores</Link>} />
+    {error ? <SPAD_Error message={error} onRetry={() => void load()} /> : !store ? <SPAD_Loading /> : <>
+      <div className="flex flex-wrap items-center gap-2"><SPAD_StatusBadge label={store.storeStatus} tone={statusTone(store.storeStatus)} /><span className="text-[10px] text-[#8e99aa]">Submitted {formatDate(store.submittedAt)} · Reviewed {formatDate(store.reviewedAt)}</span></div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><SPAD_StatCard label="Listings" value={String(store.productCount)} /><SPAD_StatCard label="Active listings" value={String(store.activeProductCount)} tone="teal" /><SPAD_StatCard label="Total stock" value={String(store.totalStock)} tone="blue" /><SPAD_StatCard label="Recorded GMV" value={formatCurrency(store.gmv)} detail={`${store.orderCount} recorded orders`} tone="purple" /></div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.8fr)]"><SPAD_Panel title="Marketplace inventory" subtitle="Products currently associated with this store in the database." action={<SPAD_ExportButton label="Export inventory" fileName={`${store.storeSlug}-inventory.csv`} rows={store.products.map((product) => ({ id: product.id, product: product.name, game: product.game, type: product.type, price: product.price ?? 0, stock: product.stock ?? 0, approval: product.approvalStatus, active: product.active ? 'Active' : 'Inactive' }))} />}><div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left"><thead className="bg-[#f4f7fb] text-[8px] uppercase tracking-wide text-[#687486]"><tr><th className="px-4 py-3">Product</th><th className="px-4 py-3">Game / type</th><th className="px-4 py-3 text-right">Price</th><th className="px-4 py-3 text-right">Stock</th><th className="px-4 py-3">State</th></tr></thead><tbody className="divide-y divide-[#edf0f4] text-[10px]">{store.products.length === 0 ? <tr><td colSpan={5} className="px-4 py-10 text-center text-[#8e99aa]">This store has no marketplace listings.</td></tr> : store.products.map((product) => <tr key={product.id}><td className="px-4 py-3"><p className="font-bold text-[#303844]">{product.name}</p><p className="mt-1 text-[8px] text-[#8e99aa]">ID: {product.id}</p></td><td className="px-4 py-3"><p>{product.game}</p><p className="mt-1 text-[8px] text-[#8e99aa]">{product.type}</p></td><td className="px-4 py-3 text-right font-bold text-[#2f65ff]">{formatCurrency(product.price)}</td><td className="px-4 py-3 text-right font-bold">{product.stock ?? 0}</td><td className="px-4 py-3"><div className="flex gap-1"><SPAD_StatusBadge label={product.active ? 'Active' : 'Inactive'} tone={product.active ? 'green' : 'red'} /><SPAD_StatusBadge label={product.approvalStatus} tone={statusTone(product.approvalStatus)} /></div></td></tr>)}</tbody></table></div></SPAD_Panel><SPAD_Panel title="Store contact" subtitle="Submitted seller details."><div className="space-y-3 px-4 py-4 text-[10px]"><p><span className="block text-[#8e99aa]">Owner</span><strong>{store.ownerName}</strong></p><p><span className="block text-[#8e99aa]">Email</span><strong>{store.ownerEmail ?? '—'}</strong></p><p><span className="block text-[#8e99aa]">Phone</span><strong>{store.ownerPhone ?? '—'}</strong></p><p><span className="block text-[#8e99aa]">Description</span><span>{store.description ?? 'No description provided.'}</span></p></div></SPAD_Panel></div>
+    </>}
+  </div></SPAD_Shell>;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addProductToCart } from '../api/cart';
 import { formatPrice } from '../context/formatters';
@@ -9,8 +9,8 @@ interface TradingListingCardProps {
   gameName: string;
   itemCount: number;
   startingPrice: number;
-  imageUrl?: string;
-  storeName?: string;
+  imageUrl?: string | null;
+  storeName?: string | null;
   source?: 'MARKETPLACE' | 'OFFICIAL';
   productId?: number;
 }
@@ -63,10 +63,29 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
     }
   };
 
+  const handleOpenDetails = () => {
+    if (productId) navigate(`/product/${productId}`);
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (productId && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      handleOpenDetails();
+    }
+  };
+
   const soldOut = itemCount === 0;
 
   return (
     <div className="flex h-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-blue-400">
+    <div
+      className={`flex h-full flex-col justify-between rounded-lg border bg-white p-4 shadow-sm transition-shadow ${productId ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500' : ''}`}
+      onClick={handleOpenDetails}
+      onKeyDown={handleCardKeyDown}
+      role={productId ? 'button' : undefined}
+      tabIndex={productId ? 0 : undefined}
+      aria-label={productId ? `View details for ${cardName}` : undefined}
+    >
       <div className="flex gap-4">
         <div className="relative flex h-28 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-100">
           {imageUrl && !imageFailed ? (
@@ -93,7 +112,10 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
       <button
         type="button"
         disabled={isAdding || soldOut}
-        onClick={handleAddToCart}
+        onClick={(event) => {
+          event.stopPropagation();
+          void handleAddToCart();
+        }}
         title={soldOut ? 'This product is out of stock' : 'Add to cart'}
         className="mt-5 w-full rounded-md bg-blue-50 py-2.5 text-sm font-semibold text-blue-600 transition-all duration-150 hover:bg-blue-600 hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-50 disabled:hover:text-blue-600 disabled:hover:scale-100"
       >

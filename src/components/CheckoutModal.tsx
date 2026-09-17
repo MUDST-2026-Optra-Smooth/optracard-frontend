@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Truck, Store, Package, MapPin, Wallet, CreditCard, QrCode, Check } from 'lucide-react';
+import { X, Truck, Store, MapPin, Wallet, CreditCard, QrCode, Check } from 'lucide-react';
 import { formatPrice } from '../context/formatters';
 
 export interface SavedAddress {

@@ -1,282 +1,70 @@
-import React, { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { CheckCircle2, Clock3, Pencil, Plus, RefreshCcw, Search, Trash2, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, User } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
-import AddProductDropdown from '../components/AddProductDropdown';
+import { deactivateSellerProduct, loadSellerProducts } from '../api/seller';
+import type { SellerProduct } from '../types/seller';
 
-interface ProductItem {
-  id: string;
-  name: string;
-  category: string;
-  stocks: number;
-  cost: string;
-  price: string;
-  profit: string;
-  cardCode?: string;
-  set?: string;
-  setCode?: string;
-  productType?: string;
-  language?: string;
-  description?: string;
-  imageUrl?: string;
-}
+const money = (value: number) => `฿${Number(value ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 
-const mockProducts: ProductItem[] = [
-  {
-    id: 'PD-0001',
-    name: 'Charizard ex',
-    category: 'Pokémon',
-    stocks: 5,
-    cost: '฿1,000',
-    price: '฿1,500',
-    profit: '฿500',
-    cardCode: '006/165',
-    set: 'Scarlet & Violet 151',
-    setCode: 'sv3pt5',
-    productType: 'Pokémon',
-    language: 'English',
-    imageUrl: 'https://images.pokemontcg.io/sv3pt5/6_hires.png',
-    description: `[Type] Fire
-[HP] 330
-[Stage] Stage 2 – Evolves from Charmeleon
-[Rarity] Double Rare
-[Brave Wing] 60+ If this Pokémon has any damage counters on it, this attack does 100 more damage.
-[Explosive Vortex] 330 Discard 3 Energy from this Pokémon.
-[Pokémon ex Rule] When your Pokémon ex is Knocked Out, your opponent takes 2 Prize cards.
-[Weakness] Water ×2
-[Resistance] None
-[Retreat Cost] 2
-[Illustrator] PLANETA Mochizuki`,
-  },
-  {
-    id: 'BT-0001',
-    name: 'Bandai One Piece OP-13 Jp',
-    category: 'One Piece',
-    stocks: 12,
-    cost: '฿600',
-    price: '฿800',
-    profit: '฿200',
-  },
-  {
-    id: 'BOX-0001',
-    name: 'One Piece [OP-13] "Carrying On His Will"',
-    category: 'One Piece',
-    stocks: 12,
-    cost: '฿600',
-    price: '฿800',
-    profit: '฿200',
-  },
-  {
-    id: 'AC-0001',
-    name: '100 Ultra Pro Penny Sleeves',
-    category: 'Sleeves',
-    stocks: 12,
-    cost: '฿600',
-    price: '฿800',
-    profit: '฿200',
-  },
-];
+const statusStyle: Record<SellerProduct['approvalStatus'], string> = {
+  PENDING: 'bg-amber-50 text-amber-700 border-amber-200',
+  APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  REJECTED: 'bg-red-50 text-red-700 border-red-200',
+};
 
-export const Seller: React.FC = () => {
+const Status = ({ status }: { status: SellerProduct['approvalStatus'] }) => {
+  const Icon = status === 'APPROVED' ? CheckCircle2 : status === 'REJECTED' ? XCircle : Clock3;
+  return <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyle[status]}`}><Icon className="h-3.5 w-3.5" />{status}</span>;
+};
+
+export const Seller = () => {
   const navigate = useNavigate();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [products, setProducts] = useState<SellerProduct[]>([]);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<'ALL' | SellerProduct['approvalStatus']>('ALL');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleEditProduct = (item: ProductItem) => {
-    // เปลี่ยนจาก '/edit-product' เป็น `/edit-product/${item.id}`
-    navigate(`/edit-product/${item.id}`, {
-      state: {
-        product: {
-          productId: item.id,
-          cardName: item.name,
-          cardGame: item.category,
-          cardCode: item.cardCode || '',
-          set: item.set || '',
-          setCode: item.setCode || '',
-          productType: item.productType || item.category,
-          language: item.language || 'English',
-          cost: item.cost.replace('฿', '').replace(',', ''),
-          priceOfSell: item.price.replace('฿', '').replace(',', ''),
-          stocks: item.stocks.toString(),
-          description: item.description || '',
-          imageUrl: item.imageUrl,
-        },
-      },
-    });
+  const load = async () => {
+    setIsLoading(true);
+    setError(null);
+    try { setProducts(await loadSellerProducts()); }
+    catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Could not load your products.'); }
+    finally { setIsLoading(false); }
   };
 
-return (
-    // 1. เปลี่ยนเป็น flex แนวนอน เพื่อให้ Sidebar อยู่ซ้ายสุด
-    <div className="min-h-screen flex bg-slate-50 font-sans text-gray-800">
-      
-      {/* 2. วาง Sidebar ไว้ลำดับแรก */}
+  useEffect(() => { void load(); }, []);
+
+  const filtered = useMemo(() => products.filter((product) => {
+    const query = search.trim().toLowerCase();
+    const matchesSearch = !query || product.name.toLowerCase().includes(query) || product.game.toLowerCase().includes(query);
+    return matchesSearch && (status === 'ALL' || product.approvalStatus === status);
+  }), [products, search, status]);
+
+  const deactivate = async (product: SellerProduct) => {
+    if (!window.confirm(`Remove ${product.name} from your shop?`)) return;
+    try { await deactivateSellerProduct(product.id); await load(); }
+    catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Could not remove the product.'); }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800">
       <Sidebar currentTab="stocks" />
-
-      {/* 3. สร้างกล่อง Container ฝั่งขวา เพื่อจัดเรียง Header ไว้บน Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        
-        {/* Top Navbar (Secondary) - คืนค่าสี bg-[#0f172a] และ text-white ให้เหมือนเดิม */}
-        <header className="bg-[#0f172a] text-white flex items-center justify-end px-8 py-3.5 h-16 shrink-0">
-          <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-              alt="Seller Profile"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          {/* Header Title & Add Button */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Stocks Management</h1>
-              <p className="text-gray-500 text-sm mt-0.5">
-                Manage stocks and set selling prices to calculate profit
-              </p>
-            </div>
-            
-            <button
-              type="button"
-              onClick={() => setIsDropdownOpen(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add new product</span>
-            </button>
-          </div>
-
-          {/* Search / Filter Box */}
-          <div className="bg-white p-5 rounded-xl border border-gray-200/80 shadow-sm mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Product id
-                </label>
-                <input
-                  type="text"
-                  placeholder="Product id"
-                  className="w-full px-3.5 py-2 text-sm bg-gray-100 rounded-lg border-transparent focus:bg-white focus:border-blue-500 focus:outline-none transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Product name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Product name"
-                  className="w-full px-3.5 py-2 text-sm bg-gray-100 rounded-lg border-transparent focus:bg-white focus:border-blue-500 focus:outline-none transition"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                    Card game
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Card game"
-                    className="w-full px-3.5 py-2 text-sm bg-gray-100 rounded-lg border-transparent focus:bg-white focus:border-blue-500 focus:outline-none transition"
-                  />
-                </div>
-                <button 
-                  type="button"
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3.5 py-2 rounded-lg border border-transparent transition flex items-center justify-center cursor-pointer"
-                >
-                  <Search className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Data Table */}
-          <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 text-gray-600 bg-slate-50/80">
-                  <th className="py-3 px-4 font-semibold">Product ID</th>
-                  <th className="py-3 px-4 font-semibold text-center">Picture</th>
-                  <th className="py-3 px-4 font-semibold">Product Name</th>
-                  <th className="py-3 px-4 font-semibold text-center">Stocks</th>
-                  <th className="py-3 px-4 font-semibold text-center bg-amber-50/40 text-amber-700">Cost</th>
-                  <th className="py-3 px-4 font-semibold text-center bg-blue-50/40 text-blue-700">Price</th>
-                  <th className="py-3 px-4 font-semibold text-center bg-emerald-50/40 text-emerald-700">Profit</th>
-                  <th className="py-3 px-4 font-semibold text-center">Manage</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {mockProducts.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/60 transition">
-                    <td className="py-4 px-4 font-semibold text-blue-600">{item.id}</td>
-                    
-                    <td className="py-4 px-4 text-center">
-                      {item.imageUrl ? (
-                        <div className="w-10 h-14 rounded mx-auto overflow-hidden border border-gray-200">
-                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-10 h-14 bg-gray-200 rounded mx-auto flex items-center justify-center border border-gray-300">
-                          <span className="text-[10px] text-gray-400 font-medium">No Img</span>
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="py-4 px-4">
-                      <div className="font-semibold text-gray-900">{item.name}</div>
-                      <div className="text-[11px] text-gray-400">{item.category}</div>
-                    </td>
-
-                    <td className="py-4 px-4 text-center">
-                      <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded-full bg-emerald-50 text-emerald-600">
-                        {item.stocks} left
-                      </span>
-                    </td>
-
-                    <td className="py-4 px-4 text-center font-medium bg-amber-50/20 text-gray-800">
-                      {item.cost}
-                    </td>
-
-                    <td className="py-4 px-4 text-center font-medium bg-blue-50/20 text-blue-600">
-                      {item.price}
-                    </td>
-
-                    <td className="py-4 px-4 text-center font-semibold bg-emerald-50/20 text-emerald-600">
-                      {item.profit}
-                    </td>
-
-                    <td className="py-4 px-4 text-center space-x-3 whitespace-nowrap">
-                      <button 
-                        type="button"
-                        onClick={() => handleEditProduct(item)}
-                        className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        type="button"
-                        className="text-red-500 hover:text-red-600 font-medium cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="h-16 bg-[#08152a]" aria-hidden="true" />
+        <main className="flex-1 overflow-y-auto p-8"><div className="mx-auto max-w-[1440px]">
+          <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">My Shop</p><h1 className="mt-1 text-3xl font-bold text-slate-900">Stocks Management</h1><p className="mt-1 text-sm text-slate-500">New listings stay hidden from buyers until Admin approval.</p></div><button type="button" onClick={() => navigate('/add-product')} className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-700"><Plus className="h-4 w-4" />Add new product</button></div>
+          <div className="mb-6 grid gap-4 sm:grid-cols-3"><div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">Total products</p><p className="mt-1 text-3xl font-bold">{products.length}</p></div><div className="rounded-xl border border-amber-100 bg-amber-50 p-5 shadow-sm"><p className="text-sm text-amber-700">Waiting for approval</p><p className="mt-1 text-3xl font-bold text-amber-800">{products.filter((product) => product.approvalStatus === 'PENDING').length}</p></div><div className="rounded-xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm"><p className="text-sm text-emerald-700">Live on Marketplace</p><p className="mt-1 text-3xl font-bold text-emerald-800">{products.filter((product) => product.approvalStatus === 'APPROVED' && product.active).length}</p></div></div>
+          <div className="mb-5 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search product or card game" className="w-full rounded-lg bg-slate-100 py-2.5 pl-10 pr-3 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/20" /></div><select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="rounded-lg bg-slate-100 px-3 py-2.5 text-sm outline-none"><option value="ALL">All statuses</option><option value="PENDING">Pending</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option></select><button type="button" onClick={() => void load()} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"><RefreshCcw className="h-4 w-4" />Refresh</button></div>
+          {error && <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm"><table className="w-full min-w-[900px] text-left text-sm"><thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4">Product</th><th className="px-5 py-4">Type / Game</th><th className="px-5 py-4 text-center">Stock</th><th className="px-5 py-4">Cost</th><th className="px-5 py-4">Selling price</th><th className="px-5 py-4">Approval</th><th className="px-5 py-4 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-100">
+            {isLoading && <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-500">Loading your products…</td></tr>}
+            {!isLoading && filtered.map((product) => <tr key={product.id} className="hover:bg-slate-50"><td className="px-5 py-4"><div className="flex items-center gap-3"><div className="h-12 w-10 overflow-hidden rounded bg-slate-100">{product.imageUrl && <img src={product.imageUrl} alt="" className="h-full w-full object-cover" />}</div><div><p className="font-bold text-slate-900">{product.name}</p><p className="text-xs text-slate-400">ID: {product.id}</p></div></div></td><td className="px-5 py-4"><p className="font-medium">{product.type}</p><p className="text-xs text-slate-500">{product.game}</p></td><td className="px-5 py-4 text-center font-bold">{product.stock}</td><td className="px-5 py-4">{money(product.cost)}</td><td className="px-5 py-4 font-bold text-blue-600">{money(product.price)}</td><td className="px-5 py-4"><Status status={product.approvalStatus} /></td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-2"><button type="button" onClick={() => navigate(`/edit-product/${product.id}`)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:border-blue-200 hover:text-blue-600" aria-label="Edit product"><Pencil className="h-4 w-4" /></button><button type="button" onClick={() => void deactivate(product)} className="rounded-lg border border-red-100 p-2 text-red-500 hover:bg-red-50" aria-label="Remove product"><Trash2 className="h-4 w-4" /></button></div></td></tr>)}
+            {!isLoading && filtered.length === 0 && <tr><td colSpan={7} className="px-5 py-12 text-center text-slate-500">No products found in this filter.</td></tr>}
+          </tbody></table></div>
+        </div></main>
       </div>
-
-      {/* เรียกใช้งาน Modal ค้นหาประเภทสินค้า */}
-      <AddProductDropdown
-        isOpen={isDropdownOpen}
-        onClose={() => setIsDropdownOpen(false)}
-      />
     </div>
   );
 };

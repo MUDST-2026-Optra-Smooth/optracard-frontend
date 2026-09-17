@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addProductToCart } from '../api/cart';
 import { formatPrice } from '../context/formatters';
@@ -8,10 +8,10 @@ interface ProductCardProps {
   title: string;
   price: number;
   game?: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   type?: string;
   source?: 'OFFICIAL' | 'MARKETPLACE';
-  storeName?: string;
+  storeName?: string | null;
   stock?: number;
   productId?: number;
 }
@@ -85,10 +85,29 @@ export const ProductCard = ({
     }
   };
 
+  const handleOpenDetails = () => {
+    if (productId) navigate(`/product/${productId}`);
+  };
+
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (productId && (event.key === 'Enter' || event.key === ' ')) {
+      event.preventDefault();
+      handleOpenDetails();
+    }
+  };
+
   const soldOut = stock === 0;
 
   return (
     <div className="flex h-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-blue-400">
+    <div
+      className={`flex h-full flex-col justify-between rounded-lg border bg-white p-4 shadow-sm transition-shadow ${productId ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500' : ''}`}
+      onClick={handleOpenDetails}
+      onKeyDown={handleCardKeyDown}
+      role={productId ? 'button' : undefined}
+      tabIndex={productId ? 0 : undefined}
+      aria-label={productId ? `View details for ${title}` : undefined}
+    >
       <div className="relative mb-4 flex h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
         {imageUrl && !imageFailed ? (
           <img src={imageUrl} alt={title} className="max-h-full object-contain transition-transform duration-200 hover:scale-105" onError={() => setImageFailed(true)} />
@@ -123,7 +142,10 @@ export const ProductCard = ({
         </div>
         <button
           type="button"
-          onClick={handleAddToCart}
+          onClick={(event) => {
+            event.stopPropagation();
+            void handleAddToCart();
+          }}
           disabled={isAdding || soldOut}
           title={soldOut ? 'This product is out of stock' : 'Add to cart'}
           aria-label="Add to cart"

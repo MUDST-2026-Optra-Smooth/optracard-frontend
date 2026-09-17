@@ -4,7 +4,7 @@ export interface User {
   userId?: number;
   username: string;
   email: string;
-  role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
+  role: 'USER' | 'SELLER' | 'ADMIN' | 'SUPER_ADMIN';
 }
 
 interface AuthContextType {

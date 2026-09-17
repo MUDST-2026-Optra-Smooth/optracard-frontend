@@ -1,147 +1,340 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  ShoppingCart, 
-  User, 
-  ArrowLeft, 
-  CheckCircle2, 
-  ChevronRight 
+import { useEffect, useState, type KeyboardEvent } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  ChevronRight,
+  LoaderCircle,
+  Minus,
+  Plus,
+  ShoppingCart,
 } from 'lucide-react';
-// ใช้ไอคอนโซเชียลจาก react-icons เพื่อแก้บัค Error
-import { FiFacebook, FiInstagram, FiGithub } from 'react-icons/fi';
+import { addProductToCart } from '../api/cart';
+import { loadProduct, loadProductOffers } from '../api/catalog';
+import { useAuth } from '../context/AuthContext';
+import { formatPrice } from '../context/formatters';
+import type { CatalogProduct } from '../types/catalog';
 
-const ProductDetail: React.FC = () => {
+const ProductDetail = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const [product, setProduct] = useState<CatalogProduct | null>(null);
+  const [offers, setOffers] = useState<CatalogProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
+  const [feedback, setFeedback] = useState<{ message: string; tone: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    const productId = Number(id);
+    if (!Number.isInteger(productId) || productId <= 0) {
+      setError('Invalid product id.');
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+    setProduct(null);
+    setOffers([]);
+    setFeedback(null);
+    setQuantity(1);
+    setImageFailed(false);
+
+    loadProduct(productId)
+      .then((loadedProduct) => {
+        if (!cancelled) setProduct(loadedProduct);
+      })
+      .catch((requestError: unknown) => {
+        if (!cancelled) {
+          setError(requestError instanceof Error ? requestError.message : 'Could not load this product.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    loadProductOffers(productId)
+      .then((loadedOffers) => {
+        if (!cancelled) setOffers(loadedOffers);
+      })
+      .catch(() => {
+        if (!cancelled) setOffers([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const isSoldOut = !product || product.stock <= 0;
+
+  const detailRows = product ? [
+    ['Card Game', product.game],
+    ['Product Type', product.type],
+    ...(product.productSet ? [['Set', product.productSet]] : []),
+    ...(product.language ? [['Language', product.language]] : []),
+    ['Available Stock', String(Math.max(product.stock, 0))],
+  ] : [];
+
+  const handleAddToCart = async () => {
+    if (!product || isSoldOut) return;
+    if (!user) {
+      navigate('/login', { state: { from: window.location.pathname } });
+      return;
+    }
+
+    setIsAdding(true);
+    setFeedback(null);
+    try {
+      for (let index = 0; index < quantity; index += 1) {
+        await addProductToCart(product.id, user.userId);
+      }
+      setFeedback({
+        tone: 'success',
+        message: `Added ${quantity} item${quantity > 1 ? 's' : ''} to cart.`,
+      });
+    } catch (requestError: unknown) {
+      setFeedback({
+        tone: 'error',
+        message: requestError instanceof Error ? requestError.message : 'Could not add this product to your cart.',
+      });
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleQuantityKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
+  };
+
+  if (isLoading) {
+    return (
+      <main className="flex min-h-[70vh] items-center justify-center bg-slate-50 px-4">
+        <div className="flex items-center gap-3 text-slate-600" role="status">
+          <LoaderCircle className="h-6 w-6 animate-spin text-blue-600" />
+          Loading product details...
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <main className="flex min-h-[70vh] flex-col items-center justify-center bg-slate-50 px-4 text-center">
+        <AlertCircle className="h-10 w-10 text-red-500" />
+        <h1 className="mt-4 text-xl font-bold text-slate-900">Unable to load product</h1>
+        <p className="mt-2 text-slate-600">{error ?? 'Product not found.'}</p>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+      </main>
+    );
+  }
+
+  const sellerLabel = product.source === 'OFFICIAL'
+    ? 'Sell By: Optracard Official Store'
+    : `Sold by: ${product.store.name}`;
+  const hasMultipleOffers = offers.length > 1;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-gray-800 font-sans"> 
-      {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 sm:px-8 py-8">
-        <button className="flex items-center text-gray-900 font-bold mb-8 hover:text-blue-600 transition">
-          <ArrowLeft className="w-5 h-5 mr-2 stroke-[3]" /> Back
+    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-[1440px]">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mb-8 inline-flex items-center gap-2 text-xl font-bold text-slate-900 transition-colors hover:text-blue-600"
+        >
+          <ArrowLeft className="h-5 w-5 stroke-[3]" />
+          Back
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-10">
-          {/* Left Column: Product Image */}
-          <div className="lg:w-1/3 flex justify-center lg:justify-start items-start">
-            {/* เรียกใช้รูปภาพจากโฟลเดอร์ public (ต้องมีเครื่องหมาย / ด้านหน้า) */}
-            <img
-              src="/1111.jpg"
-              alt="พี่หน่วง พิธีกรผมสวย"
-              className="w-full max-w-md h-auto object-contain rounded-lg shadow-sm drop-shadow-md"
-            />
+        <div className="grid gap-10 lg:grid-cols-[minmax(280px,0.75fr)_minmax(0,1.25fr)] lg:items-start">
+          <div className="flex justify-center lg:justify-start">
+            <div className="flex aspect-[3/4] w-full max-w-[480px] items-center justify-center overflow-hidden rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+              {product.imageUrl && !imageFailed ? (
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="h-full w-full object-contain"
+                  onError={() => setImageFailed(true)}
+                />
+              ) : (
+                <div className="px-8 text-center text-slate-500">
+                  <div className="text-6xl" aria-hidden="true">🃏</div>
+                  <p className="mt-4 text-sm font-bold uppercase tracking-[0.18em]">{product.type || 'TCG'}</p>
+                  <p className="mt-2 text-sm">{product.game}</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Right Column: Product Details */}
-          <div className="lg:w-2/3">
-            {/* Tags */}
-            <div className="flex flex-wrap items-center gap-2 mb-3 text-[10px] sm:text-xs font-bold tracking-wide">
-              <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded">CARD GAME: BATTLE OF TALINGCHAN</span>
-              <span className="bg-gray-100 text-gray-500 px-2 py-1 rounded">PRODUCT TYPE: Single Card</span>
-              <span className="bg-red-50 text-red-500 px-2 py-1 rounded">Rarity: PR</span>
-              <span className="ml-auto text-gray-400 font-medium hidden sm:block">Product ID: SG-0010</span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wide">
+              <span className="rounded bg-emerald-100 px-2.5 py-1 text-emerald-700">{product.game}</span>
+              <span className="rounded bg-slate-200 px-2.5 py-1 text-slate-700">{product.type}</span>
+              <span className={`rounded px-2.5 py-1 ${product.source === 'OFFICIAL' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                {product.source === 'OFFICIAL' ? 'Official Store' : 'Marketplace'}
+              </span>
+              <span className="ml-auto text-slate-400">Product ID: {product.id}</span>
             </div>
 
-            {/* Title & Store */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mt-2">
-              <h1 className="text-3xl font-bold text-blue-600">พี่หน่วง พิธีกรผมสวย</h1>
-              <button
-                type="button"
-                onClick={() => navigate('/seller-profile')}
-                className="flex items-center border border-gray-200 rounded-full px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition w-fit whitespace-nowrap shadow-sm cursor-pointer"
-              >
-                Sell By: OptraCard Official Store
-                <CheckCircle2 className="w-4 h-4 text-blue-500 ml-2 fill-current text-white bg-blue-500 rounded-full" />
-                <ChevronRight className="w-4 h-4 ml-1 text-gray-400" />
-              </button>
+            <div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <h1 className="text-3xl font-bold leading-tight text-blue-600 sm:text-4xl">{product.name}</h1>
+              {product.source === 'OFFICIAL' ? (
+                <div className="flex w-full max-w-[360px] items-center rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm xl:shrink-0">
+                  <span className="min-w-0 flex-1 truncate">{sellerLabel}</span>
+                  <CheckCircle2 className="ml-2 h-4 w-4 shrink-0 fill-blue-600 text-white" aria-label="Verified official store" />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => product.store.id && navigate(`/seller-profile/${product.store.id}`)}
+                  className="flex w-full max-w-[360px] items-center rounded-lg border border-slate-300 bg-white px-4 py-3 text-left text-sm text-slate-600 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50 xl:shrink-0"
+                  aria-label={`View ${product.store.name} seller profile`}
+                >
+                  <span className="min-w-0 flex-1 truncate">{sellerLabel}</span>
+                  <ChevronRight className="ml-2 h-5 w-5 shrink-0 text-blue-500" aria-hidden="true" />
+                </button>
+              )}
             </div>
 
-            {/* Price Box */}
-            <div className="border border-gray-200 rounded-xl p-6 mt-6 shadow-sm">
-              <div className="flex justify-between items-start mb-6">
+            <section className="mt-7 rounded-xl border border-slate-300 bg-white p-6 shadow-sm" aria-label="Purchase information">
+              <div className="flex items-start justify-between gap-6 border-b border-slate-200 pb-5">
                 <div>
-                  <p className="text-gray-400 text-xs font-bold tracking-wider mb-1">PRICE</p>
-                  <p className="text-4xl font-bold text-blue-600">฿3,000.00</p>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Price</p>
+                  <p className="mt-1 text-4xl font-bold text-blue-600">{formatPrice(product.price)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-green-500 text-sm font-bold flex items-center justify-end">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-2"></span> In Stock
+                  <p className={isSoldOut ? 'font-bold text-red-600' : 'font-bold text-emerald-600'}>
+                    <span className="mr-2 inline-block h-2 w-2 rounded-full bg-current" />
+                    {isSoldOut ? 'Out of Stock' : 'In Stock'}
                   </p>
-                  <p className="text-gray-400 text-xs mt-1 font-medium">Only 2 items left</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {isSoldOut ? 'No items available' : `Only ${product.stock} item${product.stock === 1 ? '' : 's'} left`}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-center border border-gray-200 rounded-lg h-12">
-                  <button className="px-4 text-gray-400 hover:text-gray-600 text-lg">-</button>
-                  <span className="px-4 font-bold text-gray-800">1</span>
-                  <button className="px-4 text-gray-400 hover:text-gray-600 text-lg">+</button>
+              <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+                <div className="flex h-12 items-center justify-between rounded-lg border border-slate-300 sm:w-36">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                    onKeyDown={handleQuantityKeyDown}
+                    disabled={isSoldOut || quantity <= 1}
+                    aria-label="Decrease quantity"
+                    className="px-4 text-slate-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <span className="font-bold">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((current) => Math.min(product.stock, current + 1))}
+                    onKeyDown={handleQuantityKeyDown}
+                    disabled={isSoldOut || quantity >= product.stock}
+                    aria-label="Increase quantity"
+                    className="px-4 text-slate-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
                 </div>
                 <button className="flex-1 bg-blue-600 text-white font-bold h-12 rounded-lg hover:bg-blue-700 hover:shadow-md active:scale-[0.99] transition-all shadow-sm cursor-pointer">
                   Add to Cart
+                <button
+                  type="button"
+                  onClick={() => void handleAddToCart()}
+                  disabled={isAdding || isSoldOut}
+                  className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                >
+                  {isAdding ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />}
+                  {isAdding ? 'Adding...' : 'Add to Cart'}
                 </button>
               </div>
-            </div>
+              {feedback && (
+                <p role={feedback.tone === 'error' ? 'alert' : 'status'} className={`mt-4 text-sm ${feedback.tone === 'error' ? 'text-red-600' : 'text-emerald-600'}`}>
+                  {feedback.message}
+                </p>
+              )}
+            </section>
 
-            {/* Card Details Table */}
-            <div className="mt-10">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Card Details</h3>
-              <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                <table className="w-full text-sm text-left">
-                  <tbody>
-                    <tr className="border-b border-gray-100">
-                      <td className="py-3.5 px-5 text-gray-500 w-1/3">Card Game</td>
-                      <td className="py-3.5 px-5 font-bold text-gray-800 text-right">Battle of Talingchan</td>
-                    </tr>
-                    <tr className="border-b border-gray-100">
-                      <td className="py-3.5 px-5 text-gray-500">Card Type</td>
-                      <td className="py-3.5 px-5 font-bold text-gray-800 text-right">Avatar</td>
-                    </tr>
-                    <tr className="border-b border-gray-100">
-                      <td className="py-3.5 px-5 text-gray-500">Rarity</td>
-                      <td className="py-3.5 px-5 font-bold text-gray-800 text-right">PR</td>
-                    </tr>
-                    <tr className="border-b border-gray-100">
-                      <td className="py-3.5 px-5 text-gray-500">Set</td>
-                      <td className="py-3.5 px-5 font-bold text-gray-800 text-right">[BT07] Life of หน่วง</td>
-                    </tr>
-                    <tr className="border-b border-gray-100">
-                      <td className="py-3.5 px-5 text-gray-500">Set Code</td>
-                      <td className="py-3.5 px-5 font-bold text-gray-800 text-right">BT07</td>
-                    </tr>
-                    <tr className="border-b border-gray-100">
-                      <td className="py-3.5 px-5 text-gray-500">Card Code</td>
-                      <td className="py-3.5 px-5 font-bold text-gray-800 text-right">BT07-023</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3.5 px-5 text-gray-500">Language</td>
-                      <td className="py-3.5 px-5 font-bold text-gray-800 text-right">Thai</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            {hasMultipleOffers && (
+              <section className="mt-5 rounded-xl border border-blue-100 bg-blue-50/50 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="font-bold text-slate-900">Also sold by other shops</h2>
+                    <p className="mt-1 text-sm text-slate-600">Compare price and available stock before choosing an offer.</p>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {offers.map((offer) => {
+                    const selected = offer.id === product.id;
+                    const isOfficial = offer.source === 'OFFICIAL';
+                    return (
+                      <div key={offer.id} className={`flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between ${selected ? 'border-blue-300 bg-white' : 'border-slate-200 bg-white/80'}`}>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-bold text-slate-900">{offer.store.name}</p>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${isOfficial ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                              {isOfficial ? 'Official Store' : 'Marketplace'}
+                            </span>
+                            {selected && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">Selected</span>}
+                          </div>
+                          <p className="mt-1 text-sm text-slate-500">{Math.max(offer.stock, 0)} item{offer.stock === 1 ? '' : 's'} available</p>
+                        </div>
+                        <div className="flex items-center gap-4 sm:justify-end">
+                          <span className="text-xl font-bold text-blue-600">{formatPrice(offer.price)}</span>
+                          <button
+                            type="button"
+                            disabled={selected}
+                            onClick={() => navigate(`/product/${offer.id}`, { replace: true })}
+                            className="rounded-lg border border-blue-600 px-3 py-2 text-sm font-bold text-blue-600 transition-colors hover:bg-blue-600 hover:text-white disabled:cursor-default disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500"
+                          >
+                            {selected ? 'Current offer' : 'Choose this shop'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-            {/* Description */}
-            <div className="mt-10">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Description</h3>
-              <div className="text-gray-600 text-sm leading-relaxed space-y-4">
-                <p>
-                  Main effect: [จุติ] : นำ "ยานรายการ เถียงทันหน่วง" จาก Deck หรือ นอก 1 ใบขึ้นมือ หากนำจาก Deck ให้สับ Deck
-                </p>
-                <p>
-                  [เทิร์นละครั้ง] [สั่งใช้] ถ้าใน Construct Zone ฝ่ายเรามี "ยานรายการ เถียงกันหน่วง" ทิ้งการ์ดบนมือ 1 ใบ : เลือก Avatar ฝ่ายตรงข้าม 1 ใบ ที่มี [สามัคคี] , [เตะไซ้] , [ไล่มนุษย์] หรือ [คำสั่งเสีย] นำ Avatar ใบนั้น มาไว้ที่ Magic Zone ฝ่ายเรา
-                </p>
-                <p>
-                  [คำสั่งเสีย] : ฝ่ายตรงข้าม เลือก Avatar ที่อยู่ใน Magic Zone ฝ่ายเรา 1 ใบ กลับขึ้นมือเจ้าของ
-                </p>
+            <section className="mt-8">
+              <h2 className="mb-4 text-xl font-bold">Card Details</h2>
+              <div className="overflow-hidden rounded-xl border border-slate-300 bg-white shadow-sm">
+                <dl>
+                  {detailRows.map(([label, value], index) => (
+                    <div key={label} className={`flex items-center justify-between gap-6 px-5 py-3.5 ${index < detailRows.length - 1 ? 'border-b border-slate-200' : ''}`}>
+                      <dt className="text-slate-500">{label}</dt>
+                      <dd className="text-right font-bold text-slate-800">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
-            </div>
+            </section>
+
+            <section className="mt-8 pb-8">
+              <h2 className="mb-4 text-xl font-bold">Description</h2>
+              <div className="whitespace-pre-line text-base leading-7 text-slate-600">
+                {product.description?.trim() || 'No description available for this product.'}
+              </div>
+            </section>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 };
 

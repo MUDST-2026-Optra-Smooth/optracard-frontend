@@ -1,281 +1,249 @@
-import React, { useState, useRef } from 'react';
-import { ChevronLeft, Pencil } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, ImagePlus, LoaderCircle, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import { searchCatalog } from '../api/catalog';
+import { createSellerProduct, loadSellerGames } from '../api/seller';
+import type { CatalogProduct } from '../types/catalog';
+import type { CardGameOption, SellerProductInput } from '../types/seller';
 
-interface ProductFormData {
-  productId: string;
-  cardName: string;
-  cardGame: string;
-  cardCode: string;
-  set: string;
-  setCode: string;
-  productType: string;
-  language: string;
-  cost: string;
-  priceOfSell: string;
-  stocks: string;
-  description: string;
-}
+const initialForm: SellerProductInput = {
+  name: '', game: '', type: 'Single', cost: 0, price: 0, stock: 0,
+  imageUrl: null, productSet: '', language: 'English', description: '', templateProductId: null,
+};
 
-const AddProduct: React.FC = () => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+const normalize = (value: string | null | undefined) => value?.trim().toLowerCase() ?? '';
 
-  const [formData, setFormData] = useState<ProductFormData>({
-    productId: '',
-    cardName: '',
-    cardGame: '',
-    cardCode: '',
-    set: '',
-    setCode: '',
-    productType: '',
-    language: '',
-    cost: '',
-    priceOfSell: '',
-    stocks: '',
-    description: '',
-  });
+const AddProduct = () => {
+  const navigate = useNavigate();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [form, setForm] = useState<SellerProductInput>(initialForm);
+  const [games, setGames] = useState<CardGameOption[]>([]);
+  const [matches, setMatches] = useState<CatalogProduct[]>([]);
+  const [isLoadingGames, setIsLoadingGames] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const templateSelected = form.templateProductId != null;
+
+  useEffect(() => {
+    let cancelled = false;
+    loadSellerGames()
+      .then((loadedGames) => { if (!cancelled) setGames(loadedGames); })
+      .catch((requestError: unknown) => {
+        if (!cancelled) setError(requestError instanceof Error ? requestError.message : 'Could not load card games.');
+      })
+      .finally(() => { if (!cancelled) setIsLoadingGames(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const query = form.name.trim();
+    if (query.length < 2) {
+      setMatches([]);
+      setSearchError(null);
+      setIsSearching(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      setIsSearching(true);
+      setSearchError(null);
+      searchCatalog(query)
+        .then((products) => {
+          if (!cancelled) setMatches(products.filter((product) => normalize(product.name).includes(normalize(query))).slice(0, 8));
+        })
+        .catch((requestError: unknown) => {
+          if (!cancelled) setSearchError(requestError instanceof Error ? requestError.message : 'Could not check existing listings.');
+        })
+        .finally(() => { if (!cancelled) setIsSearching(false); });
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [form.name]);
+
+  const update = (key: keyof SellerProductInput, value: string | number | null) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    if (key === 'name') setError(null);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPreviewImage(URL.createObjectURL(file));
+  const exactMatches = form.game
+    ? matches.filter((product) => normalize(product.name) === normalize(form.name)
+      && product.type === form.type
+      && normalize(product.game) === normalize(form.game))
+    : [];
+  const officialMatch = exactMatches.some((product) => product.source === 'OFFICIAL');
+  const marketplaceMatches = exactMatches.filter((product) => product.source === 'MARKETPLACE');
+
+  const selectTemplate = (product: CatalogProduct) => {
+    if (product.source !== 'MARKETPLACE') return;
+    setForm((current) => ({
+      ...current,
+      templateProductId: product.id,
+      name: product.name,
+      game: product.game,
+      type: product.type,
+      productSet: product.productSet ?? '',
+      language: product.language ?? '',
+      imageUrl: product.imageUrl,
+    }));
+    setError(null);
+  };
+
+  const clearTemplate = () => {
+    setForm((current) => ({
+      ...current,
+      templateProductId: null,
+      name: '',
+      game: '',
+      type: 'Single',
+      productSet: '',
+      language: 'English',
+      imageUrl: null,
+    }));
+    setError(null);
+  };
+
+  const loadImage = (file?: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError('Image must be smaller than 5 MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => update('imageUrl', String(reader.result ?? ''));
+    reader.readAsDataURL(file);
+  };
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (officialMatch) {
+      setError('This product is already sold by Optracard Official Store and cannot be listed on Marketplace.');
+      return;
+    }
+    setIsSaving(true);
+    setError(null);
+    try {
+      await createSellerProduct(form);
+      navigate('/seller');
+    } catch (requestError: unknown) {
+      setError(requestError instanceof Error ? requestError.message : 'Could not submit product.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Seller Product Submitted:', { ...formData, image: previewImage });
-  };
+  const input = 'mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 disabled:bg-slate-100 disabled:text-slate-500';
 
   return (
-    <div className="flex min-h-screen bg-white font-sans antialiased text-slate-800">
-      {/* ใช้งาน Sidebar Component โดยตั้งค่า Tab ให้ตรงกับหน้าจัดการสต๊อก */}
+    <div className="flex min-h-screen bg-slate-50 text-slate-800">
       <Sidebar currentTab="stocks" />
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Navbar */}
-        <header className="h-16 bg-[#0e1626] flex items-center justify-end px-8 shrink-0">
-          <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden ring-2 ring-slate-600/50">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
-              alt="Seller Profile"
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </header>
-
-        {/* Content Form Area */}
-        <main className="flex-1 p-10 max-w-7xl w-full mx-auto overflow-y-auto">
-          {/* ปุ่มย้อนกลับไปหน้าก่อนหน้า */}
-          <button
-            type="button"
-            onClick={() => window.history.back()}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-black mb-3 cursor-pointer"
-          >
-            <ChevronLeft size={18} />
-            <span>Back</span>
+      <main className="min-w-0 flex-1 p-8">
+        <div className="mx-auto max-w-4xl">
+          <button type="button" onClick={() => navigate('/seller')} className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600">
+            <ArrowLeft className="h-4 w-4" />Back to Stocks
           </button>
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Marketplace listing</p>
+            <h1 className="mt-1 text-3xl font-bold text-slate-900">Add new product</h1>
+            <p className="mt-2 text-sm text-slate-500">Choose an approved Marketplace product to reuse its details, or enter a completely new product for Admin review.</p>
+            {error && <div className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
-          <h1 className="text-2xl font-bold text-slate-900 mb-8 tracking-tight">
-            Please fill in the information
-          </h1>
+            <form onSubmit={submit} className="mt-8 space-y-6">
+              <div className="grid gap-5 md:grid-cols-2">
+                <label className="text-sm font-semibold">
+                  <span className="flex items-center justify-between gap-3">
+                    <span>Product name</span>
+                    {templateSelected && <button type="button" onClick={clearTemplate} className="text-xs font-bold text-blue-600 hover:text-blue-700">Choose another / new product</button>}
+                  </span>
+                  <input required value={form.name} readOnly={templateSelected} onChange={(event) => update('name', event.target.value)} className={input} placeholder="e.g. One Piece PRB-01 The Best Booster" />
+                </label>
+                <label className="text-sm font-semibold">
+                  Card game
+                  <select required value={form.game} onChange={(event) => update('game', event.target.value)} className={input} disabled={isLoadingGames || templateSelected}>
+                    <option value="">{isLoadingGames ? 'Loading card games...' : 'Select a card game'}</option>
+                    {games.map((game) => <option key={game.id} value={game.name}>{game.name}</option>)}
+                  </select>
+                  <span className="mt-1 block text-xs font-normal text-slate-500">Choose from games supported by Optracard.</span>
+                </label>
+              </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="flex gap-10 items-start">
-              {/* อัปโหลดรูปภาพการ์ด */}
-              <div className="shrink-0">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageUpload}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-64 h-84 border-2 border-slate-900 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden relative group"
-                >
-                  {previewImage ? (
-                    <img 
-                      src={previewImage} 
-                      alt="Card Preview" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Pencil size={24} className="text-slate-800 transition-transform group-hover:scale-110" />
+              {form.name.trim().length >= 2 && (
+                <section className="rounded-xl border border-slate-200 bg-slate-50 p-4" aria-live="polite">
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 text-blue-600" />
+                    <h2 className="text-sm font-bold text-slate-900">Existing Marketplace products</h2>
+                    {isSearching && <LoaderCircle className="h-4 w-4 animate-spin text-slate-400" />}
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">Only approved and active Marketplace listings can be selected as a template. You can still continue with a new product if there is no suitable match.</p>
+                  {searchError && <p className="mt-3 text-sm text-red-600">{searchError}</p>}
+                  {!isSearching && !searchError && matches.length === 0 && <p className="mt-3 text-sm text-slate-500">No matching products found. Continue below to submit a new product.</p>}
+                  {officialMatch && (
+                    <div className="mt-3 flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                      <AlertTriangle className="h-5 w-5 shrink-0" />
+                      <span>This exact product is already sold by Optracard Official Store and cannot be listed on Marketplace.</span>
+                    </div>
                   )}
-                </div>
+                  {!officialMatch && marketplaceMatches.length > 0 && (
+                    <div className="mt-3 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-amber-600" />
+                      <span>This product is already sold by {marketplaceMatches.length} Marketplace shop{marketplaceMatches.length === 1 ? '' : 's'}. You may select one as a template or continue with a new listing.</span>
+                    </div>
+                  )}
+                  {matches.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {matches.map((product) => (
+                        <div key={product.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-slate-800">{product.name}</p>
+                            <p className="text-xs text-slate-500">{product.game} · {product.type} · {product.store.name}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${product.source === 'OFFICIAL' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                              {product.source === 'OFFICIAL' ? 'Official Store' : `฿${product.price.toLocaleString()}`}
+                            </span>
+                            {product.source === 'MARKETPLACE' && (
+                              <button type="button" onClick={() => selectTemplate(product)} disabled={form.templateProductId === product.id} className="rounded-lg border border-blue-600 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white disabled:cursor-default disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500">
+                                {form.templateProductId === product.id ? 'Selected template' : 'Use this product'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <label className="text-sm font-semibold">Product type<select value={form.type} onChange={(event) => update('type', event.target.value)} className={input} disabled={templateSelected}><option>Single</option><option>Booster</option><option>Booster Box</option><option>Accessories</option></select></label>
+                <label className="text-sm font-semibold">Language<select value={form.language ?? ''} onChange={(event) => update('language', event.target.value)} className={input} disabled={templateSelected}><option>English</option><option>Japanese</option><option>Thai</option><option>Korean</option><option>Chinese</option></select></label>
+                <label className="text-sm font-semibold">Set<input value={form.productSet ?? ''} readOnly={templateSelected} onChange={(event) => update('productSet', event.target.value)} className={input} placeholder="Set name / code" /></label>
+                <label className="text-sm font-semibold">Stock<input required min="0" type="number" value={form.stock} onChange={(event) => update('stock', Number(event.target.value))} className={input} /></label>
+                <label className="text-sm font-semibold">Cost price (฿)<input required min="0" step="0.01" type="number" value={form.cost} onChange={(event) => update('cost', Number(event.target.value))} className={input} /></label>
+                <label className="text-sm font-semibold">Selling price (฿)<input required min="0" step="0.01" type="number" value={form.price} onChange={(event) => update('price', Number(event.target.value))} className={input} /></label>
               </div>
 
-              {/* ฟิลด์ข้อมูลสินค้า */}
-              <div className="flex-1">
-                <h2 className="text-xl font-bold text-slate-900 mb-5">
-                  Items Description
-                </h2>
-
-                <div className="grid grid-cols-3 gap-x-5 gap-y-4">
-                  {/* แถวที่ 1 */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Product ID</label>
-                    <input
-                      type="text"
-                      name="productId"
-                      value={formData.productId}
-                      onChange={handleChange}
-                      className="w-full bg-[#f1f3f5] border-none rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Card Name</label>
-                    <input
-                      type="text"
-                      name="cardName"
-                      value={formData.cardName}
-                      onChange={handleChange}
-                      className="w-full bg-[#f1f3f5] border-none rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Card Game</label>
-                    <input
-                      type="text"
-                      name="cardGame"
-                      value={formData.cardGame}
-                      onChange={handleChange}
-                      className="w-full bg-[#f1f3f5] border-none rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-
-                  {/* แถวที่ 2 */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Card Code</label>
-                    <input
-                      type="text"
-                      name="cardCode"
-                      value={formData.cardCode}
-                      onChange={handleChange}
-                      className="w-full bg-[#f1f3f5] border-none rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Set</label>
-                    <input
-                      type="text"
-                      name="set"
-                      value={formData.set}
-                      onChange={handleChange}
-                      className="w-full bg-[#f1f3f5] border-none rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Set Code</label>
-                    <input
-                      type="text"
-                      name="setCode"
-                      value={formData.setCode}
-                      onChange={handleChange}
-                      className="w-full bg-[#f1f3f5] border-none rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-
-                  {/* แถวที่ 3 */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Product Type</label>
-                    <input
-                      type="text"
-                      name="productType"
-                      value={formData.productType}
-                      onChange={handleChange}
-                      className="w-full bg-[#f1f3f5] border-none rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Language</label>
-                    <input
-                      type="text"
-                      name="language"
-                      value={formData.language}
-                      onChange={handleChange}
-                      className="w-full bg-[#f1f3f5] border-none rounded-lg px-3.5 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                  </div>
-                  <div /> {/* เว้นช่องว่าง */}
-
-                  {/* แถวที่ 4 ไฮไลต์ตามสีใน UI */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#c85a32] mb-1.5">Cost</label>
-                    <input
-                      type="text"
-                      name="cost"
-                      value={formData.cost}
-                      onChange={handleChange}
-                      className="w-full bg-[#fef2e8] border-none rounded-lg px-3.5 py-2 text-sm text-[#c85a32] focus:ring-2 focus:ring-orange-300 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#2563eb] mb-1.5">Price of Sell</label>
-                    <input
-                      type="text"
-                      name="priceOfSell"
-                      value={formData.priceOfSell}
-                      onChange={handleChange}
-                      className="w-full bg-[#e8f1fd] border-none rounded-lg px-3.5 py-2 text-sm text-[#2563eb] focus:ring-2 focus:ring-blue-300 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-[#2b9e4a] mb-1.5">Stocks</label>
-                    <input
-                      type="text"
-                      name="stocks"
-                      value={formData.stocks}
-                      onChange={handleChange}
-                      className="w-full bg-[#eaf8ee] border-none rounded-lg px-3.5 py-2 text-sm text-[#2b9e4a] focus:ring-2 focus:ring-emerald-300 outline-none"
-                    />
-                  </div>
+              <label className="block text-sm font-semibold">Description<textarea rows={5} value={form.description ?? ''} onChange={(event) => update('description', event.target.value)} className={input} placeholder="Describe condition, contents, or important details" /></label>
+              <div>
+                <p className="text-sm font-semibold">Product image</p>
+                <div className="mt-2 flex items-center gap-4">
+                  <button type="button" disabled={templateSelected} onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"><ImagePlus className="h-4 w-4" />{templateSelected ? 'Using template image' : 'Choose image'}</button>
+                  <input ref={fileRef} type="file" accept="image/*" disabled={templateSelected} onChange={(event) => loadImage(event.target.files?.[0])} className="hidden" />
+                  {form.imageUrl && <img src={form.imageUrl} alt="Preview" className="h-20 w-16 rounded object-cover ring-1 ring-slate-200" />}
                 </div>
               </div>
-            </div>
-
-            {/* ส่วนรายละเอียด Description */}
-            <div className="mt-6">
-              <label className="block text-xs font-semibold text-slate-700 mb-2">Description</label>
-              <textarea
-                name="description"
-                rows={7}
-                value={formData.description}
-                onChange={handleChange}
-                className="w-full bg-[#f1f3f5] border-none rounded-lg p-4 text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none resize-y"
-              />
-            </div>
-
-            {/* ปุ่ม ยกเลิก / ยืนยัน */}
-            <div className="mt-8 flex justify-center items-center gap-3">
-              <button
-                type="button"
-                onClick={() => window.history.back()}
-                className="min-w-[120px] py-2 px-6 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition shadow-sm cursor-pointer"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="submit"
-                className="min-w-[120px] py-2 px-6 bg-[#0088ff] hover:bg-blue-600 text-white text-sm font-semibold rounded-lg transition shadow-sm cursor-pointer"
-              >
-                ยืนยัน
-              </button>
-            </div>
-          </form>
-        </main>
-      </div>
+              <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
+                <button type="button" onClick={() => navigate('/seller')} className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-bold">Cancel</button>
+                <button disabled={isSaving || isLoadingGames || officialMatch} type="submit" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60">{isSaving && <LoaderCircle className="h-4 w-4 animate-spin" />}Submit for approval</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

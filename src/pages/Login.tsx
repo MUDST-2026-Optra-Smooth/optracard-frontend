@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import logoIcon from '../assets/logo-icon.png';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 const canOpenPathForRole = (role: string, path: string) => {
   if (role === 'SUPER_ADMIN') return path.startsWith('/superadmin');
   if (role === 'ADMIN') return path.startsWith('/admin') || path.startsWith('/AD');
+  if (role === 'SELLER') return path.startsWith('/seller') || path.startsWith('/add-product') || path.startsWith('/edit-product') || path.startsWith('/orders-management') || path.startsWith('/dashboard');
   return !path.startsWith('/admin') && !path.startsWith('/AD') && !path.startsWith('/superadmin');
 };
 
@@ -46,18 +48,22 @@ export const Login = () => {
             : location.state?.from?.pathname;
         const roleHome = data.role === 'SUPER_ADMIN'
           ? '/superadmin/overview'
-          : data.role === 'ADMIN'
-            ? '/admin/dashboard'
+            : data.role === 'ADMIN'
+              ? '/admin/dashboard'
+            : data.role === 'SELLER'
+              ? '/'
             : '/';
-        const destination = requestedPath && canOpenPathForRole(data.role, requestedPath)
-          ? requestedPath
-          : roleHome;
+        const destination = data.role === 'SELLER'
+          ? '/'
+          : requestedPath && canOpenPathForRole(data.role, requestedPath)
+            ? requestedPath
+            : roleHome;
         navigate(destination);
       } else {
         alert(data?.message || 'Login failed');
       }
-    } catch (error) {
-      console.error('Error connecting to backend server', error);
+    } catch {
+      alert('Cannot connect to backend server');
     }
   };
 
@@ -66,7 +72,7 @@ export const Login = () => {
       <div className="bg-white p-8 rounded-2xl shadow-sm w-full max-w-md">
         <div className="text-center mb-6">
           <div className="flex justify-center items-center gap-2 text-xl font-bold text-gray-800 mb-2">
-            <div className="w-6 h-6 bg-blue-600 rounded text-white text-xs flex items-center justify-center">O</div>
+            <img src={logoIcon} alt="Optracard logo" className="h-7 w-7 object-contain" />
             Optracard
           </div>
           <h2 className="text-2xl font-bold text-gray-900">Welcome To Optracard !</h2>

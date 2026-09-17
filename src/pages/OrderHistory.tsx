@@ -6,12 +6,14 @@ import { OrderHistoryStat } from '../components/OrderHistoryStat';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 type Order = { orderNumber: string; placedAt: string; store: string; status: OrderStatus; items: OrderItem[]; total: number; statusNote: string; actions: Array<{ label: string; variant: 'link' | 'outline' | 'primary'; to?: string }> };
+type RawOrderItem = { productId?: number; name?: string; game?: string; storeName?: string; price?: number; quantity?: number; imageUrl?: string };
+type RawOrder = { items?: RawOrderItem[]; status?: string; createdAt?: string; storeName?: string; source?: string; shippingMethod?: string; orderNumber?: string; orderId?: number; total?: number };
 const sortOptions: DropdownOption[] = [{ label: 'Newest first', value: 'newest', shortLabel: 'Newest first' }, { label: 'Oldest first', value: 'oldest', shortLabel: 'Oldest first' }, { label: 'Total: High to Low', value: 'total-high', shortLabel: 'Total: High to Low' }, { label: 'Total: Low to High', value: 'total-low', shortLabel: 'Total: Low to High' }];
 const statuses: OrderStatus[] = ['Processing', 'Shipped', 'Delivered', 'Canceled'];
 
-const mapOrder = (raw: any): Order => {
-  const items: OrderItem[] = (raw.items ?? []).map((item: any, index: number) => ({ id: String(item.productId ?? index), name: item.name, detail: `${item.game} · ${item.storeName ?? raw.store ?? 'Optracard'}`, price: Number(item.price ?? 0), quantity: Number(item.quantity ?? 0), imageTone: index % 2 ? 'blue' : 'orange', imageUrl: item.imageUrl ?? undefined }));
-  const status = statuses.includes(raw.status) ? raw.status : 'Processing';
+const mapOrder = (raw: RawOrder): Order => {
+  const items: OrderItem[] = (raw.items ?? []).map((item, index) => ({ id: String(item.productId ?? index), name: item.name ?? 'Product', detail: `${item.game ?? 'Card game'} · ${item.storeName ?? 'Optracard'}`, price: Number(item.price ?? 0), quantity: Number(item.quantity ?? 0), imageTone: index % 2 ? 'blue' : 'orange', imageUrl: item.imageUrl ?? undefined }));
+  const status = raw.status && statuses.includes(raw.status as OrderStatus) ? raw.status as OrderStatus : 'Processing';
   const placedAt = raw.createdAt ? new Date(raw.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recently';
   const store = raw.storeName || items[0]?.detail?.split(' · ')[1] || 'Optracard Official Store';
   const sellerNote = raw.source === 'MARKETPLACE' ? 'Marketplace seller' : 'Official Store';
@@ -27,7 +29,7 @@ export function OrderHistory() {
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState(typeof location.state?.message === 'string' ? location.state.message : null);
+  const [message] = useState(typeof location.state?.message === 'string' ? location.state.message : null);
 
   useEffect(() => {
     const load = async () => {
