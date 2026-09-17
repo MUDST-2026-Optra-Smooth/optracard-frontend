@@ -1,77 +1,34 @@
-import { useMemo, useState } from 'react';
-import { SPAD_ExportButton, SPAD_FilterBar, SPAD_FilterField, SPAD_Input, SPAD_Pagination, SPAD_Panel, SPAD_SectionHeading, SPAD_StatCard, SPAD_StatusBadge, SPAD_Select } from '../components/SPAD_Widgets';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { loadSuperAdminTransactions } from '../api/superadmin';
+import { SPAD_Error, SPAD_Loading, formatCurrency, formatDate, statusTone } from '../components/SPAD_DataState';
 import { SPAD_Shell } from '../components/SPAD_Shell';
-
-const transactions = [
-  { id: 'ORD-20250819-0842', store: 'Pokemon Center TH', buyer: 'Buyer_08421', items: '3', amount: '฿6,980', payment: 'Paid', tone: 'green' as const, date: '19 Aug 2025\n14:12', dateValue: '2025-08-19' },
-  { id: 'ORD-20250819-0839', store: 'Card Realm', buyer: 'Buyer_07118', items: '2', amount: '฿3,420', payment: 'Shipped', tone: 'blue' as const, date: '19 Aug 2025\n13:48', dateValue: '2025-08-19' },
-  { id: 'ORD-20250819-0828', store: 'Meta TCG', buyer: 'Buyer_09377', items: '1', amount: '฿3,200', payment: 'Pending', tone: 'orange' as const, date: '19 Aug 2025\n12:20', dateValue: '2025-08-19' },
-  { id: 'ORD-20250818-0812', store: "Dragon's Shield", buyer: 'Buyer_05644', items: '4', amount: '฿1,450', payment: 'Paid', tone: 'green' as const, date: '18 Aug 2025\n17:42', dateValue: '2025-08-18' },
-  { id: 'ORD-20250818-0798', store: "Collector's Club", buyer: 'Buyer_05112', items: '1', amount: '฿42,000', payment: 'Refunded', tone: 'red' as const, date: '18 Aug 2025\n16:30', dateValue: '2025-08-18' },
-];
-
-const dateRangeOptions = [
-  { value: '', label: 'All time' },
-  { value: 'yesterday', label: 'Yesterday' },
-  { value: 'last-7-days', label: 'Last 7 days' },
-  { value: 'last-30-days', label: 'Last 30 days' },
-  { value: 'last-90-days', label: 'Last 90 days' },
-  { value: 'this-year', label: 'This year' },
-];
-
-const orderStatusOptions = [
-  { value: '', label: 'All statuses' },
-  { value: 'Paid', label: 'Paid' },
-  { value: 'Shipped', label: 'Shipped' },
-  { value: 'Pending', label: 'Pending' },
-  { value: 'Refunded', label: 'Refunded' },
-];
-
-const latestTransactionDate = new Date('2025-08-19T23:59:59');
-
-const isWithinDateRange = (dateValue: string, range: string) => {
-  if (!range) return true;
-  const transactionDate = new Date(dateValue);
-  const daysSinceLatest = Math.floor((latestTransactionDate.getTime() - transactionDate.getTime()) / 86_400_000);
-  if (range === 'yesterday') return daysSinceLatest === 1;
-  if (range === 'last-7-days') return daysSinceLatest >= 0 && daysSinceLatest < 7;
-  if (range === 'last-30-days') return daysSinceLatest >= 0 && daysSinceLatest < 30;
-  if (range === 'last-90-days') return daysSinceLatest >= 0 && daysSinceLatest < 90;
-  if (range === 'this-year') return transactionDate.getFullYear() === latestTransactionDate.getFullYear();
-  return true;
-};
+import { SPAD_ExportButton, SPAD_FilterBar, SPAD_FilterField, SPAD_Input, SPAD_Panel, SPAD_SectionHeading, SPAD_StatCard, SPAD_StatusBadge } from '../components/SPAD_Widgets';
+import type { SuperAdminTransaction } from '../types/superadmin';
 
 export function SPAD_Transactions() {
+  const [transactions, setTransactions] = useState<SuperAdminTransaction[] | null>(null);
   const [query, setQuery] = useState('');
-  const [appliedQuery, setAppliedQuery] = useState('');
-  const [dateRange, setDateRange] = useState('');
-  const [status, setStatus] = useState('');
-  const visibleTransactions = useMemo(() => transactions.filter((transaction) => {
-    const matchesQuery = `${transaction.id} ${transaction.store} ${transaction.buyer}`.toLowerCase().includes(appliedQuery.toLowerCase());
-    const matchesDate = isWithinDateRange(transaction.dateValue, dateRange);
-    const matchesStatus = !status || transaction.payment === status;
-    return matchesQuery && matchesDate && matchesStatus;
-  }), [appliedQuery, dateRange, status]);
+  const [status, setStatus] = useState('ALL');
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    setError('');
+    try { setTransactions(await loadSuperAdminTransactions()); } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Unable to load transactions.'); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  const visible = useMemo(() => (transactions ?? []).filter((transaction) => {
+    const text = `${transaction.orderNumber} ${transaction.buyerName} ${transaction.storeName ?? ''} ${transaction.source}`.toLowerCase();
+    return text.includes(query.trim().toLowerCase()) && (status === 'ALL' || transaction.status.toUpperCase() === status);
+  }), [transactions, query, status]);
+  const total = (transactions ?? []).reduce((sum, transaction) => sum + (transaction.total ?? 0), 0);
+  const delivered = (transactions ?? []).filter((transaction) => transaction.status === 'Delivered').length;
+  const processing = (transactions ?? []).filter((transaction) => transaction.status === 'Processing' || transaction.status === 'Shipped').length;
 
-  return (
-    <SPAD_Shell>
-      <div className="mx-auto max-w-[1440px] space-y-4">
-        <SPAD_SectionHeading eyebrow="05 / Transactions" title="Sales & Transactions" description="Monitor platform-wide sales activity across all stores" action={<><span className="hidden rounded border border-[#e1e6ee] bg-white px-3 py-2 text-[8px] font-semibold text-[#687486] sm:inline-flex">✦ Aggregated marketplace data</span><SPAD_ExportButton label="Export transactions" fileName="optracard-transactions.csv" rows={transactions.map((transaction) => ({ 'Order ID': transaction.id, Store: transaction.store, 'Buyer ID': transaction.buyer, Items: transaction.items, Total: transaction.amount, Status: transaction.payment, Date: transaction.date }))} /></>} />
-
-        <div className="grid gap-3 md:grid-cols-3"><SPAD_StatCard label="GMV · 30 days" value="฿8.42M" detail="+14.8%" /><SPAD_StatCard label="Completed orders" value="1,284" detail="+13.2%" tone="teal" /><SPAD_StatCard label="Avg. order value" value="฿1,864" detail="+2.3%" tone="orange" /></div>
-
-        <SPAD_FilterBar>
-          <SPAD_FilterField label="Search transaction"><SPAD_Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Order ID, store or buyer ID" /></SPAD_FilterField>
-          <SPAD_FilterField label="Date range"><SPAD_Select value={dateRange} onChange={(event) => setDateRange(event.target.value)}>{dateRangeOptions.map((option) => <option key={option.value || 'all'} value={option.value}>{option.label}</option>)}</SPAD_Select></SPAD_FilterField>
-          <SPAD_FilterField label="Order status"><SPAD_Select value={status} onChange={(event) => setStatus(event.target.value)}>{orderStatusOptions.map((option) => <option key={option.value || 'all'} value={option.value}>{option.label}</option>)}</SPAD_Select></SPAD_FilterField>
-          <button type="button" onClick={() => setAppliedQuery(query.trim())} className="self-end rounded bg-[#2f65ff] px-4 py-2 text-[9px] font-bold text-white hover:bg-[#1647c4]">⌕ Search</button>
-        </SPAD_FilterBar>
-
-        <SPAD_Panel title="Recent marketplace orders · 1,284 orders" subtitle="Sales and orders from all stores across the marketplace." action={<span className="text-[8px] text-[#a1a8b3]">Showing first 5</span>}>
-          <div className="overflow-x-auto"><table className="w-full min-w-[900px] text-left"><thead className="border-b border-[#edf0f4] bg-[#f4f7fb] text-[8px] font-bold text-[#687486]"><tr><th className="px-3 py-2.5">Order ID</th><th className="px-3 py-2.5">Store</th><th className="px-3 py-2.5">Buyer ID</th><th className="px-3 py-2.5 text-center">Items</th><th className="px-3 py-2.5 text-right">Order total</th><th className="px-3 py-2.5">Payment status</th><th className="px-3 py-2.5 text-right">Date &amp; time</th></tr></thead><tbody className="divide-y divide-[#f0f2f5] text-[9px]">{visibleTransactions.map((transaction) => <tr key={transaction.id} className="hover:bg-[#fafbfd]"><td className="px-3 py-2.5 font-bold text-[#2f65ff]">{transaction.id}</td><td className="px-3 py-2.5 font-semibold text-[#303844]">{transaction.store}</td><td className="px-3 py-2.5 text-[#687486]">{transaction.buyer}</td><td className="px-3 py-2.5 text-center font-bold text-[#303844]">{transaction.items}</td><td className="px-3 py-2.5 text-right font-bold text-[#303844]">{transaction.amount}</td><td className="px-3 py-2.5"><SPAD_StatusBadge label={transaction.payment} tone={transaction.tone} /></td><td className="whitespace-pre-line px-3 py-2.5 text-right text-[8px] text-[#687486]">{transaction.date}</td></tr>)}</tbody></table></div>
-          <SPAD_Pagination count={`Showing ${visibleTransactions.length ? '1–5' : '0'} of 1,284 orders`} />
-        </SPAD_Panel>
-      </div>
-    </SPAD_Shell>
-  );
+  return <SPAD_Shell><div className="mx-auto max-w-[1440px] space-y-4">
+    <SPAD_SectionHeading title="Sales & Transactions" description="Orders recorded in the platform database, grouped by their stored seller and fulfillment status." action={transactions ? <SPAD_ExportButton label="Export transactions" fileName="optracard-transactions.csv" rows={visible.map((transaction) => ({ order: transaction.orderNumber, created_at: transaction.createdAt ?? '', buyer: transaction.buyerName, store: transaction.storeName ?? 'Optracard Official Store', source: transaction.source, total: transaction.total ?? 0, status: transaction.status, payment_status: transaction.paymentStatus ?? '' }))} /> : undefined} />
+    {error ? <SPAD_Error message={error} onRetry={() => void load()} /> : !transactions ? <SPAD_Loading /> : <>
+      <div className="grid gap-3 md:grid-cols-3"><SPAD_StatCard label="Recorded orders" value={String(transactions.length)} /><SPAD_StatCard label="Recorded GMV" value={formatCurrency(total)} tone="teal" /><SPAD_StatCard label="Fulfillment" value={`${delivered} delivered`} detail={`${processing} processing or shipped`} tone="purple" /></div>
+      <SPAD_FilterBar><SPAD_FilterField label="Search order"><SPAD_Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Order number, buyer, store, or source" /></SPAD_FilterField><SPAD_FilterField label="Fulfillment status"><select value={status} onChange={(event) => setStatus(event.target.value)} className="h-8 w-full rounded border border-[#dfe4eb] bg-white px-2.5 text-[9px] text-[#687486]"><option value="ALL">All statuses</option><option value="PROCESSING">Processing</option><option value="SHIPPED">Shipped</option><option value="DELIVERED">Delivered</option><option value="CANCELED">Canceled</option></select></SPAD_FilterField><div className="self-end text-[9px] text-[#8e99aa]">{visible.length} matching orders</div></SPAD_FilterBar>
+      <SPAD_Panel title={`Transactions · ${visible.length} results`} subtitle="No transaction data is created in the interface; each row is an order from the database."><div className="overflow-x-auto"><table className="w-full min-w-[1000px] text-left"><thead className="bg-[#f4f7fb] text-[8px] uppercase tracking-wide text-[#687486]"><tr><th className="px-4 py-3">Order</th><th className="px-4 py-3">Buyer</th><th className="px-4 py-3">Store</th><th className="px-4 py-3">Source</th><th className="px-4 py-3 text-right">Items</th><th className="px-4 py-3 text-right">Total</th><th className="px-4 py-3">Payment</th><th className="px-4 py-3">Status</th></tr></thead><tbody className="divide-y divide-[#edf0f4] text-[10px]">{visible.length === 0 ? <tr><td colSpan={8} className="px-4 py-10 text-center text-[#8e99aa]">No transactions match the selected filters.</td></tr> : visible.map((transaction) => <tr key={transaction.id} className="hover:bg-[#fafbfd]"><td className="px-4 py-3"><p className="font-bold text-[#303844]">{transaction.orderNumber}</p><p className="mt-1 text-[8px] text-[#8e99aa]">{formatDate(transaction.createdAt)}</p></td><td className="px-4 py-3 font-medium text-[#303844]">{transaction.buyerName}</td><td className="px-4 py-3"><p className="font-medium text-[#303844]">{transaction.storeName ?? 'Optracard Official Store'}</p><p className="mt-1 text-[8px] text-[#8e99aa]">{transaction.shippingMethod ?? 'Shipping method not set'}</p></td><td className="px-4 py-3 text-[#687486]">{transaction.source}</td><td className="px-4 py-3 text-right font-bold">{transaction.itemCount}</td><td className="px-4 py-3 text-right font-bold text-[#2f65ff]">{formatCurrency(transaction.total)}</td><td className="px-4 py-3"><SPAD_StatusBadge label={transaction.paymentStatus ?? 'Not recorded'} tone={statusTone(transaction.paymentStatus)} /></td><td className="px-4 py-3"><SPAD_StatusBadge label={transaction.status} tone={statusTone(transaction.status)} /></td></tr>)}</tbody></table></div></SPAD_Panel>
+    </>}
+  </div></SPAD_Shell>;
 }

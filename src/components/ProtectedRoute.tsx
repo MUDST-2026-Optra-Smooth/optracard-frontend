@@ -10,6 +10,7 @@ interface ProtectedRouteProps {
 const homeForRole = (role: User['role']) => {
   if (role === 'SUPER_ADMIN') return '/superadmin/overview';
   if (role === 'ADMIN') return '/admin/dashboard';
+  if (role === 'SELLER') return '/';
   return '/';
 };
 

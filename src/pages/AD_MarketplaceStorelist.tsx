@@ -1,112 +1,16 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Package, Search, Eye } from 'lucide-react';
-import ADsidebar from '../components/ADsidebar';
+import { useEffect, useMemo, useState } from 'react';
+import { Eye, RefreshCcw, Search } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { loadAdminMarketplaceProducts, loadAdminStore } from '../api/admin';
+import { AdminError, AdminLoading, AdminWorkspace, formatCurrency, StatusBadge } from '../components/AdminWorkspace';
+import type { AdminProduct, AdminStore } from '../types/admin';
 
-const mockProducts = [
-  { id: "P-101", name: "Charizard VMAX - Secret Rare", game: "Pokemon TCG", rarity: "Secret Rare", price: 12900, stock: 2, sold: 1, status: "Active" },
-  { id: "P-102", name: "Blue-Eyes White Dragon", game: "Yu-Gi-Oh!", rarity: "Ghost Rare", price: 8500, stock: 1, sold: 2, status: "Active" },
-  { id: "P-103", name: "Premium Card Sleeves (100pcs)", game: "Accessories", rarity: "-", price: 250, stock: 45, sold: 120, status: "Active" },
-];
-
-export const AD_MarketplaceStorelist: React.FC = () => {
-  const { storeId } = useParams<{ storeId?: string }>();
-  const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen flex bg-[#f8fafc] font-sans antialiased text-slate-800">
-      <ADsidebar currentTab="marketplace-products" />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-[#0f172a] shrink-0 border-b border-slate-800" />
-
-        <main className="flex-1 p-8 max-w-[1440px] w-full mx-auto overflow-y-auto space-y-6">
-          <button 
-            onClick={() => navigate('/admin/marketplace/products')}
-            className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors mb-6 cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Stores
-          </button>
-
-          <div className="flex justify-between items-end mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">Store Inventory</h1>
-              <p className="text-sm text-slate-400 mt-2">
-                Viewing products for Store ID: <span className="font-mono text-blue-600 font-bold">{storeId || 'CP01'}</span>
-              </p>
-            </div>
-            
-            <div className="flex gap-3">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-                <input 
-                  type="text" 
-                  placeholder="Search in store..." 
-                  className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm bg-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center gap-2">
-              <Package className="w-5 h-5 text-slate-400" />
-              <h2 className="font-bold text-slate-800">Product List</h2>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-100">
-                  <tr>
-                    <th className="py-4 px-6 font-semibold">Item ID</th>
-                    <th className="py-4 px-6 font-semibold">Product Name</th>
-                    <th className="py-4 px-6 font-semibold">Category</th>
-                    <th className="py-4 px-6 font-semibold">Rarity</th>
-                    <th className="py-4 px-6 text-right font-semibold">Price (฿)</th>
-                    <th className="py-4 px-6 text-right font-semibold">Stock</th>
-                    <th className="py-4 px-6 text-center font-semibold">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {mockProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-4 px-6 text-slate-400 font-mono text-xs">{product.id}</td>
-                      <td className="py-4 px-6 font-bold text-slate-800">{product.name}</td>
-                      <td className="py-4 px-6">
-                        <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">
-                          {product.game}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-slate-500">{product.rarity}</td>
-                      <td className="py-4 px-6 text-right font-bold text-blue-600">{product.price.toLocaleString()}</td>
-                      <td className="py-4 px-6 text-right">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                          product.stock > 10 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {product.stock}
-                        </span>
-                      </td>
-                      
-                      <td className="py-4 px-6 text-center">
-                        <button 
-                          onClick={() => navigate(`/admin/marketplace/products/${product.id}`)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer"
-                          title="View Details"
-                        >
-                          <Eye className="w-5 h-5 mx-auto" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+export const AD_MarketplaceStorelist = () => {
+  const navigate = useNavigate(); const { storeId: rawStoreId } = useParams<{ storeId: string }>(); const storeId = Number(rawStoreId); const [store, setStore] = useState<AdminStore | null>(null); const [products, setProducts] = useState<AdminProduct[]>([]); const [query, setQuery] = useState(''); const [loading, setLoading] = useState(true); const [error, setError] = useState<string | null>(null);
+  const load = async () => { setLoading(true); setError(null); try { const [nextStore, nextProducts] = await Promise.all([loadAdminStore(storeId), loadAdminMarketplaceProducts(storeId)]); setStore(nextStore); setProducts(nextProducts); } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Could not load store inventory.'); } finally { setLoading(false); } };
+  useEffect(() => { if (Number.isInteger(storeId) && storeId > 0) void load(); else setError('Invalid store ID.'); }, [storeId]);
+  const visible = useMemo(() => { const value = query.trim().toLowerCase(); return products.filter((product) => !value || `${product.id} ${product.name} ${product.game} ${product.type}`.toLowerCase().includes(value)); }, [products, query]);
+  return <AdminWorkspace currentTab="marketplace-products"><button type="button" onClick={() => navigate('/admin/marketplace/products')} className="mb-5 text-sm font-bold text-blue-600">← Back to marketplace stores</button>{error && <div className="mb-5"><AdminError message={error} onRetry={() => void load()} /></div>}{loading && <AdminLoading label="Loading store inventory…" />}{!loading && store && <><div className="mb-6 flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Store ID {store.storeId}</p><h1 className="mt-1 text-3xl font-bold text-slate-900">{store.storeName}</h1><p className="mt-1 text-sm text-slate-500">{store.productCount} seller listing(s) recorded in the database.</p></div><button type="button" onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold"><RefreshCcw className="h-4 w-4" />Refresh</button></div><div className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div className="relative max-w-lg"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search this store's listings" className="w-full rounded-lg bg-slate-100 py-2.5 pl-10 pr-3 text-sm outline-none" /></div></div><div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm"><table className="w-full min-w-[900px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-5 py-4">Product</th><th className="px-5 py-4">Card game / Type</th><th className="px-5 py-4 text-right">Price</th><th className="px-5 py-4 text-right">Stock</th><th className="px-5 py-4">Listing status</th><th className="px-5 py-4 text-right">View</th></tr></thead><tbody className="divide-y divide-slate-100">{visible.map((product) => <tr key={product.id} className="hover:bg-slate-50"><td className="px-5 py-4"><div className="flex items-center gap-3">{product.imageUrl ? <img src={product.imageUrl} alt="" className="h-12 w-10 rounded bg-slate-100 object-cover" /> : <div className="h-12 w-10 rounded bg-slate-100" />}<div><p className="font-bold">{product.name}</p><p className="text-xs text-slate-500">ID: {product.id}</p></div></div></td><td className="px-5 py-4"><p className="font-semibold">{product.game}</p><p className="text-xs text-slate-500">{product.type}</p></td><td className="px-5 py-4 text-right font-bold text-blue-600">{formatCurrency(product.price)}</td><td className="px-5 py-4 text-right font-bold">{product.stock ?? 0}</td><td className="px-5 py-4"><StatusBadge status={product.approvalStatus} /></td><td className="px-5 py-4 text-right"><button type="button" onClick={() => navigate(`/admin/marketplace/products/${product.id}`)} className="rounded p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-600"><Eye className="h-4 w-4" /></button></td></tr>)}{visible.length === 0 && <tr><td colSpan={6} className="px-5 py-12 text-center text-slate-500">No marketplace listings found for this store.</td></tr>}</tbody></table></div></>}</AdminWorkspace>;
 };
 
 export default AD_MarketplaceStorelist;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Package, ClipboardList, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { AdminHeader } from './AdminHeader';
 
 interface SidebarProps {
   currentTab?: 'stocks' | 'orders' | 'dashboard' | string;
@@ -16,16 +17,21 @@ export const Sidebar: React.FC<SidebarProps> = () => {
     }`;
 
   return (
-    <aside className="w-64 bg-[#182234] text-white flex flex-col justify-between shrink-0 min-h-[calc(100vh-64px)]">
-      <div>
-        {/* Shop Name / Brand */}
-        <div className="px-6 py-5 border-b border-gray-700/60">
+    <>
+      <AdminHeader fixed workspaceName="Optracard Seller" />
+      <aside className="mt-16 w-64 bg-[#182234] text-white flex flex-col justify-between shrink-0 min-h-[calc(100vh-64px)]">
+        <div>
+        <div className="px-6 py-5">
           <h2 className="text-xl font-bold tracking-wide text-white">AAA-Trading</h2>
         </div>
 
         {/* Navigation Menu */}
-        <nav className="p-3 space-y-1">
-          {/* ปุ่ม 1: Stocks Management */}
+        <nav className="px-3 pb-3 pt-2 space-y-1">
+          <NavLink to="/dashboard" className={navItemClass}>
+            <LayoutDashboard className="w-5 h-5" />
+            <span>Dashboard</span>
+          </NavLink>
+
           <NavLink to="/seller" className={navItemClass}>
             <Package className="w-5 h-5" />
             <span>Stocks Management</span>
@@ -37,13 +43,8 @@ export const Sidebar: React.FC<SidebarProps> = () => {
             <span>Orders Management</span>
           </NavLink>
 
-          {/* ปุ่ม 3: Dashboard */}
-          <NavLink to="/dashboard" className={navItemClass}>
-            <LayoutDashboard className="w-5 h-5" />
-            <span>Dashboard</span>
-          </NavLink>
         </nav>
-      </div>
+        </div>
 
       {/* Back to Website */}
       <div className="p-4">
@@ -55,7 +56,8 @@ export const Sidebar: React.FC<SidebarProps> = () => {
           <span>Back to Website</span>
         </Link>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 

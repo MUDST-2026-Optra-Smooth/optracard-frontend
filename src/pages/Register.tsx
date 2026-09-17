@@ -45,8 +45,8 @@ export const Register = () => {
         const errorData = await response.json().catch(() => null);
         alert(errorData?.message || 'Registration failed');
       }
-    } catch (error) {
-      console.error('Error connecting to backend server', error);
+    } catch {
+      alert('Cannot connect to backend server');
     }
   };
 

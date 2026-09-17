@@ -1,4 +1,4 @@
-import type { CatalogProduct } from '../types/catalog';
+import type { CatalogProduct, MarketplaceStoreProfile } from '../types/catalog';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 const CACHE_TTL_MS = 60_000;
@@ -50,4 +50,29 @@ export const searchCatalog = async (query: string): Promise<CatalogProduct[]> =>
     throw new Error('Failed to fetch search results');
   }
   return response.json();
+};
+
+export const loadProduct = async (productId: number): Promise<CatalogProduct> => {
+  const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
+  if (response.status === 404) {
+    throw new Error('Product not found');
+  }
+  if (!response.ok) {
+    throw new Error(`Product request failed with status ${response.status}`);
+  }
+  return response.json() as Promise<CatalogProduct>;
+};
+
+export const loadProductOffers = async (productId: number): Promise<CatalogProduct[]> => {
+  const response = await fetch(`${API_BASE_URL}/api/products/${productId}/offers`);
+  if (response.status === 404) throw new Error('Product not found');
+  if (!response.ok) throw new Error(`Product offers request failed with status ${response.status}`);
+  return response.json() as Promise<CatalogProduct[]>;
+};
+
+export const loadMarketplaceStore = async (storeId: number): Promise<MarketplaceStoreProfile> => {
+  const response = await fetch(`${API_BASE_URL}/api/marketplace/stores/${storeId}`);
+  if (response.status === 404) throw new Error('Store not found');
+  if (!response.ok) throw new Error(`Store request failed with status ${response.status}`);
+  return response.json() as Promise<MarketplaceStoreProfile>;
 };
