@@ -134,19 +134,18 @@ export const Navbar = () => {
           <input
             type="text"
             value={query}
-            onFocus={() => {
-              if (query.trim()) setShowDropdown(true);
-            }}
             onChange={(e) => {
               setQuery(e.target.value);
               setShowDropdown(true);
             }}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') setShowDropdown(false);
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            placeholder="Search by card game or card name..."
+            className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
+            onFocus={() => {
+              if (query.trim()) setShowDropdown(true);
             }}
-            placeholder="Search by card game, card name or category..."
-            className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-9 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
           />
+        
           {query && (
             <button
               type="button"
