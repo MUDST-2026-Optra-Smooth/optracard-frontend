@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
 import { FilterDropdown, type DropdownOption } from '../components/FilterDropdown';
@@ -132,8 +132,22 @@ export const SearchResult = () => {
         <>
           {marketplaceListings.length > 0 && (
             <section className="mb-12">
-              <div className="relative flex items-center justify-center mb-6">
-                <h2 className="text-3xl font-bold text-blue-600">Marketplace & Trading</h2>
+              <div className="mb-6 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Independent seller listings</p>
+                  <Link
+                    to="/ViewAllTrading"
+                    className="mt-1 text-2xl font-black text-slate-900 hover:text-blue-600 transition-colors cursor-pointer block"
+                  >
+                    Marketplace & Trading
+                  </Link>
+                </div>
+                <Link
+                  to="/ViewAllTrading"
+                  className="shrink-0 rounded-md bg-[#1e5bff] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
+                >
+                  View all marketplace →
+                </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {marketplaceListings.map((listing) => (
@@ -163,7 +177,21 @@ export const SearchResult = () => {
 
                 return (
                   <div key={type} className="text-left mb-10">
-                    <h3 className="text-xl font-bold mb-4">{type}</h3>
+                    <div className="flex justify-between items-center mb-4">
+                      <Link
+                        to={`/ViewAllOOS?type=${encodeURIComponent(type)}`}
+                        className="group flex items-center gap-2 text-xl font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer"
+                      >
+                        <span>{type}</span>
+                        <span className="text-sm text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                      </Link>
+                      <Link
+                        to={`/ViewAllOOS?type=${encodeURIComponent(type)}`}
+                        className="shrink-0 bg-[#1e5bff] text-white text-xs font-medium px-3.5 py-1.5 rounded-md hover:bg-blue-700 transition-all shadow-sm hover:shadow cursor-pointer"
+                      >
+                        View all {type} →
+                      </Link>
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       {items.map((card) => (
                         <ProductCard

@@ -90,6 +90,17 @@ export const Navbar = () => {
     }
   };
 
+  const handleCategoryClick = (category: string) => {
+    setShowDropdown(false);
+    const officialTypes = ['Single', 'Booster', 'Booster Box', 'Accessories'];
+    const matched = officialTypes.find((t) => t.toLowerCase() === category.toLowerCase());
+    if (matched) {
+      navigate(`/ViewAllOOS?type=${encodeURIComponent(matched)}`);
+    } else {
+      navigate(`/search?q=${encodeURIComponent(category)}`);
+    }
+  };
+
   const trimmedQuery = query.trim().toLowerCase();
 
   const matchingCategories = useMemo(() => {
@@ -127,7 +138,7 @@ export const Navbar = () => {
           <button
             type="submit"
             aria-label="Search"
-            className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center p-1 rounded text-gray-400 hover:text-white transition"
+            className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center p-1 rounded text-gray-400 hover:text-white transition cursor-pointer"
           >
             <img src={searchIcon} alt="Search" className="w-4 h-4 object-contain opacity-60 hover:opacity-100" />
           </button>
@@ -140,7 +151,7 @@ export const Navbar = () => {
             }}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search by card game or card name..."
-            className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
+            className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-9 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
             onFocus={() => {
               if (query.trim()) setShowDropdown(true);
             }}
@@ -153,7 +164,7 @@ export const Navbar = () => {
                 setQuery('');
                 setShowDropdown(false);
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-sm"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-sm cursor-pointer"
               aria-label="Clear search"
             >
               ✕
@@ -170,11 +181,16 @@ export const Navbar = () => {
                   <button
                     key={cat}
                     type="button"
-                    onClick={() => handleSearch(cat)}
-                    className="w-full text-left px-3 py-1.5 rounded text-xs text-blue-400 hover:bg-[#1f293d] flex items-center justify-between transition"
+                    onClick={() => handleCategoryClick(cat)}
+                    className="group w-full text-left px-3 py-2 rounded-md text-xs text-blue-400 hover:bg-[#1f293d] hover:text-blue-300 flex items-center justify-between transition-all duration-150 cursor-pointer"
                   >
-                    <span>📁 {cat}</span>
-                    <span className="text-[11px] text-gray-400">View Category →</span>
+                    <span className="flex items-center gap-2 font-medium">
+                      <span className="text-sm transition-transform duration-150 group-hover:scale-110">📁</span>
+                      <span>{cat}</span>
+                    </span>
+                    <span className="text-[11px] text-gray-400 group-hover:text-blue-300 group-hover:translate-x-0.5 transition-all">
+                      View all {cat} →
+                    </span>
                   </button>
                 ))}
               </div>
@@ -188,15 +204,19 @@ export const Navbar = () => {
                     key={p.id}
                     type="button"
                     onClick={() => handleSearch(p.name)}
-                    className="w-full text-left px-3 py-2 rounded text-xs text-gray-200 hover:bg-[#1f293d] flex items-center gap-3 transition"
+                    className="group w-full text-left px-3 py-2 rounded-md text-xs text-gray-200 hover:bg-[#1f293d] hover:text-white flex items-center gap-3 transition-all duration-150 cursor-pointer"
                   >
                     {p.imageUrl ? (
-                      <img src={p.imageUrl} alt={p.name} className="w-8 h-8 rounded object-cover shrink-0 bg-gray-800" />
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        className="w-8 h-8 rounded object-cover shrink-0 bg-gray-800 transition-transform duration-150 group-hover:scale-110 border border-transparent group-hover:border-blue-500"
+                      />
                     ) : (
-                      <div className="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-xs shrink-0">🃏</div>
+                      <div className="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-xs shrink-0 transition-transform duration-150 group-hover:scale-110">🃏</div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate text-white">{p.name}</p>
+                      <p className="font-semibold truncate text-white group-hover:text-blue-400 transition-colors">{p.name}</p>
                       <p className="text-[11px] text-gray-400 truncate">{p.game} • {p.type}</p>
                     </div>
                     <span className="font-bold text-blue-400 shrink-0">฿{p.price.toLocaleString()}</span>
@@ -215,7 +235,7 @@ export const Navbar = () => {
               <button
                 type="button"
                 onClick={() => handleSearch()}
-                className="text-xs text-blue-400 hover:underline font-medium"
+                className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium cursor-pointer transition-colors"
               >
                 View all search results for "{query}" →
               </button>

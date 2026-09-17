@@ -66,11 +66,11 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
   const soldOut = itemCount === 0;
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-lg border bg-white p-4 shadow-sm">
+    <div className="flex h-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-blue-400">
       <div className="flex gap-4">
         <div className="relative flex h-28 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-100">
           {imageUrl && !imageFailed ? (
-            <img src={imageUrl} alt={cardName} className="h-full w-full object-cover" onError={() => setImageFailed(true)} />
+            <img src={imageUrl} alt={cardName} className="h-full w-full object-cover transition-transform duration-200 hover:scale-105" onError={() => setImageFailed(true)} />
           ) : (
             <div className="px-2 text-center text-xs text-gray-500"><div className="text-2xl" aria-hidden="true">🃏</div><span className="line-clamp-3">{cardName}</span></div>
           )}
@@ -95,7 +95,7 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
         disabled={isAdding || soldOut}
         onClick={handleAddToCart}
         title={soldOut ? 'This product is out of stock' : 'Add to cart'}
-        className="mt-5 w-full rounded-md bg-blue-50 py-2.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-5 w-full rounded-md bg-blue-50 py-2.5 text-sm font-semibold text-blue-600 transition-all duration-150 hover:bg-blue-600 hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-50 disabled:hover:text-blue-600 disabled:hover:scale-100"
       >
         {added ? '✓ Added to Cart' : '🛒 Add to Cart'}
       </button>
