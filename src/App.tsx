@@ -15,6 +15,7 @@ import { OrdersManagement } from './pages/OrdersManagement';
 import { Seller } from './pages/seller';
 import { Dashboard } from './pages/Dashboard';
 import { OrderHistory } from './pages/OrderHistory';
+import { OrderHistoryDetail } from './pages/OrderHistoryDetail';
 import ProductDetail from './pages/PDdetail';
 import EditProduct from './pages/EditProduct';
 import AddProduct from './pages/AddProduct';
@@ -87,6 +88,7 @@ export function App() {
           <Route path="/profile/edit" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
           <Route path="/start-selling" element={<ProtectedRoute><StartSelling /></ProtectedRoute>} />
           <Route path="/order-history" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
+          <Route path="/order-history/:orderNumber" element={<ProtectedRoute><OrderHistoryDetail /></ProtectedRoute>} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="/admin/stocks" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADseller /></ProtectedRoute>} />
           <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADdashboard /></ProtectedRoute>} />
