@@ -20,6 +20,7 @@ export const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const isAdminUser = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const dashboardPath = user?.role === 'SUPER_ADMIN' ? '/superadmin/overview' : '/admin/dashboard';
+  const shopPath = user?.role === 'SELLER' ? '/dashboard' : '/start-selling';
 
   useEffect(() => {
     const q = searchParams.get('q');
@@ -123,30 +124,6 @@ export const Navbar = () => {
   }, [catalogItems, trimmedQuery]);
 
   return (
-    <nav className="bg-[#0b0f19] text-white py-3 px-6 md:px-10 flex justify-between items-center font-sans border-b border-gray-800 relative z-40">
-      <Link to="/" className="flex items-center gap-2 text-xl font-bold tracking-wide">
-        <img src={logoIcon} alt="Optracard Logo" className="w-7 h-7 object-contain" />
-        <span>Optracard</span>
-      </Link>
-
-      <div ref={searchContainerRef} className="hidden md:flex flex-1 max-w-xl mx-8 relative">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSearch();
-          }}
-          className="relative w-full"
-        >
-          <button
-            type="submit"
-            aria-label="Search"
-            className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center p-1 rounded text-gray-400 hover:text-white transition cursor-pointer"
-          >
-            <img src={searchIcon} alt="Search" className="w-4 h-4 object-contain opacity-60 hover:opacity-100" />
-          </button>
-  const shopPath = user?.role === 'SELLER' ? '/dashboard' : '/start-selling';
-
-  return (
     <nav className="bg-[#0b0f19] text-white py-3 px-6 md:px-10 flex justify-between items-center font-sans border-b border-gray-800">
       {isAdminUser ? (
         <div className="flex items-center gap-2 text-xl font-bold tracking-wide">
@@ -217,7 +194,7 @@ export const Navbar = () => {
               ✕
             </button>
           )}
-        </form>
+        </div>
 
         {showDropdown && trimmedQuery && (
           <div className="absolute left-0 right-0 top-full mt-2 bg-[#121722] border border-gray-700 rounded-lg shadow-2xl overflow-hidden z-50 text-left">

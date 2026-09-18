@@ -250,8 +250,6 @@ const ProductDetail = () => {
                     <Plus className="h-4 w-4" />
                   </button>
                 </div>
-                <button className="flex-1 bg-blue-600 text-white font-bold h-12 rounded-lg hover:bg-blue-700 hover:shadow-md active:scale-[0.99] transition-all shadow-sm cursor-pointer">
-                  Add to Cart
                 <button
                   type="button"
                   onClick={() => void handleAddToCart()}

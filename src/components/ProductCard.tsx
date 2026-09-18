@@ -99,7 +99,6 @@ export const ProductCard = ({
   const soldOut = stock === 0;
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-blue-400">
     <div
       className={`flex h-full flex-col justify-between rounded-lg border bg-white p-4 shadow-sm transition-shadow ${productId ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500' : ''}`}
       onClick={handleOpenDetails}
