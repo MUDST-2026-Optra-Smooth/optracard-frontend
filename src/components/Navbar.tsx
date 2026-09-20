@@ -7,7 +7,7 @@ import logoIcon from '../assets/logo-icon.png';
 import searchIcon from '../assets/search.png';
 import avatarIcon from '../assets/Generic avatar.png';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? '' : 'http://localhost:8080');
 
 export const Navbar = () => {
   const [query, setQuery] = useState('');
@@ -137,35 +137,21 @@ export const Navbar = () => {
         </Link>
       )}
 
-      {isAdminUser ? (
-        <>
-        <div className="hidden flex-1 md:flex md:max-w-xl md:mx-8">
-          <div className="relative w-full">
-            <div className="absolute left-3 top-1/2 flex -translate-y-1/2 items-center justify-center pointer-events-none">
-              <img src={searchIcon} alt="Search" className="h-4 w-4 object-contain opacity-50" />
-            </div>
-            <input
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => event.key === 'Enter' && handleSearch()}
-              placeholder="Search by card game or card name..."
-              className="w-full rounded-md bg-[#1a1f2b] py-2 pl-10 pr-4 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-5 text-sm font-medium">
-          <Link to={dashboardPath} className="text-gray-300 transition hover:text-white">Back to Dashboard</Link>
-          <button type="button" onClick={() => { logout(); navigate('/'); }} className="text-xs text-gray-300 hover:text-white">Logout</button>
-        </div>
-        </>
-      ) : (
-        <>
       <div ref={searchContainerRef} className="hidden md:flex flex-1 max-w-xl mx-8">
-        <div className="relative w-full">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
-            <img src={searchIcon} alt="Search" className="w-4 h-4 object-contain opacity-50" />
-          </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSearch();
+          }}
+          className="relative w-full"
+        >
+          <button
+            type="submit"
+            className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer border-0 bg-transparent p-0"
+            aria-label="Search"
+          >
+            <img src={searchIcon} alt="Search" className="w-4 h-4 object-contain opacity-50 hover:opacity-80" />
+          </button>
           <input
             type="text"
             value={query}
@@ -173,7 +159,12 @@ export const Navbar = () => {
               setQuery(e.target.value);
               setShowDropdown(true);
             }}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearch();
+              }
+            }}
             placeholder="Search by card game or card name..."
             className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-9 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
             onFocus={() => {
@@ -194,7 +185,7 @@ export const Navbar = () => {
               ✕
             </button>
           )}
-        </div>
+        </form>
 
         {showDropdown && trimmedQuery && (
           <div className="absolute left-0 right-0 top-full mt-2 bg-[#121722] border border-gray-700 rounded-lg shadow-2xl overflow-hidden z-50 text-left">
@@ -205,6 +196,7 @@ export const Navbar = () => {
                   <button
                     key={cat}
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleCategoryClick(cat)}
                     className="group w-full text-left px-3 py-2 rounded-md text-xs text-blue-400 hover:bg-[#1f293d] hover:text-blue-300 flex items-center justify-between transition-all duration-150 cursor-pointer"
                   >
@@ -227,6 +219,7 @@ export const Navbar = () => {
                   <button
                     key={p.id}
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       setShowDropdown(false);
                       navigate(`/product/${p.id}`);
@@ -261,6 +254,7 @@ export const Navbar = () => {
             <div className="bg-[#0b0f19] p-2 border-t border-gray-800 text-center">
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSearch()}
                 className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium cursor-pointer transition-colors"
               >
@@ -270,6 +264,13 @@ export const Navbar = () => {
           </div>
         )}
       </div>
+
+      {isAdminUser ? (
+        <div className="flex items-center gap-5 text-sm font-medium">
+          <Link to={dashboardPath} className="text-gray-300 transition hover:text-white">Back to Dashboard</Link>
+          <button type="button" onClick={() => { logout(); navigate('/'); }} className="text-xs text-gray-300 hover:text-white">Logout</button>
+        </div>
+      ) : (
 
       <div className="flex items-center gap-6 text-sm font-medium">
         <div className="hidden lg:flex gap-5 text-gray-300 items-center">
@@ -300,7 +301,6 @@ export const Navbar = () => {
           )}
         </div>
       </div>
-        </>
       )}
     </nav>
   );
