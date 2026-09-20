@@ -227,6 +227,7 @@ export const Navbar = () => {
                   <button
                     key={p.id}
                     type="button"
+                    onClick={() => handleSearch(p.name)}
                     onClick={() => {
                       setShowDropdown(false);
                       navigate(`/product/${p.id}`);
