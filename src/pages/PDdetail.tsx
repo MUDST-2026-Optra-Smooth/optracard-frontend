@@ -77,9 +77,11 @@ const ProductDetail = () => {
   const detailRows = product ? [
     ['Card Game', product.game],
     ['Product Type', product.type],
+    ...(product.sku ? [['SKU', product.sku]] : []),
     ...(product.productSet ? [['Set', product.productSet]] : []),
     ...(product.language ? [['Language', product.language]] : []),
     ['Available Stock', String(Math.max(product.stock, 0))],
+    ['Store / Seller', product.store?.name || (product.source === 'OFFICIAL' ? 'Optracard Official Store' : 'Marketplace')],
   ] : [];
 
   const handleAddToCart = async () => {
@@ -186,6 +188,11 @@ const ProductDetail = () => {
               <span className={`rounded px-2.5 py-1 ${product.source === 'OFFICIAL' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
                 {product.source === 'OFFICIAL' ? 'Official Store' : 'Marketplace'}
               </span>
+              {product.sku && (
+                <span className="rounded bg-slate-100 px-2.5 py-1 text-slate-500 font-mono text-[11px] normal-case">
+                  SKU: {product.sku}
+                </span>
+              )}
               <span className="ml-auto text-slate-400">Product ID: {product.id}</span>
             </div>
 
