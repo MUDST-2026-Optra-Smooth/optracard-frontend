@@ -7,7 +7,7 @@ import logoIcon from '../assets/logo-icon.png';
 import searchIcon from '../assets/search.png';
 import avatarIcon from '../assets/Generic avatar.png';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? '' : 'http://localhost:8080');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 export const Navbar = () => {
   const [query, setQuery] = useState('');
@@ -137,7 +137,7 @@ export const Navbar = () => {
         </Link>
       )}
 
-      <div ref={searchContainerRef} className="hidden md:flex flex-1 max-w-xl mx-8">
+      <div ref={searchContainerRef} className="relative hidden md:flex flex-1 max-w-xl mx-8">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -168,6 +168,9 @@ export const Navbar = () => {
             placeholder="Search by card game or card name..."
             className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-9 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
             onFocus={() => {
+              if (!catalogItems.length) {
+                void loadCatalog().then(setCatalogItems).catch(() => {});
+              }
               if (query.trim()) setShowDropdown(true);
             }}
           />
@@ -185,84 +188,84 @@ export const Navbar = () => {
               ✕
             </button>
           )}
-        </form>
 
-        {showDropdown && trimmedQuery && (
-          <div className="absolute left-0 right-0 top-full mt-2 bg-[#121722] border border-gray-700 rounded-lg shadow-2xl overflow-hidden z-50 text-left">
-            {matchingCategories.length > 0 && (
-              <div className="p-2 border-b border-gray-800">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2 py-1">Categories</p>
-                {matchingCategories.map((cat) => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleCategoryClick(cat)}
-                    className="group w-full text-left px-3 py-2 rounded-md text-xs text-blue-400 hover:bg-[#1f293d] hover:text-blue-300 flex items-center justify-between transition-all duration-150 cursor-pointer"
-                  >
-                    <span className="flex items-center gap-2 font-medium">
-                      <span className="text-sm transition-transform duration-150 group-hover:scale-110">📁</span>
-                      <span>{cat}</span>
-                    </span>
-                    <span className="text-[11px] text-gray-400 group-hover:text-blue-300 group-hover:translate-x-0.5 transition-all">
-                      View all {cat} →
-                    </span>
-                  </button>
-                ))}
+          {showDropdown && trimmedQuery && (
+            <div className="absolute left-0 right-0 top-full mt-2 bg-[#121722] border border-gray-700 rounded-lg shadow-2xl overflow-hidden z-50 text-left">
+              {matchingCategories.length > 0 && (
+                <div className="p-2 border-b border-gray-800">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2 py-1">Categories</p>
+                  {matchingCategories.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleCategoryClick(cat)}
+                      className="group w-full text-left px-3 py-2 rounded-md text-xs text-blue-400 hover:bg-[#1f293d] hover:text-blue-300 flex items-center justify-between transition-all duration-150 cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2 font-medium">
+                        <span className="text-sm transition-transform duration-150 group-hover:scale-110">📁</span>
+                        <span>{cat}</span>
+                      </span>
+                      <span className="text-[11px] text-gray-400 group-hover:text-blue-300 group-hover:translate-x-0.5 transition-all">
+                        View all {cat} →
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {matchingProducts.length > 0 && (
+                <div className="p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2 py-1">Products</p>
+                  {matchingProducts.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setShowDropdown(false);
+                        navigate(`/product/${p.id}`);
+                      }}
+                      className="group w-full text-left px-3 py-2 rounded-md text-xs text-gray-200 hover:bg-[#1f293d] hover:text-white flex items-center gap-3 transition-all duration-150 cursor-pointer"
+                    >
+                      {p.imageUrl ? (
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          className="w-8 h-8 rounded object-cover shrink-0 bg-gray-800 transition-transform duration-150 group-hover:scale-110 border border-transparent group-hover:border-blue-500"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-xs shrink-0 transition-transform duration-150 group-hover:scale-110">🃏</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate text-white group-hover:text-blue-400 transition-colors">{p.name}</p>
+                        <p className="text-[11px] text-gray-400 truncate">{p.game} • {p.type}</p>
+                      </div>
+                      <span className="font-bold text-blue-400 shrink-0">฿{p.price.toLocaleString()}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {matchingCategories.length === 0 && matchingProducts.length === 0 && (
+                <div className="p-4 text-center text-xs text-gray-400">
+                  Press Enter to search for "{query}"
+                </div>
+              )}
+
+              <div className="bg-[#0b0f19] p-2 border-t border-gray-800 text-center">
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleSearch()}
+                  className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium cursor-pointer transition-colors"
+                >
+                  View all search results for "{query}" →
+                </button>
               </div>
-            )}
-
-            {matchingProducts.length > 0 && (
-              <div className="p-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 px-2 py-1">Products</p>
-                {matchingProducts.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      setShowDropdown(false);
-                      navigate(`/product/${p.id}`);
-                    }}
-                    className="group w-full text-left px-3 py-2 rounded-md text-xs text-gray-200 hover:bg-[#1f293d] hover:text-white flex items-center gap-3 transition-all duration-150 cursor-pointer"
-                  >
-                    {p.imageUrl ? (
-                      <img
-                        src={p.imageUrl}
-                        alt={p.name}
-                        className="w-8 h-8 rounded object-cover shrink-0 bg-gray-800 transition-transform duration-150 group-hover:scale-110 border border-transparent group-hover:border-blue-500"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-xs shrink-0 transition-transform duration-150 group-hover:scale-110">🃏</div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate text-white group-hover:text-blue-400 transition-colors">{p.name}</p>
-                      <p className="text-[11px] text-gray-400 truncate">{p.game} • {p.type}</p>
-                    </div>
-                    <span className="font-bold text-blue-400 shrink-0">฿{p.price.toLocaleString()}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {matchingCategories.length === 0 && matchingProducts.length === 0 && (
-              <div className="p-4 text-center text-xs text-gray-400">
-                Press Enter to search for "{query}"
-              </div>
-            )}
-
-            <div className="bg-[#0b0f19] p-2 border-t border-gray-800 text-center">
-              <button
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => handleSearch()}
-                className="text-xs text-blue-400 hover:text-blue-300 hover:underline font-medium cursor-pointer transition-colors"
-              >
-                View all search results for "{query}" →
-              </button>
             </div>
-          </div>
-        )}
+          )}
+        </form>
       </div>
 
       {isAdminUser ? (
