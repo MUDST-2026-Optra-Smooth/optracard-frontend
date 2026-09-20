@@ -1,6 +1,6 @@
 import type { CatalogProduct, MarketplaceStoreProfile } from '../types/catalog';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? '' : 'http://localhost:8080');
 const CACHE_TTL_MS = 60_000;
 
 let cachedCatalog: CatalogProduct[] | null = null;
@@ -124,23 +124,11 @@ function normalizeProduct(raw: RawBackendProduct): CatalogProduct {
 export const searchCatalog = async (query: string): Promise<CatalogProduct[]> => {
   const trimmed = query.trim().toLowerCase();
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/products/search?q=${encodeURIComponent(query)}`);
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        return data.map(normalizeProduct);
-      }
-    }
-  } catch {
-    // API request failed or was rejected; gracefully fall back to local catalog search
-  }
-
-  // Fallback: search over all available products from loadCatalog()
-  const allProducts = await loadCatalog();
+  // Load all products first to ensure fast, reliable matching across all fields
+  const allProducts = await loadCatalog().catch(() => []);
   if (!trimmed) return allProducts;
 
-  return allProducts.filter((product) => {
+  const clientMatches = allProducts.filter((product) => {
     const matchesName = product.name?.toLowerCase().includes(trimmed);
     const matchesGame = product.game?.toLowerCase().includes(trimmed);
     const matchesType = product.type?.toLowerCase().includes(trimmed);
@@ -148,6 +136,29 @@ export const searchCatalog = async (query: string): Promise<CatalogProduct[]> =>
     const matchesStore = product.store?.name?.toLowerCase().includes(trimmed);
     return Boolean(matchesName || matchesGame || matchesType || matchesDesc || matchesStore);
   });
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/products/search?q=${encodeURIComponent(query)}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const backendMatches = data.map(normalizeProduct);
+        const seen = new Set<number>(clientMatches.map((p) => p.id));
+        const combined = [...clientMatches];
+        for (const p of backendMatches) {
+          if (!seen.has(p.id)) {
+            seen.add(p.id);
+            combined.push(p);
+          }
+        }
+        return combined;
+      }
+    }
+  } catch {
+    // Backend search endpoint failed or was rejected; rely on client matches
+  }
+
+  return clientMatches;
 };
 
 export const loadProduct = async (productId: number): Promise<CatalogProduct> => {
