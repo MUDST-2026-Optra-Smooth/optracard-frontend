@@ -20,11 +20,12 @@ export async function loadCatalog(): Promise<CatalogProduct[]> {
   catalogRequest = fetch(`${API_BASE_URL}/api/products/home`)
     .then(async (response) => {
       if (!response.ok) throw new Error(`Catalog request failed with status ${response.status}`);
-      const data = await response.json() as CatalogProduct[];
+      const data = (await response.json()) as RawBackendProduct[];
       if (!Array.isArray(data)) throw new Error('Catalog response was invalid');
-      cachedCatalog = data;
+      const normalized = data.map(normalizeProduct);
+      cachedCatalog = normalized;
       cachedAt = Date.now();
-      return data;
+      return normalized;
     })
     .catch((error) => {
       // If a refresh has a temporary network issue, preserve a catalog the
@@ -63,6 +64,10 @@ interface RawBackendProduct {
   proImageUrl?: string | null;
   description?: string | null;
   proDescription?: string | null;
+  productSet?: string | null;
+  proSet?: string | null;
+  language?: string | null;
+  proLanguage?: string | null;
   source?: string;
   listingSource?: string;
   store?: {
@@ -85,6 +90,8 @@ function normalizeProduct(raw: RawBackendProduct): CatalogProduct {
   const stock = Number(raw.stock ?? raw.proQuantity ?? 0);
   const imageUrl = raw.imageUrl ?? raw.proImageUrl ?? null;
   const description = raw.description ?? raw.proDescription ?? null;
+  const productSet = raw.productSet ?? raw.proSet ?? null;
+  const language = raw.language ?? raw.proLanguage ?? null;
   const rawSource = (raw.source ?? raw.listingSource ?? 'OFFICIAL').toUpperCase();
   const source = rawSource === 'MARKETPLACE' ? 'MARKETPLACE' : 'OFFICIAL';
 
@@ -103,6 +110,8 @@ function normalizeProduct(raw: RawBackendProduct): CatalogProduct {
     stock,
     imageUrl,
     description,
+    productSet,
+    language,
     source,
     store: {
       id: storeId,
@@ -142,21 +151,51 @@ export const searchCatalog = async (query: string): Promise<CatalogProduct[]> =>
 };
 
 export const loadProduct = async (productId: number): Promise<CatalogProduct> => {
-  const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
-  if (response.status === 404) {
-    throw new Error('Product not found');
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
+    if (response.ok) {
+      const data = await response.json();
+      return normalizeProduct(data as RawBackendProduct);
+    }
+  } catch {
+    // API request failed; fall back to catalog lookup
   }
-  if (!response.ok) {
-    throw new Error(`Product request failed with status ${response.status}`);
+
+  // Fallback: lookup in full catalog
+  const allProducts = await loadCatalog();
+  const matched = allProducts.find((p) => p.id === productId);
+  if (matched) {
+    return matched;
   }
-  return response.json() as Promise<CatalogProduct>;
+
+  throw new Error('Product not found');
 };
 
 export const loadProductOffers = async (productId: number): Promise<CatalogProduct[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/products/${productId}/offers`);
-  if (response.status === 404) throw new Error('Product not found');
-  if (!response.ok) throw new Error(`Product offers request failed with status ${response.status}`);
-  return response.json() as Promise<CatalogProduct[]>;
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/products/${productId}/offers`);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        return data.map((item) => normalizeProduct(item as RawBackendProduct));
+      }
+    }
+  } catch {
+    // API request failed; fall back to catalog matching
+  }
+
+  try {
+    const allProducts = await loadCatalog();
+    const current = allProducts.find((p) => p.id === productId);
+    if (!current) return [];
+    return allProducts.filter(
+      (p) =>
+        p.name.toLowerCase() === current.name.toLowerCase() &&
+        p.game.toLowerCase() === current.game.toLowerCase()
+    );
+  } catch {
+    return [];
+  }
 };
 
 export const loadMarketplaceStore = async (storeId: number): Promise<MarketplaceStoreProfile> => {
