@@ -1,6 +1,6 @@
 import type { CatalogProduct, MarketplaceStoreProfile } from '../types/catalog';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? '' : 'http://localhost:8080');
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 const CACHE_TTL_MS = 60_000;
 
 let cachedCatalog: CatalogProduct[] | null = null;
@@ -17,19 +17,22 @@ export async function loadCatalog(): Promise<CatalogProduct[]> {
   if (cachedCatalog && now - cachedAt < CACHE_TTL_MS) return cachedCatalog;
   if (catalogRequest) return catalogRequest;
 
-  catalogRequest = fetch(`${API_BASE_URL}/api/products/home`)
-    .then(async (response) => {
-      if (!response.ok) throw new Error(`Catalog request failed with status ${response.status}`);
-      const data = (await response.json()) as RawBackendProduct[];
-      if (!Array.isArray(data)) throw new Error('Catalog response was invalid');
-      const normalized = data.map(normalizeProduct);
+  const tryFetch = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Catalog request failed with status ${response.status}`);
+    const data = (await response.json()) as RawBackendProduct[];
+    if (!Array.isArray(data)) throw new Error('Catalog response was invalid');
+    return data.map(normalizeProduct);
+  };
+
+  catalogRequest = tryFetch(`${API_BASE_URL}/api/products/home`)
+    .catch(() => tryFetch('/api/products/home'))
+    .then((normalized) => {
       cachedCatalog = normalized;
       cachedAt = Date.now();
       return normalized;
     })
     .catch((error) => {
-      // If a refresh has a temporary network issue, preserve a catalog the
-      // visitor has already seen instead of replacing Home with an error.
       if (cachedCatalog) return cachedCatalog;
       throw error;
     })
