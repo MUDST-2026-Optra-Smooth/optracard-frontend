@@ -77,9 +77,11 @@ const ProductDetail = () => {
   const detailRows = product ? [
     ['Card Game', product.game],
     ['Product Type', product.type],
+    ...(product.sku ? [['SKU', product.sku]] : []),
     ...(product.productSet ? [['Set', product.productSet]] : []),
     ...(product.language ? [['Language', product.language]] : []),
     ['Available Stock', String(Math.max(product.stock, 0))],
+    ['Store / Seller', product.store?.name || (product.source === 'OFFICIAL' ? 'Optracard Official Store' : 'Marketplace')],
   ] : [];
 
   const handleAddToCart = async () => {
@@ -153,7 +155,7 @@ const ProductDetail = () => {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="mb-8 inline-flex items-center gap-2 text-xl font-bold text-slate-900 transition-colors hover:text-blue-600"
+          className="mb-8 inline-flex items-center gap-2 text-xl font-bold text-slate-900 transition-colors hover:text-blue-600 cursor-pointer"
         >
           <ArrowLeft className="h-5 w-5 stroke-[3]" />
           Back
@@ -186,6 +188,11 @@ const ProductDetail = () => {
               <span className={`rounded px-2.5 py-1 ${product.source === 'OFFICIAL' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
                 {product.source === 'OFFICIAL' ? 'Official Store' : 'Marketplace'}
               </span>
+              {product.sku && (
+                <span className="rounded bg-slate-100 px-2.5 py-1 text-slate-500 font-mono text-[11px] normal-case">
+                  SKU: {product.sku}
+                </span>
+              )}
               <span className="ml-auto text-slate-400">Product ID: {product.id}</span>
             </div>
 
@@ -234,7 +241,7 @@ const ProductDetail = () => {
                     onKeyDown={handleQuantityKeyDown}
                     disabled={isSoldOut || quantity <= 1}
                     aria-label="Decrease quantity"
-                    className="px-4 text-slate-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="px-4 text-slate-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
@@ -245,7 +252,7 @@ const ProductDetail = () => {
                     onKeyDown={handleQuantityKeyDown}
                     disabled={isSoldOut || quantity >= product.stock}
                     aria-label="Increase quantity"
-                    className="px-4 text-slate-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="px-4 text-slate-500 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -254,7 +261,7 @@ const ProductDetail = () => {
                   type="button"
                   onClick={() => void handleAddToCart()}
                   disabled={isAdding || isSoldOut}
-                  className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                  className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400 cursor-pointer"
                 >
                   {isAdding ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <ShoppingCart className="h-5 w-5" />}
                   {isAdding ? 'Adding...' : 'Add to Cart'}

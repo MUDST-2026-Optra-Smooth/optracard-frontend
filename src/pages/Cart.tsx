@@ -220,7 +220,7 @@ export const Cart = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] py-8 px-4 sm:px-6 lg:px-10">
       <div className="max-w-6xl mx-auto">
-        <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 mb-6">
+        <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 mb-6 cursor-pointer">
           <ArrowLeft size={16} />Continue Shopping
         </button>
         {error && <p role="alert" className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
@@ -230,7 +230,7 @@ export const Cart = () => {
             <div className="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center mb-4"><ShoppingBag size={24} className="text-gray-300" /></div>
             <h2 className="text-lg font-bold text-gray-900 mb-1">Your cart is empty</h2>
             <p className="text-sm text-gray-400 mb-6">Add some cards to get started.</p>
-            <button type="button" onClick={() => navigate('/')} className="bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-full text-sm">Browse Cards</button>
+            <button type="button" onClick={() => navigate('/')} className="bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-full text-sm cursor-pointer">Browse Cards</button>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -261,11 +261,11 @@ export const Cart = () => {
                           </div>
                           <div className="w-24 text-right text-sm font-bold text-gray-900 shrink-0">{formatPrice(item.price)}</div>
                           <div className="flex items-center border border-gray-200 rounded-lg h-8 shrink-0">
-                            <button type="button" onClick={() => updateQty(item.id, -1)} className="w-8 h-full flex items-center justify-center text-gray-400" aria-label="Decrease quantity"><Minus size={14} /></button>
+                            <button type="button" onClick={() => updateQty(item.id, -1)} className="w-8 h-full flex items-center justify-center text-gray-400 cursor-pointer" aria-label="Decrease quantity"><Minus size={14} /></button>
                             <span className="w-6 text-center text-sm font-bold text-gray-800">{item.qty}</span>
-                            <button type="button" onClick={() => updateQty(item.id, 1)} className="w-8 h-full flex items-center justify-center text-gray-400" aria-label="Increase quantity"><Plus size={14} /></button>
+                            <button type="button" onClick={() => updateQty(item.id, 1)} className="w-8 h-full flex items-center justify-center text-gray-400 cursor-pointer" aria-label="Increase quantity"><Plus size={14} /></button>
                           </div>
-                          <button type="button" onClick={() => removeItem(item.id)} className="text-gray-300 hover:text-red-500" aria-label="Remove item"><Trash2 size={16} /></button>
+                          <button type="button" onClick={() => removeItem(item.id)} className="text-gray-300 hover:text-red-500 cursor-pointer" aria-label="Remove item"><Trash2 size={16} /></button>
                         </div>
                       ))}
                     </div>
@@ -281,7 +281,7 @@ export const Cart = () => {
                 <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span className="text-gray-400 text-xs">Calculated per seller at checkout</span></div>
               </div>
               <div className="flex justify-between items-center py-4"><span className="text-sm font-bold text-gray-900">Estimated Total</span><span className="text-lg font-bold text-blue-600">{formatPrice(subtotal)}</span></div>
-              <button type="button" disabled={isOrdering} onClick={() => setIsCheckoutOpen(true)} className="w-full bg-blue-600 disabled:opacity-50 text-white font-bold py-3 rounded-full text-sm">
+              <button type="button" disabled={isOrdering} onClick={() => setIsCheckoutOpen(true)} className="w-full bg-blue-600 disabled:opacity-50 text-white font-bold py-3 rounded-full text-sm cursor-pointer">
                 {isOrdering ? 'Processing…' : 'Place Order'}
               </button>
               <div className="mt-4 flex items-start gap-2 bg-gray-50 rounded-lg p-3">

@@ -107,7 +107,7 @@ export const Login = () => {
               required 
             />
           </div>
-          <button type="submit" className="w-full bg-[#2f65ff] text-white font-medium py-2 rounded-md hover:bg-blue-700 transition duration-200 text-sm">
+          <button type="submit" className="w-full bg-[#2f65ff] text-white font-medium py-2 rounded-md hover:bg-blue-700 transition duration-200 text-sm cursor-pointer">
             Login
           </button>
         </form>

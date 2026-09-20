@@ -81,7 +81,7 @@ export function ViewAllOOS() {
     <section className="min-h-full bg-[#f8f9fb] font-sans text-[#20242b]">
       <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
         <button
-          className="mb-6 flex items-center gap-1 text-sm font-semibold text-gray-700 transition hover:text-black"
+          className="mb-6 flex items-center gap-1 text-sm font-semibold text-gray-700 transition hover:text-black cursor-pointer"
           onClick={() => navigate(-1)}
           type="button"
         >
@@ -101,7 +101,7 @@ export function ViewAllOOS() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between ">
           <FilterDropdown
             label="Game:"
             options={gameOptions}

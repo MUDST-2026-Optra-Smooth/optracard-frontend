@@ -142,7 +142,6 @@ export const Home = () => {
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-100">Optracard marketplace</p>
           <h1 className="mt-3 text-3xl font-black sm:text-4xl">Discover cards, sealed products and TCG essentials.</h1>
           <p className="mt-3 max-w-2xl text-base text-blue-100">Shop Optracard Official Store or listings from approved community sellers.</p>
-
         </div>
       </section>
 

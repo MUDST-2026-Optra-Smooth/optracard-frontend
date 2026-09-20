@@ -213,36 +213,7 @@ export const SearchResult = () => {
               })}
             </section>
           )}
-          <section className="text-center">
-            <h2 className="text-3xl font-bold text-blue-600 mb-8">Optracard Official Store</h2>
-            
-            {singleCards.length > 0 && (
-              <div className="text-left mb-10">
-                <h3 className="text-xl font-bold mb-4">Single</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {singleCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} storeName={card.store.name} stock={card.stock} />)}
-                </div>
-              </div>
-            )}
 
-            {boosterCards.length > 0 && (
-              <div className="text-left mb-10">
-                <h3 className="text-xl font-bold mb-4">Booster</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {boosterCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} storeName={card.store.name} stock={card.stock} />)}
-                </div>
-              </div>
-            )}
-
-            {boosterBoxCards.length > 0 && (
-              <div className="text-left">
-                <h3 className="text-xl font-bold mb-4">Booster Box</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {boosterBoxCards.map(card => <ProductCard key={card.id} productId={card.id} title={card.name} price={card.price} game={card.game} imageUrl={card.imageUrl} type={card.type} source={card.source} storeName={card.store.name} stock={card.stock} />)}
-                </div>
-              </div>
-            )}
-          </section>
         </>
       )}
     </div>
