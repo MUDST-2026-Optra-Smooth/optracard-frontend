@@ -8,6 +8,7 @@ export interface CatalogStore {
 
 export interface CatalogProduct {
   id: number;
+  sku?: string | null;
   name: string;
   type: string;
   game: string;
