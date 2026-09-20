@@ -44,7 +44,7 @@ export const Footer = () => {
 
           {/* GitHub - Official Dark Gray (with border to stand out from dark background) */}
           <a 
-            href="#" 
+            href="https://github.com/MUDST-2026-Optra-Smooth" 
             aria-label="GitHub"
             className="w-12 h-12 bg-[#24292e] border border-gray-700 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_4px_15px_rgba(255,255,255,0.2)]"
           >
