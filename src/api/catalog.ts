@@ -20,14 +20,11 @@ export async function loadCatalog(): Promise<CatalogProduct[]> {
   catalogRequest = fetch(`${API_BASE_URL}/api/products/home`)
     .then(async (response) => {
       if (!response.ok) throw new Error(`Catalog request failed with status ${response.status}`);
-      const data = await response.json() as CatalogProduct[];
       const data = (await response.json()) as RawBackendProduct[];
       if (!Array.isArray(data)) throw new Error('Catalog response was invalid');
-      cachedCatalog = data;
       const normalized = data.map(normalizeProduct);
       cachedCatalog = normalized;
       cachedAt = Date.now();
-      return data;
       return normalized;
     })
     .catch((error) => {
@@ -154,9 +151,6 @@ export const searchCatalog = async (query: string): Promise<CatalogProduct[]> =>
 };
 
 export const loadProduct = async (productId: number): Promise<CatalogProduct> => {
-  const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
-  if (response.status === 404) {
-    throw new Error('Product not found');
   try {
     const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
     if (response.ok) {
@@ -166,8 +160,6 @@ export const loadProduct = async (productId: number): Promise<CatalogProduct> =>
   } catch {
     // API request failed; fall back to catalog lookup
   }
-  if (!response.ok) {
-    throw new Error(`Product request failed with status ${response.status}`);
 
   // Fallback: lookup in full catalog
   const allProducts = await loadCatalog();
@@ -175,16 +167,11 @@ export const loadProduct = async (productId: number): Promise<CatalogProduct> =>
   if (matched) {
     return matched;
   }
-  return response.json() as Promise<CatalogProduct>;
 
   throw new Error('Product not found');
 };
 
 export const loadProductOffers = async (productId: number): Promise<CatalogProduct[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/products/${productId}/offers`);
-  if (response.status === 404) throw new Error('Product not found');
-  if (!response.ok) throw new Error(`Product offers request failed with status ${response.status}`);
-  return response.json() as Promise<CatalogProduct[]>;
   try {
     const response = await fetch(`${API_BASE_URL}/api/products/${productId}/offers`);
     if (response.ok) {
