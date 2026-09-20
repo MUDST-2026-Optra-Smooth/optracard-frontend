@@ -227,7 +227,10 @@ export const Navbar = () => {
                   <button
                     key={p.id}
                     type="button"
-                    onClick={() => handleSearch(p.name)}
+                    onClick={() => {
+                      setShowDropdown(false);
+                      navigate(`/product/${p.id}`);
+                    }}
                     className="group w-full text-left px-3 py-2 rounded-md text-xs text-gray-200 hover:bg-[#1f293d] hover:text-white flex items-center gap-3 transition-all duration-150 cursor-pointer"
                   >
                     {p.imageUrl ? (
