@@ -161,7 +161,7 @@ export const Navbar = () => {
         </>
       ) : (
         <>
-      <div className="hidden md:flex flex-1 max-w-xl mx-8">
+      <div ref={searchContainerRef} className="hidden md:flex flex-1 max-w-xl mx-8">
         <div className="relative w-full">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
             <img src={searchIcon} alt="Search" className="w-4 h-4 object-contain opacity-50" />
