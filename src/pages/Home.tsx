@@ -142,38 +142,6 @@ export const Home = () => {
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-100">Optracard marketplace</p>
           <h1 className="mt-3 text-3xl font-black sm:text-4xl">Discover cards, sealed products and TCG essentials.</h1>
           <p className="mt-3 max-w-2xl text-base text-blue-100">Shop Optracard Official Store or listings from approved community sellers.</p>
-
-          <form onSubmit={handleHeroSearch} className="mt-6 max-w-2xl">
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by card game, product name, or category..."
-                className="w-full rounded-lg bg-white px-5 py-3.5 pr-28 text-sm text-slate-900 shadow-lg placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 rounded-md bg-[#1e5bff] px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700 cursor-pointer"
-              >
-                Search
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-blue-200 font-medium">Quick categories:</span>
-            {['Single', 'Booster', 'Booster Box', 'Pokemon', 'One Piece'].map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => navigate(`/search?q=${encodeURIComponent(item)}`)}
-                className="rounded-full bg-white/10 px-3 py-1 font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20 cursor-pointer"
-              >
-                {item}
-              </button>
-            ))}
-          </div>
         </div>
       </section>
 
