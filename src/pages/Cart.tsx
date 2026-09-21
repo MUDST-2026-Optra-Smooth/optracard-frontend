@@ -193,8 +193,21 @@ export const Cart = () => {
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(getApiErrorMessage(data, 'Could not place your order.'));
 
-      const orders = Array.isArray(data?.orders) ? data.orders : [];
-      const orderNumbers = orders.map((order: { orderNumber?: string }) => order.orderNumber).filter(Boolean);
+      const orders = Array.isArray(data?.orders)
+        ? data.orders
+        : Array.isArray(data)
+          ? data
+          : data?.orderNumber || data?.Ord_ID || data?.ord_id
+            ? [data]
+            : [];
+      const orderNumbers = orders
+        .map((order: { orderNumber?: string; Ord_ID?: number; ord_id?: number; id?: number }) =>
+          order.orderNumber ||
+          (order.Ord_ID ? `ORD-${order.Ord_ID}` : '') ||
+          (order.ord_id ? `ORD-${order.ord_id}` : '') ||
+          (order.id ? `ORD-${order.id}` : '')
+        )
+        .filter(Boolean);
       const sellerCount = Math.max(sellerGroups.length, 1);
       const shippingFee = details.shippingMethod === 'standard' ? 50 * sellerCount : 0;
       const total = subtotal + shippingFee;
@@ -314,6 +327,8 @@ export const Cart = () => {
         subtotal={subtotal}
         sellerGroups={sellerGroups}
         savedAddress={savedAddress}
+        isOrdering={isOrdering}
+        error={error}
         onConfirm={handleOrderConfirmed}
       />
     </div>
