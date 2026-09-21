@@ -231,7 +231,7 @@ export const EditProfile = () => {
         <button
           type="button"
           onClick={() => navigate('/profile')}
-          className="absolute top-6 left-6 text-sm text-gray-600 flex items-center hover:text-black"
+          className="absolute top-6 left-6 text-sm text-gray-600 flex items-center hover:text-black cursor-pointer transition duration-200"
         >
           ← Back
         </button>
@@ -246,7 +246,7 @@ export const EditProfile = () => {
             <button
               type="button"
               onClick={() => void loadProfile()}
-              className="mt-4 rounded-full bg-blue-600 px-5 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition"
+              className="mt-4 rounded-full bg-blue-600 px-5 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
             >
               Try again
             </button>
@@ -261,7 +261,7 @@ export const EditProfile = () => {
                 <button
                   type="button"
                   onClick={handleAvatarClick}
-                  className="absolute bottom-0 right-0 w-7 h-7 bg-white border border-gray-300 rounded-md flex items-center justify-center shadow-sm hover:bg-gray-50 transition"
+                  className="absolute bottom-0 right-0 w-7 h-7 bg-white border border-gray-300 rounded-md flex items-center justify-center shadow-sm hover:bg-gray-50 transition cursor-pointer"
                   aria-label="Change profile picture"
                 >
                   <FiEdit2 className="w-3.5 h-3.5 text-gray-600" />
@@ -359,7 +359,7 @@ export const EditProfile = () => {
               <button
                 type="submit"
                 disabled={isSaving || logoutCountdown !== null}
-                className="w-full bg-[#2f65ff] text-white font-medium py-2.5 rounded-full hover:bg-blue-700 transition duration-200 text-sm mb-3 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full bg-[#2f65ff] text-white font-medium py-2.5 rounded-full hover:bg-blue-700 transition duration-200 text-sm mb-3 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -367,7 +367,7 @@ export const EditProfile = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full bg-red-500 text-white font-medium py-2.5 rounded-full hover:bg-red-600 transition duration-200 text-sm"
+                className="w-full bg-red-500 text-white font-medium py-2.5 rounded-full hover:bg-red-600 transition duration-200 text-sm cursor-pointer"
               >
                 Logout
               </button>

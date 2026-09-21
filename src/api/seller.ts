@@ -1,4 +1,4 @@
-import type { SellerOrder, SellerProduct, SellerProductInput, CardGameOption } from '../types/seller';
+import type { SellerOrder, SellerProduct, SellerProductInput, CardGameOption, SellerStoreInfo } from '../types/seller';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
@@ -17,6 +17,7 @@ const request = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   return data as T;
 };
 
+export const loadMyStore = () => request<SellerStoreInfo>('/api/stores/my');
 export const loadSellerProducts = () => request<SellerProduct[]>('/api/seller/products');
 export const loadSellerGames = () => request<CardGameOption[]>('/api/seller/games');
 export const loadSellerProduct = (id: number) => request<SellerProduct>(`/api/seller/products/${id}`);

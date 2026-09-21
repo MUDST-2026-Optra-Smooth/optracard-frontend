@@ -143,7 +143,7 @@ const AddProduct = () => {
       <Sidebar currentTab="stocks" />
       <main className="min-w-0 flex-1 p-8">
         <div className="mx-auto max-w-4xl">
-          <button type="button" onClick={() => navigate('/seller')} className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600">
+          <button type="button" onClick={() => navigate('/seller')} className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600 cursor-pointer">
             <ArrowLeft className="h-4 w-4" />Back to Stocks
           </button>
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -231,14 +231,14 @@ const AddProduct = () => {
               <div>
                 <p className="text-sm font-semibold">Product image</p>
                 <div className="mt-2 flex items-center gap-4">
-                  <button type="button" disabled={templateSelected} onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"><ImagePlus className="h-4 w-4" />{templateSelected ? 'Using template image' : 'Choose image'}</button>
+                  <button type="button" disabled={templateSelected} onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-bold hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 cursor-pointer"><ImagePlus className="h-4 w-4" />{templateSelected ? 'Using template image' : 'Choose image'}</button>
                   <input ref={fileRef} type="file" accept="image/*" disabled={templateSelected} onChange={(event) => loadImage(event.target.files?.[0])} className="hidden" />
                   {form.imageUrl && <img src={form.imageUrl} alt="Preview" className="h-20 w-16 rounded object-cover ring-1 ring-slate-200" />}
                 </div>
               </div>
               <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
-                <button type="button" onClick={() => navigate('/seller')} className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-bold">Cancel</button>
-                <button disabled={isSaving || isLoadingGames || officialMatch} type="submit" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60">{isSaving && <LoaderCircle className="h-4 w-4 animate-spin" />}Submit for approval</button>
+                <button type="button" onClick={() => navigate('/seller')} className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-bold cursor-pointer">Cancel</button>
+                <button disabled={isSaving || isLoadingGames || officialMatch} type="submit" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60 cursor-pointer">{isSaving && <LoaderCircle className="h-4 w-4 animate-spin" />}Submit for approval</button>
               </div>
             </form>
           </div>

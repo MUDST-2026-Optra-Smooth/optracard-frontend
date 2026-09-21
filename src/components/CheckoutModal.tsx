@@ -29,6 +29,8 @@ interface CheckoutModalProps {
   subtotal: number;
   sellerGroups: CheckoutSellerGroup[];
   savedAddress: SavedAddress;
+  isOrdering?: boolean;
+  error?: string | null;
   onConfirm: (details: CheckoutDetails) => void;
 }
 
@@ -74,7 +76,16 @@ const PAYMENT_OPTIONS = [
 
 type PaymentId = (typeof PAYMENT_OPTIONS)[number]['id'];
 
-export const CheckoutModal = ({ isOpen, onClose, subtotal, sellerGroups, savedAddress, onConfirm }: CheckoutModalProps) => {
+export const CheckoutModal = ({
+  isOpen,
+  onClose,
+  subtotal,
+  sellerGroups,
+  savedAddress,
+  isOrdering = false,
+  error = null,
+  onConfirm,
+}: CheckoutModalProps) => {
   const [shippingMethod, setShippingMethod] = useState<ShippingId>('pickup');
   const [paymentMethod, setPaymentMethod] = useState<PaymentId>('cash');
   const [addressMode, setAddressMode] = useState<'saved' | 'new'>('saved');
@@ -88,6 +99,22 @@ export const CheckoutModal = ({ isOpen, onClose, subtotal, sellerGroups, savedAd
     if (hasMultipleSellers) setShippingMethod('standard');
   }, [hasMultipleSellers]);
 
+  const isSavedAddressValid =
+    Boolean(savedAddress.name?.trim()) &&
+    Boolean(savedAddress.phone?.trim()) &&
+    Boolean(savedAddress.address?.trim());
+
+  useEffect(() => {
+    if (!isSavedAddressValid && addressMode === 'saved') {
+      setAddressMode('new');
+      setNewAddress((prev) => ({
+        name: prev.name || savedAddress.name || '',
+        phone: prev.phone || savedAddress.phone || '',
+        address: prev.address || savedAddress.address || '',
+      }));
+    }
+  }, [isSavedAddressValid, savedAddress]);
+
   if (!isOpen) return null;
 
   const needsAddress = shippingMethod !== 'pickup';
@@ -97,8 +124,6 @@ export const CheckoutModal = ({ isOpen, onClose, subtotal, sellerGroups, savedAd
 
   const isNewAddressValid =
     newAddress.name.trim() !== '' && newAddress.phone.trim() !== '' && newAddress.address.trim() !== '';
-  const isSavedAddressValid =
-    savedAddress.name.trim() !== '' && savedAddress.phone.trim() !== '' && savedAddress.address.trim() !== '';
   const canConfirm = !needsAddress || (addressMode === 'saved' ? isSavedAddressValid : isNewAddressValid);
 
   const handleNewAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -110,14 +135,20 @@ export const CheckoutModal = ({ isOpen, onClose, subtotal, sellerGroups, savedAd
   };
 
   const handleConfirm = () => {
-    if (!canConfirm) return;
+    if (!canConfirm || isOrdering) return;
     const address = addressMode === 'new' ? newAddress : savedAddress;
+    const resolvedName = address.name?.trim() || savedAddress.name?.trim() || 'Customer';
+    const resolvedPhone = address.phone?.trim() || savedAddress.phone?.trim() || '0000000000';
+    const resolvedAddress = shippingMethod === 'pickup'
+      ? 'Store Counter Pickup'
+      : (address.address?.trim() || savedAddress.address?.trim() || 'Store Counter Pickup');
+
     onConfirm({
       shippingMethod,
       paymentMethod,
-      recipientName: address.name,
-      recipientPhone: address.phone,
-      shippingAddress: address.address,
+      recipientName: resolvedName,
+      recipientPhone: resolvedPhone,
+      shippingAddress: resolvedAddress,
     });
   };
 
@@ -386,17 +417,27 @@ export const CheckoutModal = ({ isOpen, onClose, subtotal, sellerGroups, savedAd
             </div>
           </div>
 
+          {error && (
+            <p role="alert" className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs font-semibold text-red-700">
+              {error}
+            </p>
+          )}
+
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={!canConfirm}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:cursor-not-allowed text-white disabled:text-gray-400 font-bold py-3 rounded-full text-sm transition cursor-pointer"
+            disabled={!canConfirm || isOrdering}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:cursor-not-allowed text-white disabled:text-gray-400 font-bold py-3 rounded-full text-sm transition cursor-pointer flex items-center justify-center gap-2"
           >
-            Confirm Order — {formatPrice(total)}
+            {isOrdering ? 'Placing Order…' : `Confirm Order — ${formatPrice(total)}`}
           </button>
 
           {!canConfirm && (
-            <p className="text-[11px] text-red-500 text-center">Please fill in your delivery address to continue.</p>
+            <p className="text-[11px] text-red-500 text-center">
+              {addressMode === 'saved' && !isSavedAddressValid
+                ? 'Your saved address is incomplete. Please switch to "New Address" and fill in the details.'
+                : 'Please fill in your delivery address to continue.'}
+            </p>
           )}
         </div>
       </div>

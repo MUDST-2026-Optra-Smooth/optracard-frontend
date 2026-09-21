@@ -61,3 +61,31 @@ export interface SellerProductInput {
   description: string | null;
   templateProductId?: number | null;
 }
+
+export interface SellerStoreInfo {
+  storeId: number;
+  storeSlug: string;
+  storeStatus: string;
+  storeName: string;
+  storeDescription: string | null;
+  physicalStore: boolean;
+  ownerFirstName: string | null;
+  ownerLastName: string | null;
+  ownerEmail: string | null;
+  ownerPhone: string | null;
+  bankName: string | null;
+  bankBranch: string | null;
+  bankAccountName: string | null;
+  bankAccountNumber: string | null;
+  storeAddress: string | null;
+  province: string | null;
+  district: string | null;
+  subdistrict: string | null;
+  postalCode: string | null;
+  storeProfileImage: string | null;
+  bankPassbookImage: string | null;
+  termsAccepted: boolean;
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+}

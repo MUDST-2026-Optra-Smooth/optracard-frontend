@@ -225,7 +225,7 @@ export function OrderHistoryDetail() {
       <div className="mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-12 lg:py-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <button type="button" onClick={() => navigate('/order-history')} className="mb-4 flex items-center gap-1 text-[10px] font-bold text-[#2f65ff] transition hover:text-[#1647c4]">
+            <button type="button" onClick={() => navigate('/order-history')} className="mb-4 flex items-center gap-1 text-[10px] font-bold text-[#2f65ff] transition hover:text-[#1647c4] cursor-pointer">
               ← Back to order history
             </button>
             <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-2 text-[10px] font-medium text-[#a1a8b3]">

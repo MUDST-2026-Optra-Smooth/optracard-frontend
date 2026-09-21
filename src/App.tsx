@@ -20,6 +20,7 @@ import ProductDetail from './pages/PDdetail';
 import EditProduct from './pages/EditProduct';
 import AddProduct from './pages/AddProduct';
 import { Cart } from './pages/Cart';
+import { PaymentSuccess } from './pages/PaymentSuccess';
 import { EditProfile } from './pages/EditProfile';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ADaddProduct } from './pages/AD_addProduct';
@@ -135,6 +136,9 @@ export function App() {
           <Route path="/edit-product/:id" element={<ProtectedRoute allowedRoles={['SELLER']}><EditProduct /></ProtectedRoute>} />
           <Route path="/add-product" element={<ProtectedRoute allowedRoles={['SELLER']}><AddProduct /></ProtectedRoute>} />
           <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+          <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+          <Route path="/seller-profile/my" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerProfile isOwnerOnly /></ProtectedRoute>} />
+          <Route path="/seller-profile" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerProfile isOwnerOnly /></ProtectedRoute>} />
           <Route path="/seller-profile/:sellerId" element={<SellerProfile />} />
         </Routes>
       </main>

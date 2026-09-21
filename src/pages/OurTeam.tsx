@@ -65,7 +65,7 @@ export const OurTeam = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="text-sm font-semibold text-gray-700 hover:text-black mb-8 flex items-center gap-1 transition ml-2"
+          className="text-sm font-semibold text-gray-700 hover:text-black mb-8 flex items-center gap-1 transition ml-2 cursor-pointer duration-200"
         >
           ← Back
         </button>
