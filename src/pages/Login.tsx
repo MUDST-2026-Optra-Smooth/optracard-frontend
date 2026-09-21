@@ -51,13 +51,11 @@ export const Login = () => {
             : data.role === 'ADMIN'
               ? '/admin/dashboard'
             : data.role === 'SELLER'
-              ? '/'
+              ? '/dashboard'
             : '/';
-        const destination = data.role === 'SELLER'
-          ? '/'
-          : requestedPath && canOpenPathForRole(data.role, requestedPath)
-            ? requestedPath
-            : roleHome;
+        const destination = requestedPath && canOpenPathForRole(data.role, requestedPath)
+          ? requestedPath
+          : roleHome;
         navigate(destination);
       } else {
         alert(data?.message || 'Login failed');
