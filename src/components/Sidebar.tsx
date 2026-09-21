@@ -65,8 +65,8 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                 </span>
                 {store.storeId && (
                   <Link
-                    to={`/seller-profile/${store.storeId}`}
-                    className="text-[11px] text-slate-400 hover:text-blue-300 flex items-center gap-0.5 transition"
+                    to="/seller-profile/my"
+                    className="text-[11px] text-slate-400 hover:text-blue-300 flex items-center gap-0.5 transition cursor-pointer"
                     title="View your store page on marketplace"
                   >
                     View shop <ExternalLink className="w-3 h-3 inline" />
