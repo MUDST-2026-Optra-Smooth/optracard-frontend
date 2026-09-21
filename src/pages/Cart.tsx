@@ -195,14 +195,26 @@ export const Cart = () => {
 
       const orders = Array.isArray(data?.orders) ? data.orders : [];
       const orderNumbers = orders.map((order: { orderNumber?: string }) => order.orderNumber).filter(Boolean);
-      const message = orderNumbers.length === 1
-        ? `Order ${orderNumbers[0]} was saved successfully.`
-        : `Created ${orderNumbers.length} separate orders for ${orderNumbers.join(' and ')}.`;
+      const sellerCount = Math.max(sellerGroups.length, 1);
+      const shippingFee = details.shippingMethod === 'standard' ? 50 * sellerCount : 0;
+      const total = subtotal + shippingFee;
 
       invalidateCatalogCache();
       setIsCheckoutOpen(false);
       window.dispatchEvent(new Event('cart-updated'));
-      navigate('/order-history', { state: { message } });
+      navigate('/payment-success', {
+        state: {
+          orderNumbers,
+          paymentMethod: details.paymentMethod,
+          shippingMethod: details.shippingMethod,
+          recipientName: details.recipientName,
+          recipientPhone: details.recipientPhone,
+          shippingAddress: details.shippingAddress,
+          subtotal,
+          total,
+          itemCount: totalItemCount,
+        },
+      });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not place your order.');
     } finally {
