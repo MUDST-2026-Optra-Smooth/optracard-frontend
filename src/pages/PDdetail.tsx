@@ -15,6 +15,7 @@ import { loadProduct, loadProductOffers } from '../api/catalog';
 import { useAuth } from '../context/AuthContext';
 import { formatPrice } from '../context/formatters';
 import type { CatalogProduct } from '../types/catalog';
+import { encodeStoreId } from '../utils/storeSecurity';
 
 const ProductDetail = () => {
   const navigate = useNavigate();
@@ -206,7 +207,7 @@ const ProductDetail = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={() => product.store.id && navigate(`/seller-profile/${product.store.id}`)}
+                  onClick={() => product.store.id && navigate(`/seller-profile/${encodeStoreId(product.store.id)}`)}
                   className="flex w-full max-w-[360px] items-center rounded-lg border border-slate-300 bg-white px-4 py-3 text-left text-sm text-slate-600 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-50 xl:shrink-0"
                   aria-label={`View ${product.store.name} seller profile`}
                 >
