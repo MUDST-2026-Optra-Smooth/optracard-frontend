@@ -46,3 +46,4 @@ export function decodeStoreId(token?: string): number | null {
   }
   return null;
 }
+
