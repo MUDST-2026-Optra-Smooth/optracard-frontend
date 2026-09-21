@@ -13,7 +13,7 @@ export const AboutUs: React.FC = () => {
         {/* Back Button */}
         <button 
           onClick={() => navigate(-1)} 
-          className="text-sm md:text-base font-semibold text-gray-700 hover:text-black mb-6 md:mb-8 flex items-center gap-1 transition"
+          className="text-sm md:text-base font-semibold text-gray-700 hover:text-black mb-6 md:mb-8 flex items-center gap-1 transition cursor-pointer duration-200"
         >
           ← Back
         </button>
