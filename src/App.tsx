@@ -137,6 +137,8 @@ export function App() {
           <Route path="/add-product" element={<ProtectedRoute allowedRoles={['SELLER']}><AddProduct /></ProtectedRoute>} />
           <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
           <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+          <Route path="/seller-profile/my" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerProfile isOwnerOnly /></ProtectedRoute>} />
+          <Route path="/seller-profile" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerProfile isOwnerOnly /></ProtectedRoute>} />
           <Route path="/seller-profile/:sellerId" element={<SellerProfile />} />
         </Routes>
       </main>
