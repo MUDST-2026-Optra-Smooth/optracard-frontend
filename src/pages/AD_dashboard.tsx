@@ -16,7 +16,7 @@ export const ADdashboard = () => {
   useEffect(() => { void load(); }, []);
 
   return <AdminWorkspace currentTab="dashboard">
-    <div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-3xl font-bold text-slate-900">Dashboard</h1><p className="mt-1 text-sm text-slate-500">Live summary of Optracard stock, orders, and marketplace reviews.</p></div><button type="button" onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm"><RefreshCcw className="h-4 w-4" />Refresh</button></div>
+    <div className="mb-7 flex flex-wrap items-end justify-between gap-4"><div><h1 className="text-3xl font-bold text-slate-900">Dashboard</h1><p className="mt-1 text-sm text-slate-500">Live summary of Optracard stock, orders, and marketplace reviews.</p></div><button type="button" onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm cursor-pointer"><RefreshCcw className="h-4 w-4" />Refresh</button></div>
     {error && <div className="mb-5"><AdminError message={error} onRetry={() => void load()} /></div>}
     {loading && <AdminLoading label="Loading live dashboard…" />}
     {!loading && dashboard && <div className="space-y-6">

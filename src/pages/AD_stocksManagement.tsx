@@ -53,8 +53,8 @@ export const ADseller = () => {
         <p className="mt-1 text-sm text-slate-500">Official Store inventory, selling prices, and availability.</p>
       </div>
       <div className="flex gap-2">
-        <button type="button" onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold"><RefreshCcw className="h-4 w-4" />Refresh</button>
-        <button type="button" onClick={() => navigate('/admin/products/new')} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white"><Plus className="h-4 w-4" />Add product</button>
+        <button type="button" onClick={() => void load()} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold cursor-pointer"><RefreshCcw className="h-4 w-4" />Refresh</button>
+        <button type="button" onClick={() => navigate('/admin/products/new')} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white cursor-pointer"><Plus className="h-4 w-4" />Add product</button>
       </div>
     </div>
 
@@ -92,7 +92,7 @@ export const ADseller = () => {
             <td className="px-5 py-4 text-right text-blue-700">{formatCurrency(product.price)}</td>
             <td className="px-5 py-4 text-right font-bold text-emerald-700">{formatCurrency((product.price ?? 0) - (product.cost ?? 0))}</td>
             <td className="px-5 py-4"><StatusBadge status={product.active ? 'Active' : 'Inactive'} /></td>
-            <td className="px-5 py-4"><div className="flex justify-end gap-1"><button type="button" onClick={() => navigate(`/admin/products/${product.id}`)} title="View" className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600"><Eye className="h-4 w-4" /></button><button type="button" onClick={() => navigate(`/admin/products/${product.id}/edit`)} title="Edit" className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600"><Pencil className="h-4 w-4" /></button>{product.active && <button type="button" onClick={() => void deactivate(product)} title="Deactivate" className="rounded p-2 text-slate-500 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>}</div></td>
+            <td className="px-5 py-4"><div className="flex justify-end gap-1"><button type="button" onClick={() => navigate(`/admin/products/${product.id}`)} title="View" className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600 cursor-pointer"><Eye className="h-4 w-4" /></button><button type="button" onClick={() => navigate(`/admin/products/${product.id}/edit`)} title="Edit" className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600 cursor-pointer"><Pencil className="h-4 w-4" /></button>{product.active && <button type="button" onClick={() => void deactivate(product)} title="Deactivate" className="rounded p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"><Trash2 className="h-4 w-4" /></button>}</div></td>
           </tr>)}
           {filtered.length === 0 && <tr><td colSpan={8} className="px-5 py-12 text-center text-slate-500">No official products found.</td></tr>}
         </tbody>
