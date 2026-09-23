@@ -52,3 +52,16 @@ export const loadAdminMarketplaceProducts = (storeId?: number) => request<AdminP
   `/api/admin/marketplace/products${storeId === undefined ? '' : `?storeId=${storeId}`}`,
 );
 export const loadAdminMarketplaceProduct = (id: number) => request<AdminProduct>(`/api/admin/marketplace/products/${id}`);
+
+export const loadMarketplaceRequests = (status = 'ALL') => request<AdminProduct[]>(
+  `/api/admin/marketplace/requests?status=${encodeURIComponent(status)}`,
+);
+export const approveMarketplaceRequest = (id: number) => request<AdminProduct>(
+  `/api/admin/marketplace/requests/${id}/approve`, { method: 'PUT' },
+);
+export const rejectMarketplaceRequest = (id: number, note = '') => request<AdminProduct>(
+  `/api/admin/marketplace/requests/${id}/reject`, {
+    method: 'PUT', body: JSON.stringify({ note }),
+  },
+);
+
