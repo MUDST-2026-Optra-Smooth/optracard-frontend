@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
         <div className="p-4 border-t border-slate-800/60">
           <Link
             to="/"
-            className="flex items-center gap-2 text-sm font-semibold text-gray-300 hover:text-white transition-colors w-full px-2 py-2.5 rounded-lg hover:bg-slate-800"
+            className="flex items-center gap-2 text-sm font-semibold text-gray-300 hover:text-white transition-colors w-full px-2 py-2.5 rounded-lg hover:bg-slate-800 cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Back to Website</span>

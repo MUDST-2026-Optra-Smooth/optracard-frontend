@@ -111,7 +111,7 @@ export const ADsidebar: React.FC<ADsidebarProps> = ({ currentTab }) => {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="mb-3 w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-gray-300 transition-colors hover:bg-slate-800 hover:text-white"
+            className="mb-3 w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-gray-300 transition-colors hover:bg-slate-800 hover:text-white cursor-pointer"
           >
             Back to Website
           </button>
