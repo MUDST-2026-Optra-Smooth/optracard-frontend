@@ -5,7 +5,7 @@ import { deactivateAdminProduct, loadAdminProducts } from '../api/admin';
 import { AdminError, AdminLoading, AdminWorkspace, formatCurrency, StatusBadge } from '../components/AdminWorkspace';
 import type { AdminProduct } from '../types/admin';
 
-export const ADseller = () => {
+export const ADstocks = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [query, setQuery] = useState('');
@@ -101,4 +101,4 @@ export const ADseller = () => {
   </AdminWorkspace>;
 };
 
-export default ADseller;
+export default ADstocks;

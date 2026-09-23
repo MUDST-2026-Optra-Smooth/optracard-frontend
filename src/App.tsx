@@ -34,7 +34,7 @@ import { AD_MarketplaceStorelist } from './pages/AD_MarketplaceStorelist';
 import { ADorderDetail } from './pages/AD_orderDetail';
 import { ADordersManagement } from './pages/AD_ordersManagement';
 import { ADpddetail } from './pages/AD_pddetail';
-import { ADseller } from './pages/AD_seller';
+import { ADstocks } from './pages/AD_stocksManagement';
 import { ADstoreRequest } from './pages/AD_storeRequest';
 import { ADstoreRequestdetail } from './pages/AD_storeRequestdetail';
 import { SPAD_AddAdmin } from './pages/SPAD_AddAdmin';
@@ -91,7 +91,7 @@ export function App() {
           <Route path="/order-history" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} />
           <Route path="/order-history/:orderNumber" element={<ProtectedRoute><OrderHistoryDetail /></ProtectedRoute>} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="/admin/stocks" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADseller /></ProtectedRoute>} />
+          <Route path="/admin/stocks" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADstocks /></ProtectedRoute>} />
           <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADdashboard /></ProtectedRoute>} />
           <Route path="/admin/products/new" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADaddProduct /></ProtectedRoute>} />
           <Route path="/admin/products/:id/edit" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADeditProduct /></ProtectedRoute>} />
@@ -105,7 +105,7 @@ export function App() {
           <Route path="/admin/marketplace/products/:productId" element={<ProtectedRoute allowedRoles={['ADMIN']}><AD_MarketplaceProductDetail /></ProtectedRoute>} />
           <Route path="/admin/marketplace/requests" element={<ProtectedRoute allowedRoles={['ADMIN']}><AD_MarketplaceRequestsList /></ProtectedRoute>} />
           <Route path="/admin/marketplace/requests/:id" element={<ProtectedRoute allowedRoles={['ADMIN']}><AD_MarketplaceRequestDetail /></ProtectedRoute>} />
-          <Route path="/ADseller" element={<LegacyAdminRedirect to="/admin/stocks" />} />
+          <Route path="/ADstocks" element={<LegacyAdminRedirect to="/admin/stocks" />} />
           <Route path="/ADaddProduct" element={<LegacyAdminRedirect to="/admin/products/new" />} />
           <Route path="/ADeditProduct/:id" element={<LegacyAdminRedirect to="/admin/products/:id/edit" />} />
           <Route path="/ADdashboard" element={<LegacyAdminRedirect to="/admin/dashboard" />} />
