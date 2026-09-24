@@ -156,9 +156,9 @@ export const SPAD_Pagination = ({ count = 'Showing 1–5 of 124 results', pageCo
     <div className="flex items-center justify-between gap-3 border-t border-[#edf0f4] px-4 py-3 text-[8px] text-[#9aa3b1]">
       <span>{count} · Page {page}</span>
       <div className="flex items-center gap-1">
-        <button type="button" aria-label="Previous page" disabled={page === 1} onClick={() => setSafePage(page - 1)} className="h-6 min-w-6 rounded border border-[#e1e6ee] px-1 text-[#687486] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer">‹</button>
-        {pageButtons.map((pageNumber, index) => <span key={pageNumber}>{index > 2 && pageNumber - pageButtons[index - 1] > 1 ? <span className="px-1">…</span> : null}<button type="button" aria-label={`Go to page ${pageNumber}`} onClick={() => setSafePage(pageNumber)} className={`h-6 min-w-6 rounded border px-1 cursor-pointer ${page === pageNumber ? 'border-[#2f65ff] bg-[#2f65ff] font-bold text-white' : 'border-[#e1e6ee] text-[#687486]'}`}>{pageNumber}</button></span>)}
-        <button type="button" aria-label="Next page" disabled={page === pageCount} onClick={() => setSafePage(page + 1)} className="h-6 min-w-6 rounded border border-[#e1e6ee] px-1 text-[#687486] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer">›</button>
+        <button type="button" aria-label="Previous page" disabled={page === 1} onClick={() => setSafePage(page - 1)} className="h-6 min-w-6 rounded border border-[#e1e6ee] px-1 text-[#687486] disabled:cursor-not-allowed disabled:opacity-40">‹</button>
+        {pageButtons.map((pageNumber, index) => <span key={pageNumber}>{index > 2 && pageNumber - pageButtons[index - 1] > 1 ? <span className="px-1">…</span> : null}<button type="button" aria-label={`Go to page ${pageNumber}`} onClick={() => setSafePage(pageNumber)} className={`h-6 min-w-6 rounded border px-1 ${page === pageNumber ? 'border-[#2f65ff] bg-[#2f65ff] font-bold text-white' : 'border-[#e1e6ee] text-[#687486]'}`}>{pageNumber}</button></span>)}
+        <button type="button" aria-label="Next page" disabled={page === pageCount} onClick={() => setSafePage(page + 1)} className="h-6 min-w-6 rounded border border-[#e1e6ee] px-1 text-[#687486] disabled:cursor-not-allowed disabled:opacity-40">›</button>
       </div>
     </div>
   );
@@ -178,7 +178,7 @@ export const SPAD_ExportButton = ({ label, fileName, rows }: { label: string; fi
     URL.revokeObjectURL(url);
   };
 
-  return <button type="button" onClick={handleExport} className="rounded border border-[#dfe4eb] bg-white px-3 py-2 text-[8px] font-bold text-[#687486] hover:border-[#2f65ff] hover:text-[#2f65ff] cursor-pointer">{label}</button>;
+  return <button type="button" onClick={handleExport} className="rounded border border-[#dfe4eb] bg-white px-3 py-2 text-[8px] font-bold text-[#687486] hover:border-[#2f65ff] hover:text-[#2f65ff]">{label}</button>;
 };
 
 export const SPAD_Input = (props: InputHTMLAttributes<HTMLInputElement>) => (
@@ -186,6 +186,5 @@ export const SPAD_Input = (props: InputHTMLAttributes<HTMLInputElement>) => (
 );
 
 export const SPAD_Select = (props: SelectHTMLAttributes<HTMLSelectElement>) => (
-  <select {...props} className={`h-8 w-full rounded border border-[#dfe4eb] bg-white px-2.5 text-[9px] text-[#687486] outline-none focus:border-[#2f65ff] cursor-pointer ${props.className ?? ''}`} />
+  <select {...props} className={`h-8 w-full rounded border border-[#dfe4eb] bg-white px-2.5 text-[9px] text-[#687486] outline-none focus:border-[#2f65ff] ${props.className ?? ''}`} />
 );
-

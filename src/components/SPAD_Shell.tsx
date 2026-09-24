@@ -16,7 +16,7 @@ const mainLinks = [
 ];
 
 const linkClass = (isActive: boolean) =>
-  `w-full flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm transition-colors cursor-pointer ${
+  `w-full flex items-center gap-3 rounded-lg px-4 py-3 text-left text-sm transition-colors ${
     isActive
       ? 'border-l-4 border-blue-500 bg-blue-600/30 pl-3 font-semibold text-white'
       : 'border-l-4 border-transparent font-medium text-gray-300 hover:bg-slate-800 hover:text-white'
@@ -63,7 +63,7 @@ export const SPAD_Shell = ({ children }: SPAD_ShellProps) => {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="mb-3 w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-gray-300 transition-colors hover:bg-slate-800 hover:text-white cursor-pointer"
+            className="mb-3 w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-gray-300 transition-colors hover:bg-slate-800 hover:text-white"
           >
             Back to Website
           </button>
@@ -71,7 +71,7 @@ export const SPAD_Shell = ({ children }: SPAD_ShellProps) => {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2f65ff] text-xs font-black">S</div>
             <div>
               <p className="text-sm font-bold">{user?.username ?? 'Super Admin'}</p>
-              <button type="button" onClick={handleLogout} className="text-xs text-[#8796b0] hover:text-white cursor-pointer">Logout</button>
+              <button type="button" onClick={handleLogout} className="text-xs text-[#8796b0] hover:text-white">Logout</button>
             </div>
           </div>
         </div>

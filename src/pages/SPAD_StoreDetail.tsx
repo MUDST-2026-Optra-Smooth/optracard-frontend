@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { RefreshCcw } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { loadSuperAdminStore } from '../api/superadmin';
 import { SPAD_Error, SPAD_Loading, formatCurrency, formatDate, statusTone } from '../components/SPAD_DataState';
@@ -19,26 +18,7 @@ export function SPAD_StoreDetail() {
   useEffect(() => { void load(); }, [load]);
 
   return <SPAD_Shell><div className="mx-auto max-w-[1440px] space-y-4">
-    <SPAD_SectionHeading
-      title={store?.storeName ?? 'Store details'}
-      description={store ? `Owner: ${store.ownerName} · ${store.location ?? 'Location not recorded'}` : 'Loading the selected marketplace store.'}
-      action={
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-[#dfe4eb] bg-white px-3 py-2 text-[9px] font-semibold text-[#485363] hover:bg-[#f4f7fb]"
-            title="Refresh store details from live database"
-          >
-            <RefreshCcw className="h-3 w-3 text-[#2f65ff]" />
-            Refresh
-          </button>
-          <Link to="/superadmin/stores" className="cursor-pointer rounded border border-[#dfe4eb] bg-white px-3 py-2 text-[9px] font-semibold text-[#687486] hover:bg-[#f4f7fb]">
-            ← Back to stores
-          </Link>
-        </div>
-      }
-    />
+    <SPAD_SectionHeading title={store?.storeName ?? 'Store details'} description={store ? `Owner: ${store.ownerName} · ${store.location ?? 'Location not recorded'}` : 'Loading the selected marketplace store.'} action={<Link to="/superadmin/stores" className="rounded border border-[#dfe4eb] bg-white px-3 py-2 text-[9px] font-semibold text-[#687486]">← Back to stores</Link>} />
     {error ? <SPAD_Error message={error} onRetry={() => void load()} /> : !store ? <SPAD_Loading /> : <>
       <div className="flex flex-wrap items-center gap-2"><SPAD_StatusBadge label={store.storeStatus} tone={statusTone(store.storeStatus)} /><span className="text-[10px] text-[#8e99aa]">Submitted {formatDate(store.submittedAt)} · Reviewed {formatDate(store.reviewedAt)}</span></div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><SPAD_StatCard label="Listings" value={String(store.productCount)} /><SPAD_StatCard label="Active listings" value={String(store.activeProductCount)} tone="teal" /><SPAD_StatCard label="Total stock" value={String(store.totalStock)} tone="blue" /><SPAD_StatCard label="Recorded GMV" value={formatCurrency(store.gmv)} detail={`${store.orderCount} recorded orders`} tone="purple" /></div>
