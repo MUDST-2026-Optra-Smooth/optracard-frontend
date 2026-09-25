@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "name": "Pikachu Illustrator Promo Card",
+    "description": "Legendary Holy Grail Pokemon card, certified PSA 9 condition.",
+    "price": 250000,
+    "stock": 2,
+    "imageUrl": "https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=500",
+    "game": "Pokemon",
+    "type": "Single",
+    "source": "OFFICIAL",
+    "listingSource": "OFFICIAL",
+    "approvalStatus": "APPROVED",
+    "store": {
+      "id": 1,
+      "name": "Optracard Official Store",
+      "storeSlug": "optracard-official"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Charizard VMAX Shiny Secret Rare",
+    "description": "Stunning dark Charizard VMAX from Shining Fates vault.",
+    "price": 4500,
+    "stock": 5,
+    "imageUrl": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500",
+    "game": "Pokemon",
+    "type": "Single",
+    "source": "MARKETPLACE",
+    "listingSource": "MARKETPLACE",
+    "approvalStatus": "APPROVED",
+    "store": {
+      "id": 2,
+      "name": "PokeVault Central",
+      "storeSlug": "pokevault-central"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Blue-Eyes White Dragon 1st Edition",
+    "description": "LOB-001 Legendary Dragon with ultra holographic foil.",
+    "price": 89000,
+    "stock": 1,
+    "imageUrl": "https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=500",
+    "game": "Yu-Gi-Oh!",
+    "type": "Single",
+    "source": "OFFICIAL",
+    "listingSource": "OFFICIAL",
+    "approvalStatus": "APPROVED",
+    "store": {
+      "id": 1,
+      "name": "Optracard Official Store",
+      "storeSlug": "optracard-official"
+    }
+  },
+  {
+    "id": 4,
+    "name": "One Piece Romance Dawn Booster Box",
+    "description": "Sealed OP-01 English Edition booster display containing 24 packs.",
+    "price": 12500,
+    "stock": 8,
+    "imageUrl": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500",
+    "game": "One Piece",
+    "type": "Booster Box",
+    "source": "MARKETPLACE",
+    "listingSource": "MARKETPLACE",
+    "approvalStatus": "APPROVED",
+    "store": {
+      "id": 3,
+      "name": "GrandLine Hobbies",
+      "storeSlug": "grandline-hobbies"
+    }
+  }
+]
