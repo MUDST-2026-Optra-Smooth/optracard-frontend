@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "productId": 1,
+      "quantity": 1,
+      "name": "Pikachu Illustrator Promo Card",
+      "game": "Pokemon",
+      "category": "Single",
+      "price": 250000,
+      "stock": 2,
+      "imageUrl": "https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=500",
+      "storeId": 1,
+      "storeName": "Optracard Official Store",
+      "source": "OFFICIAL"
+    },
+    {
+      "productId": 2,
+      "quantity": 2,
+      "name": "Charizard VMAX Shiny Secret Rare",
+      "game": "Pokemon",
+      "category": "Single",
+      "price": 4500,
+      "stock": 5,
+      "imageUrl": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500",
+      "storeId": 2,
+      "storeName": "PokeVault Central",
+      "source": "MARKETPLACE"
+    }
+  ],
+  "subtotal": 259000,
+  "totalItemCount": 3
+}

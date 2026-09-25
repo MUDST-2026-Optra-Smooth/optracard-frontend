@@ -136,7 +136,7 @@ const ProductDetail = () => {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700"
+          className="mt-6 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700 cursor-pointer transition-colors disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
