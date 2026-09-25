@@ -28,3 +28,23 @@ export async function addProductToCart(productId: number, userId?: number): Prom
   window.dispatchEvent(new Event('cart-updated'));
   return data as CartSnapshot;
 }
+
+export async function getCartItemCount(userId?: number): Promise<number> {
+  const token = localStorage.getItem('token');
+  if (!token) return 0;
+  let resolvedUserId = userId;
+  try {
+    if (!resolvedUserId) {
+      const profile = await fetch(`${API_BASE_URL}/api/profile`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!profile.ok) return 0;
+      resolvedUserId = (await profile.json()).userId;
+    }
+    if (!resolvedUserId) return 0;
+    const response = await fetch(`${API_BASE_URL}/api/cart/${resolvedUserId}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!response.ok) return 0;
+    const data = await response.json();
+    return Number(data.totalItemCount ?? 0);
+  } catch {
+    return 0;
+  }
+}

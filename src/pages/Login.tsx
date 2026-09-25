@@ -6,6 +6,9 @@ import logoIcon from '../assets/logo-icon.png';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 const canOpenPathForRole = (role: string, path: string) => {
+  if (path === '/' || path.startsWith('/cart') || path.startsWith('/payment-success') || path.startsWith('/product') || path.startsWith('/order-history')) {
+    return true;
+  }
   if (role === 'SUPER_ADMIN') return path.startsWith('/superadmin');
   if (role === 'ADMIN') return path.startsWith('/admin') || path.startsWith('/AD');
   if (role === 'SELLER') return path.startsWith('/seller') || path.startsWith('/add-product') || path.startsWith('/edit-product') || path.startsWith('/orders-management') || path.startsWith('/dashboard');

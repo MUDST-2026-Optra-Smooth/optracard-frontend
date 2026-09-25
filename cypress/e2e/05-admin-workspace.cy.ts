@@ -43,4 +43,11 @@ describe('Admin Workspace & Operations', () => {
     cy.contains(/Marketplace|Requests|Review/i).should('be.visible');
     cy.contains('Charizard VMAX Shiny').should('be.visible');
   });
+
+  it('displays cart in admin header and navigates to cart page', () => {
+    cy.visit('/admin/dashboard');
+    cy.get('header').find('a[aria-label="Shopping Cart"]').should('be.visible').click();
+    cy.url().should('include', '/cart');
+    cy.contains(/Your Shopping Cart|Shopping Cart/i).should('be.visible');
+  });
 });

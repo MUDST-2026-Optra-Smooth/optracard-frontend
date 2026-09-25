@@ -1,13 +1,12 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useCartCount } from '../hooks/useCartCount';
 import { loadCatalog } from '../api/catalog';
 import type { CatalogProduct } from '../types/catalog';
 import logoIcon from '../assets/logo-icon.png';
 import searchIcon from '../assets/search.png';
 import avatarIcon from '../assets/Generic avatar.png';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 export const Navbar = () => {
   const [query, setQuery] = useState('');
@@ -17,7 +16,7 @@ export const Navbar = () => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const [cartCount, setCartCount] = useState(0);
+  const cartCount = useCartCount();
   const isAdminUser = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const dashboardPath = user?.role === 'SUPER_ADMIN' ? '/superadmin/overview' : '/admin/dashboard';
   const shopPath = user?.role === 'SELLER' ? '/dashboard' : '/start-selling';
@@ -53,28 +52,6 @@ export const Navbar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const loadCount = async () => {
-      if (!user) { setCartCount(0); return; }
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      let userId = user.userId;
-      try {
-        if (!userId) {
-          const profile = await fetch(`${API_BASE_URL}/api/profile`, { headers: { Authorization: `Bearer ${token}` } });
-          if (!profile.ok) return;
-          userId = (await profile.json()).userId;
-        }
-        if (!userId) return;
-        const response = await fetch(`${API_BASE_URL}/api/cart/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
-        if (response.ok) setCartCount(Number((await response.json()).totalItemCount ?? 0));
-      } catch { /* count is non-critical to navigation */ }
-    };
-    void loadCount();
-    const refresh = () => { void loadCount(); };
-    window.addEventListener('cart-updated', refresh);
-    return () => window.removeEventListener('cart-updated', refresh);
-  }, [user]);
 
   const handleProtectedNavigation = (path: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (!user) {
@@ -270,7 +247,18 @@ export const Navbar = () => {
 
       {isAdminUser ? (
         <div className="flex items-center gap-5 text-sm font-medium">
+          <div className="hidden lg:flex gap-5 text-gray-300 items-center">
+            <Link to="/order-history" className="hover:text-white transition">Order history</Link>
+            <Link to="/about" className="hover:text-white transition">About Us</Link>
+            <Link to="/team" className="hover:text-white transition">Our Team</Link>
+          </div>
           <Link to={dashboardPath} className="text-gray-300 transition hover:text-white">Back to Dashboard</Link>
+          <Link to="/cart" aria-label="Shopping Cart" className="relative flex items-center justify-center w-10 h-10 bg-[#1a1f2b] rounded-full hover:bg-gray-800 transition cursor-pointer">
+            <span className="text-lg">🛒</span>
+            <span className="absolute -top-1 -right-1 bg-[#ff4757] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full">
+              {cartCount}
+            </span>
+          </Link>
           <button type="button" onClick={() => { logout(); navigate('/'); }} className="text-xs text-gray-300 hover:text-white cursor-pointer">
             Logout
           </button>
