@@ -1,4 +1,9 @@
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: optracard-frontend
+---
+apiVersion: v1
 kind: Pod
 metadata:
   name: optracard-frontend-pod
