@@ -56,6 +56,7 @@ export interface AdminOrder {
   storeName: string | null;
   status: string;
   paymentStatus: string | null;
+  paymentMethod: string | null;
   shippingMethod: string | null;
   shippingAddress: string | null;
   recipientName: string | null;

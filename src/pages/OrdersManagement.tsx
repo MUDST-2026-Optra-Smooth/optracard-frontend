@@ -39,6 +39,7 @@ export const OrdersManagement = () => {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [activeModalOrder, setActiveModalOrder] = useState<SellerOrder | null>(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [trackingDrafts, setTrackingDrafts] = useState<Record<number, string>>({});
 
   const load = async () => {
     setIsLoading(true);
@@ -50,6 +51,7 @@ export const OrdersManagement = () => {
       ]);
       setStore(loadedStore);
       setOrders(loadedOrders);
+      setTrackingDrafts(Object.fromEntries(loadedOrders.map((order) => [order.orderId, order.trackingNumber ?? ''])));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not load orders.');
     } finally {
@@ -62,15 +64,24 @@ export const OrdersManagement = () => {
   }, []);
 
   const updateStatus = async (order: SellerOrder, newStatus: string) => {
+    const trackingNumber = trackingDrafts[order.orderId] ?? order.trackingNumber ?? '';
+    if (newStatus === 'Shipped' && order.status !== 'Shipped' && !trackingNumber.trim()) {
+      setError(`Enter a tracking number before marking ${order.orderNumber} as Shipped.`);
+      setActiveModalOrder(order);
+      return;
+    }
     setUpdatingId(order.orderId);
     setError(null);
     try {
-      const updated = await updateSellerOrderStatus(order.orderId, newStatus);
+      const updated = await updateSellerOrderStatus(order.orderId, newStatus, trackingNumber);
       setOrders((current) => current.map((item) => (item.orderId === updated.orderId ? updated : item)));
+      setTrackingDrafts((current) => ({ ...current, [updated.orderId]: updated.trackingNumber ?? '' }));
       if (activeModalOrder?.orderId === updated.orderId) {
         setActiveModalOrder(updated);
       }
-      setActionNotice(`Order ${updated.orderNumber} status updated to ${newStatus}.`);
+      setActionNotice(newStatus === 'Shipped'
+        ? `Order ${updated.orderNumber} is Shipped. The buyer has been notified with tracking number ${updated.trackingNumber}.`
+        : `Order ${updated.orderNumber} status updated to ${newStatus}.`);
       setTimeout(() => setActionNotice(null), 3500);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not update order status.');
@@ -313,7 +324,26 @@ export const OrdersManagement = () => {
 
                           {/* Status changer */}
                           <td className="px-5 py-4">
-                            <div className="flex items-center gap-2">
+                            <div className="min-w-52 space-y-1.5">
+                              {order.status === 'Processing' ? (
+                                <input
+                                  type="text"
+                                  value={trackingDrafts[order.orderId] ?? ''}
+                                  onChange={(event) => setTrackingDrafts((current) => ({
+                                    ...current,
+                                    [order.orderId]: event.target.value,
+                                  }))}
+                                  placeholder="Tracking # required for shipping"
+                                  maxLength={100}
+                                  className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs outline-none focus:border-blue-500"
+                                  aria-label={`Tracking number for ${order.orderNumber}`}
+                                />
+                              ) : order.trackingNumber ? (
+                                <p className="truncate text-[10px] font-semibold text-blue-600" title={order.trackingNumber}>
+                                  Tracking: {order.trackingNumber}
+                                </p>
+                              ) : null}
+                              <div className="flex items-center gap-2">
                               <select
                                 value={order.status}
                                 disabled={updatingId === order.orderId}
@@ -329,6 +359,7 @@ export const OrdersManagement = () => {
                               {updatingId === order.orderId && (
                                 <span className="text-[10px] text-slate-400 animate-pulse">Saving…</span>
                               )}
+                              </div>
                             </div>
                           </td>
 
@@ -434,6 +465,28 @@ export const OrdersManagement = () => {
                   </select>
                 </div>
               </div>
+
+              {activeModalOrder.status === 'Processing' ? (
+                <label className="block rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-xs font-semibold text-slate-700">
+                  Tracking number <span className="text-red-600">(required before shipping)</span>
+                  <input
+                    type="text"
+                    value={trackingDrafts[activeModalOrder.orderId] ?? ''}
+                    onChange={(event) => setTrackingDrafts((current) => ({
+                      ...current,
+                      [activeModalOrder.orderId]: event.target.value,
+                    }))}
+                    placeholder="e.g. TH123456789"
+                    maxLength={100}
+                    className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-blue-500"
+                  />
+                </label>
+              ) : activeModalOrder.trackingNumber ? (
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-xs text-slate-700">
+                  <span className="font-semibold">Tracking number:</span>{' '}
+                  <span className="font-bold text-blue-700">{activeModalOrder.trackingNumber}</span>
+                </div>
+              ) : null}
 
               {/* Customer & Shipping Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

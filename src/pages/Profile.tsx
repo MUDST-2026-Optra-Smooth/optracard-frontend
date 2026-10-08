@@ -173,7 +173,7 @@ export const Profile = () => {
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">Card Collection</h2>
                   <p className="text-xs text-gray-400 mt-1 max-w-md">
-                    Cards in this collection are based on your purchase history.
+                    Cards appear here only after their order has been delivered.
                   </p>
                 </div>
                 <button
@@ -189,8 +189,8 @@ export const Profile = () => {
 
               {collection.length === 0 ? (
                 <div className="mt-6 rounded-xl border border-dashed border-gray-200 px-6 py-10 text-center">
-                  <p className="text-sm font-semibold text-gray-600">No purchased cards yet.</p>
-                  <p className="mt-1 text-xs text-gray-400">Cards from your orders will appear here.</p>
+                  <p className="text-sm font-semibold text-gray-600">No delivered cards yet.</p>
+                  <p className="mt-1 text-xs text-gray-400">Cards from delivered orders will appear here.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">

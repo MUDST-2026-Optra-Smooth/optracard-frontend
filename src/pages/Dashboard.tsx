@@ -120,7 +120,7 @@ export const Dashboard = () => {
                     to="/seller-profile/my"
                     className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-700 shadow-2xs transition cursor-pointer"
                   >
-                    View Storefront <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+                    View My Store <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
                   </Link>
                 )}
                 <button
