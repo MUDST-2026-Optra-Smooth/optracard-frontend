@@ -30,6 +30,8 @@ export function setupCommonMocks() {
   };
   cy.intercept('GET', '**/api/profile', profileMock).as('getProfile');
   cy.intercept('GET', '**/api/users/profile', profileMock).as('getUserProfile');
+  cy.intercept('GET', '**/api/notifications', []).as('getOrderNotifications');
+  cy.intercept('PUT', '**/api/notifications/read-all', { statusCode: 204, body: '' }).as('markOrderNotificationsRead');
 
   // Cart
   cy.intercept('GET', '**/api/cart/**', { fixture: 'cart.json' }).as('getCart');
@@ -216,6 +218,12 @@ export function setupCommonMocks() {
   }).as('getAdminDashboard');
 
   cy.intercept('GET', '**/api/admin/products', { fixture: 'products.json' }).as('getAdminProducts');
+  cy.intercept('GET', '**/api/admin/card-games', [
+    { id: 1, name: 'Pokemon' },
+    { id: 2, name: 'One Piece' },
+    { id: 3, name: 'Magic: The Gathering' },
+    { id: 4, name: 'Yu-Gi-Oh!' },
+  ]).as('getAdminCardGames');
   cy.intercept('GET', '**/api/admin/orders', [
     {
       id: 1,
