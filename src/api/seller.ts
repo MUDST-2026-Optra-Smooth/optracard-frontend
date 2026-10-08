@@ -27,10 +27,13 @@ export const createSellerProduct = (product: SellerProductInput) => request<Sell
 export const updateSellerProduct = (id: number, product: SellerProductInput) => request<SellerProduct>(`/api/seller/products/${id}`, {
   method: 'PUT', body: JSON.stringify(product),
 });
-export const deactivateSellerProduct = (id: number) => request<void>(`/api/seller/products/${id}`, { method: 'DELETE' });
+export const updateSellerProductActive = (id: number, active: boolean) => request<SellerProduct>(`/api/seller/products/${id}/active`, {
+  method: 'PUT', body: JSON.stringify({ active }),
+});
+export const deleteSellerProduct = (id: number) => request<void>(`/api/seller/products/${id}`, { method: 'DELETE' });
 export const loadSellerOrders = () => request<SellerOrder[]>('/api/seller/orders');
-export const updateSellerOrderStatus = (id: number, status: string) => request<SellerOrder>(`/api/seller/orders/${id}/status`, {
-  method: 'PUT', body: JSON.stringify({ status }),
+export const updateSellerOrderStatus = (id: number, status: string, trackingNumber?: string) => request<SellerOrder>(`/api/seller/orders/${id}/status`, {
+  method: 'PUT', body: JSON.stringify({ status, trackingNumber }),
 });
 
 export const loadMarketplaceRequests = (status = 'ALL') => request<SellerProduct[]>(`/api/admin/marketplace/requests?status=${encodeURIComponent(status)}`);

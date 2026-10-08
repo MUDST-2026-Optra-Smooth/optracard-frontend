@@ -148,7 +148,7 @@ export const ADdashboard = () => {
                 <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
               </div>
               <p className="mt-2 text-2xl font-bold text-slate-900">{dashboard.activeMarketplaceProducts}</p>
-              <p className="mt-1 text-xs text-slate-500">Active approved listings</p>
+              <p className="mt-1 text-xs text-slate-500">Active listings visible to buyers</p>
             </button>
           </div>
 

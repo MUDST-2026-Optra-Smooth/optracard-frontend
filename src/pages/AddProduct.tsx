@@ -78,11 +78,10 @@ const AddProduct = () => {
       && product.type === form.type
       && normalize(product.game) === normalize(form.game))
     : [];
-  const officialMatch = exactMatches.some((product) => product.source === 'OFFICIAL');
+  const officialMatches = exactMatches.filter((product) => product.source === 'OFFICIAL');
   const marketplaceMatches = exactMatches.filter((product) => product.source === 'MARKETPLACE');
 
   const selectTemplate = (product: CatalogProduct) => {
-    if (product.source !== 'MARKETPLACE') return;
     setForm((current) => ({
       ...current,
       templateProductId: product.id,
@@ -120,10 +119,6 @@ const AddProduct = () => {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (officialMatch) {
-      setError('This product is already sold by Optracard Official Store and cannot be listed on Marketplace.');
-      return;
-    }
     setIsSaving(true);
     setError(null);
     try {
@@ -149,7 +144,7 @@ const AddProduct = () => {
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Marketplace listing</p>
             <h1 className="mt-1 text-3xl font-bold text-slate-900">Add new product</h1>
-            <p className="mt-2 text-sm text-slate-500">Choose an approved Marketplace product to reuse its details, or enter a completely new product for Admin review.</p>
+            <p className="mt-2 text-sm text-slate-500">Choose an approved Marketplace or Official Store product to reuse its details, or enter a completely new product for Admin review.</p>
             {error && <div className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
             <form onSubmit={submit} className="mt-8 space-y-6">
@@ -175,19 +170,19 @@ const AddProduct = () => {
                 <section className="rounded-xl border border-slate-200 bg-slate-50 p-4" aria-live="polite">
                   <div className="flex items-center gap-2">
                     <Search className="h-4 w-4 text-blue-600" />
-                    <h2 className="text-sm font-bold text-slate-900">Existing Marketplace products</h2>
+                    <h2 className="text-sm font-bold text-slate-900">Existing catalog products</h2>
                     {isSearching && <LoaderCircle className="h-4 w-4 animate-spin text-slate-400" />}
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">Only approved and active Marketplace listings can be selected as a template. You can still continue with a new product if there is no suitable match.</p>
+                  <p className="mt-1 text-xs text-slate-500">Approved Marketplace and Official Store listings can be used as templates. An Official Store listing is labelled below; you may still set your own price and stock.</p>
                   {searchError && <p className="mt-3 text-sm text-red-600">{searchError}</p>}
                   {!isSearching && !searchError && matches.length === 0 && <p className="mt-3 text-sm text-slate-500">No matching products found. Continue below to submit a new product.</p>}
-                  {officialMatch && (
-                    <div className="mt-3 flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                      <AlertTriangle className="h-5 w-5 shrink-0" />
-                      <span>This exact product is already sold by Optracard Official Store and cannot be listed on Marketplace.</span>
+                  {officialMatches.length > 0 && (
+                    <div className="mt-3 flex gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                      <AlertTriangle className="h-5 w-5 shrink-0 text-blue-600" />
+                      <span>Optracard Official Store already sells this exact product. You may still list it in your shop with your own price and stock.</span>
                     </div>
                   )}
-                  {!officialMatch && marketplaceMatches.length > 0 && (
+                  {marketplaceMatches.length > 0 && (
                     <div className="mt-3 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                       <CheckCircle2 className="h-5 w-5 shrink-0 text-amber-600" />
                       <span>This product is already sold by {marketplaceMatches.length} Marketplace shop{marketplaceMatches.length === 1 ? '' : 's'}. You may select one as a template or continue with a new listing.</span>
@@ -205,11 +200,9 @@ const AddProduct = () => {
                             <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${product.source === 'OFFICIAL' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
                               {product.source === 'OFFICIAL' ? 'Official Store' : `฿${product.price.toLocaleString()}`}
                             </span>
-                            {product.source === 'MARKETPLACE' && (
-                              <button type="button" onClick={() => selectTemplate(product)} disabled={form.templateProductId === product.id} className="rounded-lg border border-blue-600 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white disabled:cursor-default disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500">
-                                {form.templateProductId === product.id ? 'Selected template' : 'Use this product'}
-                              </button>
-                            )}
+                            <button type="button" onClick={() => selectTemplate(product)} disabled={form.templateProductId === product.id} className="rounded-lg border border-blue-600 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white disabled:cursor-default disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500">
+                              {form.templateProductId === product.id ? 'Selected template' : 'Use this product'}
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -238,7 +231,7 @@ const AddProduct = () => {
               </div>
               <div className="flex justify-end gap-3 border-t border-slate-100 pt-6">
                 <button type="button" onClick={() => navigate('/seller')} className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-bold cursor-pointer">Cancel</button>
-                <button disabled={isSaving || isLoadingGames || officialMatch} type="submit" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60 cursor-pointer">{isSaving && <LoaderCircle className="h-4 w-4 animate-spin" />}Submit for approval</button>
+                <button disabled={isSaving || isLoadingGames} type="submit" className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60 cursor-pointer">{isSaving && <LoaderCircle className="h-4 w-4 animate-spin" />}Submit for approval</button>
               </div>
             </form>
           </div>

@@ -1,9 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Eye, Pencil, Plus, RefreshCcw, Search, Trash2, X } from 'lucide-react';
+import { CheckCircle2, Eye, Pencil, Plus, RefreshCcw, Search, Trash2, X, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { deactivateAdminProduct, loadAdminProducts } from '../api/admin';
-import { AdminError, AdminLoading, AdminWorkspace, formatCurrency, StatusBadge } from '../components/AdminWorkspace';
+import { deleteAdminProduct, loadAdminProducts } from '../api/admin';
+import { AdminError, AdminLoading, AdminWorkspace, formatCurrency } from '../components/AdminWorkspace';
 import type { AdminProduct } from '../types/admin';
+
+const VisibilityBadge = ({ active }: { active: boolean }) => (
+  <span
+    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${
+      active
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        : 'border-red-200 bg-red-50 text-red-700'
+    }`}
+  >
+    {active ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+    {active ? 'ACTIVE' : 'INACTIVE'}
+  </span>
+);
 
 export const ADstocks = () => {
   const navigate = useNavigate();
@@ -56,23 +69,21 @@ export const ADstocks = () => {
     });
   }, [products, query, typeFilter, statusFilter]);
 
-  const deactivate = async (product: AdminProduct) => {
+  const deleteProduct = async (product: AdminProduct) => {
     if (
       !window.confirm(
-        `Are you sure you want to delete / deactivate “${product.name}”?\n\nThis will remove it from the active official store catalog in the database.`,
+        `Permanently delete “${product.name}”?\n\nThis removes the product from the database and cannot be undone.`,
       )
     ) {
       return;
     }
 
     try {
-      await deactivateAdminProduct(product.id);
-      setProducts((current) =>
-        current.map((item) => (item.id === product.id ? { ...item, active: false } : item)),
-      );
-      setSuccessMessage(`Product “${product.name}” (ID: ${product.id}) has been deactivated in the database.`);
+      await deleteAdminProduct(product.id);
+      setProducts((current) => current.filter((item) => item.id !== product.id));
+      setSuccessMessage(`Product “${product.name}” (ID: ${product.id}) was permanently deleted from the database.`);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Could not deactivate product.');
+      setError(requestError instanceof Error ? requestError.message : 'Could not delete product.');
     }
   };
 
@@ -153,7 +164,7 @@ export const ADstocks = () => {
             onChange={(event) => setStatusFilter(event.target.value)}
             className="rounded-lg bg-slate-100 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 md:w-44"
           >
-            <option value="ALL">Status: All</option>
+            <option value="ALL">Visibility: All</option>
             <option value="ACTIVE">Active only</option>
             <option value="INACTIVE">Inactive only</option>
           </select>
@@ -164,16 +175,16 @@ export const ADstocks = () => {
         <AdminLoading label="Loading official products from database…" />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[920px] text-left text-sm">
+          <table className="w-full min-w-[1080px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-5 py-4">Product</th>
-                <th className="px-5 py-4">Card game / Type</th>
-                <th className="px-5 py-4 text-right">Stock</th>
-                <th className="px-5 py-4 text-right">Cost</th>
-                <th className="px-5 py-4 text-right">Sell price</th>
-                <th className="px-5 py-4 text-right">Margin</th>
-                <th className="px-5 py-4">Status</th>
+                <th className="px-5 py-4">Product details</th>
+                <th className="px-5 py-4">Game / Category</th>
+                <th className="px-5 py-4 text-center">Stock</th>
+                <th className="px-5 py-4">Cost price</th>
+                <th className="px-5 py-4">Selling price</th>
+                <th className="px-5 py-4">Profit est.</th>
+                <th className="px-5 py-4">Status / Visibility</th>
                 <th className="px-5 py-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -201,14 +212,30 @@ export const ADstocks = () => {
                     <p className="font-semibold">{product.game}</p>
                     <p className="text-xs text-slate-500">{product.type}</p>
                   </td>
-                  <td className="px-5 py-4 text-right font-bold">{product.stock ?? 0}</td>
-                  <td className="px-5 py-4 text-right text-orange-700">{formatCurrency(product.cost)}</td>
-                  <td className="px-5 py-4 text-right text-blue-700">{formatCurrency(product.price)}</td>
-                  <td className="px-5 py-4 text-right font-bold text-emerald-700">
-                    {formatCurrency((product.price ?? 0) - (product.cost ?? 0))}
+                  <td className="px-5 py-4 text-center">
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold ${
+                        (product.stock ?? 0) === 0
+                          ? 'bg-rose-100 text-rose-800'
+                          : (product.stock ?? 0) <= 3
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {(product.stock ?? 0)} left
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 font-medium text-slate-600">{formatCurrency(product.cost)}</td>
+                  <td className="px-5 py-4 font-bold text-blue-600">{formatCurrency(product.price)}</td>
+                  <td className="px-5 py-4">
+                    <span className={`text-xs font-semibold ${(product.price ?? 0) - (product.cost ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {(product.price ?? 0) - (product.cost ?? 0) >= 0
+                        ? `+${formatCurrency((product.price ?? 0) - (product.cost ?? 0))}`
+                        : formatCurrency((product.price ?? 0) - (product.cost ?? 0))}
+                    </span>
                   </td>
                   <td className="px-5 py-4">
-                    <StatusBadge status={product.active ? 'Active' : 'Inactive'} />
+                    <VisibilityBadge active={product.active} />
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex justify-end gap-1">
@@ -216,7 +243,7 @@ export const ADstocks = () => {
                         type="button"
                         onClick={() => navigate(`/admin/products/${product.id}`)}
                         title="View details"
-                        className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600 cursor-pointer"
+                        className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 cursor-pointer"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
@@ -224,20 +251,18 @@ export const ADstocks = () => {
                         type="button"
                         onClick={() => navigate(`/admin/products/${product.id}/edit`)}
                         title="Edit product"
-                        className="rounded p-2 text-slate-500 hover:bg-slate-100 hover:text-blue-600 cursor-pointer"
+                        className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 cursor-pointer"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
-                      {product.active && (
-                        <button
-                          type="button"
-                          onClick={() => void deactivate(product)}
-                          title="Delete / deactivate product from database"
-                          className="rounded p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => void deleteProduct(product)}
+                        title="Delete product permanently"
+                        className="rounded-lg border border-rose-200 p-2 text-rose-500 hover:bg-rose-50 cursor-pointer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>

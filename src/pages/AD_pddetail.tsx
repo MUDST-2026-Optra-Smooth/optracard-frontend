@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { deactivateAdminProduct, loadAdminProduct } from '../api/admin';
+import { deleteAdminProduct, loadAdminProduct } from '../api/admin';
 import { AdminError, AdminLoading, AdminWorkspace, formatCurrency, StatusBadge } from '../components/AdminWorkspace';
 import type { AdminProduct } from '../types/admin';
 
@@ -35,7 +35,7 @@ export const ADpddetail = () => {
     if (!product) return;
     if (
       !window.confirm(
-        `Are you sure you want to delete / deactivate “${product.name}”?\n\nThis will remove it from the active official store catalog in the database.`,
+        `Permanently delete “${product.name}”?\n\nThis removes the product from the database and cannot be undone.`,
       )
     ) {
       return;
@@ -44,7 +44,7 @@ export const ADpddetail = () => {
     setDeleting(true);
     setError(null);
     try {
-      await deactivateAdminProduct(product.id);
+      await deleteAdminProduct(product.id);
       navigate('/admin/stocks', { replace: true });
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not delete product.');
@@ -89,17 +89,15 @@ export const ADpddetail = () => {
                 <Pencil className="h-4 w-4" />
                 Edit product
               </button>
-              {product.active && (
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={() => void handleDelete()}
-                  className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-60 cursor-pointer"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete / Deactivate
-                </button>
-              )}
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => void handleDelete()}
+                className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-60 cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete permanently
+              </button>
             </div>
           </div>
 

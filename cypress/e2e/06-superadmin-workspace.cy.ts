@@ -78,10 +78,8 @@ describe('Super Admin Workspace & System Management', () => {
     cy.get('button[type="submit"]').should('be.visible');
   });
 
-  it('displays cart in superadmin header and navigates to cart page', () => {
+  it('does not display a shopping cart in the superadmin workspace header', () => {
     cy.visit('/superadmin/overview');
-    cy.get('header').find('a[aria-label="Shopping Cart"]').should('be.visible').click();
-    cy.url().should('include', '/cart');
-    cy.contains(/Your Shopping Cart|Shopping Cart/i).should('be.visible');
+    cy.get('a[aria-label="Shopping Cart"]').should('not.exist');
   });
 });
