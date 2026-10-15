@@ -9,8 +9,6 @@ import {
   X,
   Phone,
   MapPin,
-  Calendar,
-  CreditCard,
   PackageCheck,
   CheckCircle2,
 } from 'lucide-react';
@@ -20,7 +18,6 @@ import type { SellerOrder, SellerStoreInfo } from '../types/seller';
 import { formatPrice } from '../context/formatters';
 
 const STATUS_OPTIONS = ['Processing', 'Shipped', 'Delivered', 'Canceled'] as const;
-type OrderStatusType = (typeof STATUS_OPTIONS)[number];
 
 const statusColors: Record<string, string> = {
   Processing: 'bg-blue-50 text-blue-700 border-blue-200',
