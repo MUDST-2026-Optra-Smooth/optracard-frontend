@@ -12,6 +12,15 @@ import {
 } from '../components/AdminWorkspace';
 import type { AdminOrder } from '../types/admin';
 
+const paymentMethodLabel = (method: string | null) => {
+  switch (method?.toLowerCase()) {
+    case 'cash': return 'Cash on delivery';
+    case 'credit-card': return 'Credit card';
+    case 'qr': return 'QR payment';
+    default: return 'Not recorded';
+  }
+};
+
 export const ADorderDetail = () => {
   const navigate = useNavigate();
   const { orderId } = useParams<{ orderId: string }>();
@@ -21,11 +30,14 @@ export const ADorderDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState('');
 
   const load = async () => {
     setError(null);
     try {
-      setOrder(await loadAdminOrder(id));
+      const loadedOrder = await loadAdminOrder(id);
+      setOrder(loadedOrder);
+      setTrackingNumber(loadedOrder.trackingNumber ?? '');
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not load order.');
     }
@@ -41,12 +53,19 @@ export const ADorderDetail = () => {
 
   const changeStatus = async (status: string) => {
     if (!order) return;
+    if (status.toUpperCase() === 'SHIPPED' && order.status !== 'Shipped' && !trackingNumber.trim()) {
+      setError('Enter a tracking number before marking an order as Shipped.');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      const updated = await updateAdminOrderStatus(order.id, status);
+      const updated = await updateAdminOrderStatus(order.id, status, trackingNumber);
       setOrder(updated);
-      setSuccessMessage(`Order status successfully updated to “${updated.status}” in the database.`);
+      setTrackingNumber(updated.trackingNumber ?? '');
+      setSuccessMessage(updated.status === 'Shipped'
+        ? `Order is Shipped. The buyer has been notified with tracking number ${updated.trackingNumber}.`
+        : `Order status successfully updated to “${updated.status}” in the database.`);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not update order status.');
     } finally {
@@ -193,7 +212,11 @@ export const ADorderDetail = () => {
                       <dd className="font-semibold text-slate-900">{order.source}</dd>
                     </div>
                     <div>
-                      <dt className="text-slate-400">Payment</dt>
+                      <dt className="text-slate-400">Payment method</dt>
+                      <dd className="font-semibold text-slate-900">{paymentMethodLabel(order.paymentMethod)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-400">Payment status</dt>
                       <dd className="mt-1">
                         <StatusBadge status={order.paymentStatus} />
                       </dd>
@@ -219,6 +242,19 @@ export const ADorderDetail = () => {
                   <StatusBadge status={order.status} />
                 </div>
               </div>
+
+              <label className="mt-5 block text-sm font-semibold text-slate-700">
+                Tracking number <span className="text-red-600">(required before shipping)</span>
+                <input
+                  type="text"
+                  disabled={saving || order.status !== 'Processing'}
+                  value={trackingNumber}
+                  onChange={(event) => setTrackingNumber(event.target.value)}
+                  placeholder="e.g. TH123456789"
+                  maxLength={100}
+                  className="mt-1.5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100"
+                />
+              </label>
 
               <label className="mt-5 block text-sm font-semibold text-slate-700">
                 Update status in database

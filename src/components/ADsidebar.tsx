@@ -108,13 +108,6 @@ export const ADsidebar: React.FC<ADsidebarProps> = ({ currentTab }) => {
         </div>
 
         <div className="p-4 border-t border-slate-800/80 bg-[#111827]/40">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="mb-3 w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-gray-300 transition-colors hover:bg-slate-800 hover:text-white cursor-pointer"
-          >
-            Back to Website
-          </button>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center shrink-0 text-base shadow-sm">
               A

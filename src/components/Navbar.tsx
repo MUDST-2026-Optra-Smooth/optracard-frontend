@@ -3,7 +3,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCartCount } from '../hooks/useCartCount';
 import { loadCatalog } from '../api/catalog';
+import { loadOrderNotifications, markOrderNotificationsRead, type OrderNotification } from '../api/notifications';
 import type { CatalogProduct } from '../types/catalog';
+import { Bell } from 'lucide-react';
 import logoIcon from '../assets/logo-icon.png';
 import searchIcon from '../assets/search.png';
 import avatarIcon from '../assets/Generic avatar.png';
@@ -13,7 +15,10 @@ export const Navbar = () => {
   const [searchParams] = useSearchParams();
   const [catalogItems, setCatalogItems] = useState<CatalogProduct[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<OrderNotification[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const notificationContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const cartCount = useCartCount();
@@ -47,10 +52,37 @@ export const Navbar = () => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
       }
+      if (notificationContainerRef.current && !notificationContainerRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+
+    let isCurrent = true;
+    const loadNotifications = () => {
+      void loadOrderNotifications()
+        .then((items) => {
+          if (isCurrent) setNotifications(items);
+        })
+        .catch(() => {
+          // Notifications must not prevent normal navigation if they are temporarily unavailable.
+        });
+    };
+    loadNotifications();
+    const interval = window.setInterval(loadNotifications, 30_000);
+    return () => {
+      isCurrent = false;
+      window.clearInterval(interval);
+    };
+  }, [user?.email]);
 
 
   const handleProtectedNavigation = (path: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -82,6 +114,18 @@ export const Navbar = () => {
   };
 
   const trimmedQuery = query.trim().toLowerCase();
+  const unreadNotificationCount = notifications.filter((notification) => !notification.read).length;
+
+  const toggleNotifications = () => {
+    setShowNotifications((open) => {
+      const nextOpen = !open;
+      if (nextOpen && unreadNotificationCount > 0) {
+        void markOrderNotificationsRead().catch(() => undefined);
+        setNotifications((items) => items.map((notification) => ({ ...notification, read: true })));
+      }
+      return nextOpen;
+    });
+  };
 
   const matchingCategories = useMemo(() => {
     if (!trimmedQuery) return [];
@@ -274,6 +318,51 @@ export const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-5 pl-2">
+          {user && (
+            <div ref={notificationContainerRef} className="relative">
+              <button
+                type="button"
+                onClick={toggleNotifications}
+                aria-label="Order notifications"
+                aria-expanded={showNotifications}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#1a1f2b] transition hover:bg-gray-800 cursor-pointer"
+              >
+                <Bell className="h-5 w-5 text-gray-200" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ff4757] px-1 text-[10px] font-bold text-white">
+                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-gray-700 bg-[#121722] shadow-2xl">
+                  <div className="border-b border-gray-800 px-4 py-3">
+                    <p className="text-sm font-bold text-white">Order notifications</p>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <p className="px-4 py-6 text-center text-xs text-gray-400">No delivery updates yet.</p>
+                  ) : (
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.map((notification) => (
+                        <button
+                          key={notification.id}
+                          type="button"
+                          onClick={() => {
+                            setShowNotifications(false);
+                            navigate(`/order-history/${encodeURIComponent(notification.orderNumber)}`);
+                          }}
+                          className="w-full border-b border-gray-800 px-4 py-3 text-left transition hover:bg-[#1f293d] cursor-pointer"
+                        >
+                          <p className="text-xs font-semibold leading-relaxed text-gray-100">{notification.message}</p>
+                          <p className="mt-1 text-[10px] text-blue-300">View order {notification.orderNumber}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <Link to="/cart" className="relative flex items-center justify-center w-10 h-10 bg-[#1a1f2b] rounded-full hover:bg-gray-800 transition cursor-pointer">
             <span className="text-lg">🛒</span>
             <span className="absolute -top-1 -right-1 bg-[#ff4757] text-white text-[11px] font-bold w-5 h-5 flex items-center justify-center rounded-full">

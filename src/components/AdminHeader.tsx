@@ -2,17 +2,15 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logoIcon from '../assets/logo-icon.png';
 import { useAuth } from '../context/AuthContext';
-import { useCartCount } from '../hooks/useCartCount';
 
 interface AdminHeaderProps {
   fixed?: boolean;
   workspaceName?: string;
 }
 
-/** Shared header for the admin and super-admin workspaces with cart and storefront access. */
+/** Shared header for the seller, admin, and super-admin workspaces. */
 export const AdminHeader = ({ fixed = false, workspaceName }: AdminHeaderProps) => {
   const { user } = useAuth();
-  const cartCount = useCartCount();
   const [hidden, setHidden] = useState(false);
   const headerName = workspaceName ?? user?.username;
 
@@ -50,17 +48,6 @@ export const AdminHeader = ({ fixed = false, workspaceName }: AdminHeaderProps) 
           className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:border-slate-500 hover:bg-slate-800 hover:text-white transition cursor-pointer"
         >
           Storefront
-        </Link>
-        <Link
-          to="/cart"
-          aria-label="Shopping Cart"
-          className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#14233c] hover:bg-[#1e3458] text-white transition cursor-pointer"
-          title="Shopping Cart"
-        >
-          <span className="text-lg">🛒</span>
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#ff4757] text-[11px] font-bold text-white shadow-sm">
-            {cartCount}
-          </span>
         </Link>
       </div>
     </header>

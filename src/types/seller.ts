@@ -45,6 +45,7 @@ export interface SellerOrder {
   shippingAddress: string | null;
   recipientName: string | null;
   recipientPhone: string | null;
+  trackingNumber: string | null;
   items: SellerOrderItem[];
 }
 

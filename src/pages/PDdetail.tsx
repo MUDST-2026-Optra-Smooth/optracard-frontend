@@ -279,8 +279,8 @@ const ProductDetail = () => {
               <section className="mt-5 rounded-xl border border-blue-100 bg-blue-50/50 p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="font-bold text-slate-900">Also sold by other shops</h2>
-                    <p className="mt-1 text-sm text-slate-600">Compare price and available stock before choosing an offer.</p>
+                    <h2 className="font-bold text-slate-900">Choose a seller and price</h2>
+                    <p className="mt-1 text-sm text-slate-600">Official Store and Marketplace shops may offer the same item. Compare price and available stock before choosing an offer.</p>
                   </div>
                 </div>
                 <div className="mt-4 space-y-3">

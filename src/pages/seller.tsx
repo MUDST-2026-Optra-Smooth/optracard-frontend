@@ -9,12 +9,10 @@ import {
   Trash2,
   XCircle,
   Package,
-  AlertTriangle,
-  Store,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import { deactivateSellerProduct, loadMyStore, loadSellerProducts } from '../api/seller';
+import { deleteSellerProduct, loadMyStore, loadSellerProducts } from '../api/seller';
 import type { SellerProduct, SellerStoreInfo } from '../types/seller';
 import { formatPrice } from '../context/formatters';
 
@@ -34,12 +32,26 @@ const StatusBadge = ({ status }: { status: SellerProduct['approvalStatus'] }) =>
   );
 };
 
+const ActiveBadge = ({ active }: { active: boolean }) => (
+  <span
+    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${
+      active
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+        : 'border-red-200 bg-red-50 text-red-700'
+    }`}
+  >
+    {active ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+    {active ? 'ACTIVE' : 'INACTIVE'}
+  </span>
+);
+
 export const Seller = () => {
   const navigate = useNavigate();
   const [store, setStore] = useState<SellerStoreInfo | null>(null);
   const [products, setProducts] = useState<SellerProduct[]>([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'ALL' | SellerProduct['approvalStatus']>('ALL');
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   const [gameFilter, setGameFilter] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,16 +95,18 @@ export const Seller = () => {
         product.game.toLowerCase().includes(query) ||
         String(product.id).includes(query);
       const matchesStatus = status === 'ALL' || product.approvalStatus === status;
+      const matchesActive = activeFilter === 'ALL'
+        || (activeFilter === 'ACTIVE' ? product.active : !product.active);
       const matchesGame = gameFilter === 'ALL' || product.game === gameFilter;
-      return matchesSearch && matchesStatus && matchesGame;
+      return matchesSearch && matchesStatus && matchesActive && matchesGame;
     });
-  }, [products, search, status, gameFilter]);
+  }, [products, search, status, activeFilter, gameFilter]);
 
-  const deactivate = async (product: SellerProduct) => {
-    if (!window.confirm(`Are you sure you want to remove "${product.name}" from your shop stock?`)) return;
+  const deleteProduct = async (product: SellerProduct) => {
+    if (!window.confirm(`Permanently delete "${product.name}" from your shop?\n\nThis removes the product from the database and cannot be undone.`)) return;
     setDeletingId(product.id);
     try {
-      await deactivateSellerProduct(product.id);
+      await deleteSellerProduct(product.id);
       await load();
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not remove the product.');
@@ -188,6 +202,16 @@ export const Seller = () => {
                   <option value="REJECTED">Rejected</option>
                 </select>
 
+                <select
+                  value={activeFilter}
+                  onChange={(e) => setActiveFilter(e.target.value as typeof activeFilter)}
+                  className="rounded-lg bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Visibility States</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+
                 {uniqueGames.length > 0 && (
                   <select
                     value={gameFilter}
@@ -222,7 +246,7 @@ export const Seller = () => {
 
             {/* Products Table */}
             <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-xs">
-              <table className="w-full min-w-[960px] text-left text-sm">
+              <table className="w-full min-w-[1080px] text-left text-sm">
                 <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                   <tr>
                     <th className="px-5 py-4">Product Details</th>
@@ -231,7 +255,7 @@ export const Seller = () => {
                     <th className="px-5 py-4">Cost Price</th>
                     <th className="px-5 py-4">Selling Price</th>
                     <th className="px-5 py-4">Profit Est.</th>
-                    <th className="px-5 py-4">Status</th>
+                    <th className="px-5 py-4">Status / Visibility</th>
                     <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -308,7 +332,10 @@ export const Seller = () => {
 
                           {/* Status */}
                           <td className="px-5 py-4">
-                            <StatusBadge status={product.approvalStatus} />
+                            <div className="flex flex-wrap gap-1.5">
+                              <StatusBadge status={product.approvalStatus} />
+                              <ActiveBadge active={product.active} />
+                            </div>
                           </td>
 
                           {/* Actions */}
@@ -326,10 +353,10 @@ export const Seller = () => {
                               <button
                                 type="button"
                                 disabled={deletingId === product.id}
-                                onClick={() => void deactivate(product)}
-                                className="rounded-lg border border-rose-200 p-2 text-rose-500 hover:bg-rose-50 transition cursor-pointer disabled:opacity-50"
-                                aria-label={`Delete ${product.name}`}
-                                title="Remove product"
+                                onClick={() => void deleteProduct(product)}
+                                className="rounded-lg border border-rose-200 p-2 text-rose-500 hover:bg-rose-50 transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                aria-label={`Delete ${product.name} permanently`}
+                                title="Delete product permanently"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>

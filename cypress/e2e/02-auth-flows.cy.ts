@@ -27,7 +27,7 @@ describe('Authentication & User Registration Flows', () => {
     cy.window().then((win) => {
       const user = JSON.parse(win.localStorage.getItem('user') || '{}');
       expect(user.username).to.eq('somchai');
-      expect(win.localStorage.getItem('token')).to.exist;
+      expect(win.localStorage.getItem('token')).to.not.equal(null);
     });
   });
 
@@ -61,7 +61,7 @@ describe('Authentication & User Registration Flows', () => {
 
     // User is logged in
     cy.window().then((win) => {
-      expect(win.localStorage.getItem('token')).to.exist;
+      expect(win.localStorage.getItem('token')).to.not.equal(null);
     });
 
     // Profile link or user avatar in navbar
@@ -75,7 +75,7 @@ describe('Authentication & User Registration Flows', () => {
 
     // Verify localStorage cleared
     cy.window().then((win) => {
-      expect(win.localStorage.getItem('token')).to.be.null;
+      expect(win.localStorage.getItem('token')).to.equal(null);
     });
     // Verify redirected to login because /profile is protected
     cy.url().should('include', '/login');

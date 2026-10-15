@@ -56,9 +56,12 @@ export const Login = () => {
             : data.role === 'SELLER'
               ? '/dashboard'
             : '/';
-        const destination = requestedPath && canOpenPathForRole(data.role, requestedPath)
-          ? requestedPath
-          : roleHome;
+        const isBackOfficeRole = data.role === 'ADMIN' || data.role === 'SUPER_ADMIN';
+        const destination = isBackOfficeRole
+          ? roleHome
+          : requestedPath && canOpenPathForRole(data.role, requestedPath)
+            ? requestedPath
+            : roleHome;
         navigate(destination);
       } else {
         alert(data?.message || 'Login failed');

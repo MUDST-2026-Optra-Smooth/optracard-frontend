@@ -34,12 +34,15 @@ export const createAdminProduct = (product: AdminProductInput) => request<AdminP
 export const updateAdminProduct = (id: number, product: AdminProductInput) => request<AdminProduct>(`/api/admin/products/${id}`, {
   method: 'PUT', body: JSON.stringify(product),
 });
-export const deactivateAdminProduct = (id: number) => request<void>(`/api/admin/products/${id}`, { method: 'DELETE' });
+export const updateAdminProductActive = (id: number, active: boolean) => request<AdminProduct>(`/api/admin/products/${id}/active`, {
+  method: 'PUT', body: JSON.stringify({ active }),
+});
+export const deleteAdminProduct = (id: number) => request<void>(`/api/admin/products/${id}`, { method: 'DELETE' });
 
 export const loadAdminOrders = () => request<AdminOrder[]>('/api/admin/orders');
 export const loadAdminOrder = (id: number) => request<AdminOrder>(`/api/admin/orders/${id}`);
-export const updateAdminOrderStatus = (id: number, status: string) => request<AdminOrder>(`/api/admin/orders/${id}/status`, {
-  method: 'PUT', body: JSON.stringify({ status }),
+export const updateAdminOrderStatus = (id: number, status: string, trackingNumber?: string) => request<AdminOrder>(`/api/admin/orders/${id}/status`, {
+  method: 'PUT', body: JSON.stringify({ status, trackingNumber }),
 });
 
 export const loadAdminStores = (status = 'ALL') => request<AdminStore[]>(`/api/admin/stores?status=${encodeURIComponent(status)}`);

@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { spawn } from 'child_process';
 
 const env = { ...process.env };

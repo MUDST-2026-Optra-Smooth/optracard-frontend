@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink, Link } from 'react-router-dom';
-import { Package, ClipboardList, LayoutDashboard, ArrowLeft, ExternalLink, Store } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { Package, ClipboardList, LayoutDashboard, Store } from 'lucide-react';
 import { AdminHeader } from './AdminHeader';
 import { loadMyStore } from '../api/seller';
 import type { SellerStoreInfo } from '../types/seller';
@@ -63,15 +63,6 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                   <span className={`w-1.5 h-1.5 rounded-full ${isApproved ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                   {store.storeStatus || 'Active'}
                 </span>
-                {store.storeId && (
-                  <Link
-                    to="/seller-profile/my"
-                    className="text-[11px] text-slate-400 hover:text-blue-300 flex items-center gap-0.5 transition cursor-pointer"
-                    title="View your store page on marketplace"
-                  >
-                    View shop <ExternalLink className="w-3 h-3 inline" />
-                  </Link>
-                )}
               </div>
             )}
           </div>
@@ -93,17 +84,6 @@ export const Sidebar: React.FC<SidebarProps> = () => {
               <span>Orders Management</span>
             </NavLink>
           </nav>
-        </div>
-
-        {/* Back to Website */}
-        <div className="p-4 border-t border-slate-800/60">
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-sm font-semibold text-gray-300 hover:text-white transition-colors w-full px-2 py-2.5 rounded-lg hover:bg-slate-800 cursor-pointer"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Website</span>
-          </Link>
         </div>
       </aside>
     </>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 import { OrderDetailPanel } from '../components/OrderDetailPanel';
 import { type OrderStatus } from '../components/OrderHistoryCard';
 import { formatPrice } from '../context/formatters';
@@ -114,11 +115,15 @@ const timelineFor = (order: OrderDetail): TimelineStep[] => {
   ];
   const statusRank: Record<Exclude<OrderStatus, 'Canceled'>, number> = { Processing: 1, Shipped: 2, Delivered: 3 };
   const currentRank = statusRank[order.status as Exclude<OrderStatus, 'Canceled'>];
+  const orderCompleted = order.status === 'Delivered';
 
   return steps.map((step, index) => ({
     ...step,
-    state: index < currentRank ? 'completed' : index === currentRank ? 'current' : 'upcoming',
-    timestamp: index === 0 ? orderPlacedAt : index === currentRank ? 'Current status' : '—',
+    description: orderCompleted && index === 3
+      ? 'Your order was delivered successfully. This order is complete.'
+      : step.description,
+    state: orderCompleted || index < currentRank ? 'completed' : index === currentRank ? 'current' : 'upcoming',
+    timestamp: index === 0 ? orderPlacedAt : orderCompleted ? 'Completed' : index === currentRank ? 'Current status' : '—',
   }));
 };
 
@@ -280,8 +285,16 @@ export function OrderHistoryDetail() {
               <p className={`${hasTrackingNumber ? 'mt-1' : ''} text-[10px] text-[#a1a8b3]`}>{formatDeliveryMethod(order.shippingMethod)}</p>
             </OrderDetailPanel>
 
-            <OrderDetailPanel title="Order timeline" subtitle="Status from your order record">
-              <ol className="relative space-y-4 before:absolute before:bottom-2 before:left-[4px] before:top-2 before:w-px before:bg-[#e5e9ef]">
+            <OrderDetailPanel
+              title="Order timeline"
+              subtitle={order.status === 'Delivered' ? 'Delivery completed' : 'Status from your order record'}
+              headerRight={order.status === 'Delivered' ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#eafaf3] px-2 py-1 text-[9px] font-bold text-[#159568]">
+                  <CheckCircle2 className="h-3 w-3" /> Complete
+                </span>
+              ) : undefined}
+            >
+              <ol className={`relative space-y-4 before:absolute before:bottom-2 before:left-[4px] before:top-2 before:w-px ${order.status === 'Delivered' ? 'before:bg-[#b8e6d2]' : 'before:bg-[#e5e9ef]'}`}>
                 {timeline.map((step) => (
                   <li key={step.label} className="relative grid grid-cols-[10px_minmax(0,1fr)_auto] items-start gap-3">
                     <span className={`z-10 mt-0.5 h-[9px] w-[9px] rounded-full border-2 ${timelineDotStyles[step.state]}`} />
