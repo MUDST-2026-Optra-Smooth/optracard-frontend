@@ -63,6 +63,11 @@ jobs:
     needs: build-and-test
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     runs-on: self-hosted
+    env:
+      DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: '1'
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || 'saksitboom' }}
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
 
     steps:
       - name: Checkout repository
