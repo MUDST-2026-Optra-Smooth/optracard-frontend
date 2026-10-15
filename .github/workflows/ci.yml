@@ -68,6 +68,38 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Validate deployment secrets
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          FRONTEND_API_BASE_URL: ${{ secrets.FRONTEND_API_BASE_URL }}
+          KUBECONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64 }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+        run: |
+          required=(
+            DOCKERHUB_USERNAME
+            DOCKERHUB_TOKEN
+            FRONTEND_API_BASE_URL
+            KUBECONFIG_BASE64
+            FRONTEND_URL
+            BACKEND_API_URL
+            E2E_EMAIL
+            E2E_PASSWORD
+          )
+          missing=()
+          for secret_name in "${required[@]}"; do
+            if [ -z "${!secret_name}" ]; then
+              missing+=("$secret_name")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing repository secrets: ${missing[*]}. Add them in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
