@@ -120,7 +120,6 @@ End-to-end tests are written in **Cypress** and cover the end-to-end user journe
 | `05-admin-workspace.cy.ts` | Admin | GMV & revenue metrics, official stock inventory, platform order management, seller verification, and header cart access. |
 | `06-superadmin-workspace.cy.ts` | Super Admin | Platform overview, stores audit, catalog visibility toggles, platform transaction logs, user account deletion, staff administration. |
 | `07-order-and-catalog-controls.cy.ts` | Safeguards & Operations | Order tracking validation before shipment, marketplace review templates, and permanent catalog deletion guards. |
-| `08-deployed-smoke.cy.ts` | Deployed system | Live backend API, catalog shown in the deployed storefront, and UI login with a protected profile request. Runs only when `REAL_E2E=true`. |
 
 ### Running E2E Tests
 
@@ -146,7 +145,7 @@ npm run cypress:run
 ```
 
 #### Deployed Full-Stack Smoke Tests
-The normal suite uses mocked APIs for fast UI regression checks. The deployed smoke suite deliberately uses no `cy.intercept()` calls and is run by the deployment workflow after `main` is deployed. It needs the deployed frontend URL, backend URL, and a dedicated demo-user credential.
+The normal suite uses mocked APIs for fast UI regression checks. The deployed smoke suite at `cypress/e2e-deployed/08-deployed-smoke.cy.ts` deliberately uses no `cy.intercept()` calls and is run by the deployment workflow after `main` is deployed. It needs the deployed frontend URL, backend URL, and a dedicated demo-user credential.
 
 ---
 
@@ -275,15 +274,16 @@ optracard-frontend/
 │       ├── ci.yml                 # Automated CI (lint, build, Cypress E2E)
 │       └── codeql.yml             # CodeQL static security analysis
 ├── cypress/
-│   ├── e2e/                       # 8 Cypress test suites
+│   ├── e2e/                       # 7 mock-backed Cypress test suites
 │   │   ├── 01-public-pages.cy.ts
 │   │   ├── 02-auth-flows.cy.ts
 │   │   ├── 03-buyer-cart-checkout.cy.ts
 │   │   ├── 04-seller-workspace.cy.ts
 │   │   ├── 05-admin-workspace.cy.ts
 │   │   ├── 06-superadmin-workspace.cy.ts
-│   │   ├── 07-order-and-catalog-controls.cy.ts
-│   │   └── 08-deployed-smoke.cy.ts
+│   │   └── 07-order-and-catalog-controls.cy.ts
+│   ├── e2e-deployed/
+│   │   └── 08-deployed-smoke.cy.ts # 3 no-mock checks, run after deployment
 │   └── support/                   # Cypress mocks & custom commands
 │       ├── commands.ts
 │       ├── e2e.ts
