@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
 import { loadCatalog as loadCatalogFromApi } from '../api/catalog';
@@ -22,19 +22,8 @@ const sourceContent: Record<CatalogSource, { title: string; eyebrow: string; vie
 
 export const Home = () => {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
-
-  const handleHeroSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-      navigate('/search');
-    }
-  };
 
   useEffect(() => {
     let isCurrent = true;
