@@ -90,7 +90,9 @@ describe('Order, visibility, and catalog safeguards', () => {
     cy.visit('/');
     cy.wait('@getShippingNotification');
 
-    cy.get('button[aria-label="Order notifications"]').click();
+    // Wait for React to render the unread state before opening the menu. Waiting
+    // only for the intercepted response is not enough on a slower CI runner.
+    cy.get('button[aria-label="Order notifications"]').should('contain.text', '1').click();
     cy.wait('@readShippingNotification');
     cy.contains('Tracking number: TH123456789').should('be.visible');
     cy.contains('View order ORD-2026-001').should('be.visible');
