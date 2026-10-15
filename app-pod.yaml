@@ -23,7 +23,7 @@ spec:
       containers:
         - name: optracard-frontend-container
           image: saksitboom/optracard-frontend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
 ---
