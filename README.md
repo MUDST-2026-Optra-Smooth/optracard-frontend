@@ -120,6 +120,7 @@ End-to-end tests are written in **Cypress** and cover the end-to-end user journe
 | `05-admin-workspace.cy.ts` | Admin | GMV & revenue metrics, official stock inventory, platform order management, seller verification, and header cart access. |
 | `06-superadmin-workspace.cy.ts` | Super Admin | Platform overview, stores audit, catalog visibility toggles, platform transaction logs, user account deletion, staff administration. |
 | `07-order-and-catalog-controls.cy.ts` | Safeguards & Operations | Order tracking validation before shipment, marketplace review templates, and permanent catalog deletion guards. |
+| `08-deployed-smoke.cy.ts` | Deployed system | Live backend API, catalog shown in the deployed storefront, and UI login with a protected profile request. Runs only when `REAL_E2E=true`. |
 
 ### Running E2E Tests
 
@@ -143,6 +144,11 @@ npm run test:e2e
 ```bash
 npm run cypress:run
 ```
+
+#### Deployed Full-Stack Smoke Tests
+The normal suite uses mocked APIs for fast UI regression checks. The deployed smoke suite deliberately uses no `cy.intercept()` calls and is run by the deployment workflow after `main` is deployed. It needs the deployed frontend URL, backend URL, and a dedicated demo-user credential.
+
+---
 
 ---
 
@@ -212,8 +218,8 @@ Open [http://localhost:8080](http://localhost:8080) in your browser (or port `30
 
 The repository implements automated CI workflows located in `.github/workflows/`:
 
-### 1. Frontend CI (`.github/workflows/ci.yml`)
-Triggered on every `push` and `pull_request` targeting `main` or `develop`:
+### 1. Frontend CI/CD (`.github/workflows/ci.yml`)
+The CI job runs on every `push` and `pull_request` targeting `main` or `develop`:
 1. **Checkout:** Checks out source code via `actions/checkout@v4`.
 2. **Environment Setup:** Configures Node.js 22 with npm dependency caching.
 3. **Deterministic Install:** Executes `npm ci`.
@@ -221,6 +227,24 @@ Triggered on every `push` and `pull_request` targeting `main` or `develop`:
 5. **Production Build:** Bundles production assets via `npm run build`.
 6. **Automated E2E Tests:** Runs the full Cypress test suite headlessly via `npm run test:e2e`.
 7. **Artifact Archiving:** Uploads `dist/` build artifacts (retained 7 days) and uploads Cypress failure screenshots/videos if any test fails.
+
+After a successful push to `main`, the deploy job:
+1. Builds the image with the deployed backend URL.
+2. Pushes a Docker Hub image tagged with the commit SHA.
+3. Applies `app-pod.yaml`, sets that SHA on the Deployment, and waits for rollout completion.
+4. Runs the no-mock deployed Cypress smoke suite.
+
+Set these GitHub repository secrets before the first deployment:
+
+| Secret | Purpose |
+| :--- | :--- |
+| `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` | Push the versioned frontend image to Docker Hub. |
+| `KUBECONFIG_BASE64` | Base64-encoded kubeconfig for the online Kubernetes cluster. |
+| `FRONTEND_API_BASE_URL` | Public Backend API URL embedded in the production frontend build. |
+| `FRONTEND_URL`, `BACKEND_API_URL` | Public URLs used by the deployed smoke tests. |
+| `E2E_EMAIL`, `E2E_PASSWORD` | Dedicated demo buyer used only to verify deployed login and profile access. |
+
+Deploy the Backend first so `FRONTEND_API_BASE_URL` points to a ready API.
 
 ### 2. CodeQL Static Analysis (`.github/workflows/codeql.yml`)
 Runs GitHub CodeQL automated vulnerability and security scanning on all TypeScript and JavaScript files.
@@ -232,6 +256,7 @@ Runs GitHub CodeQL automated vulnerability and security scanning on all TypeScri
 ### What is Currently Covered:
 - **Comprehensive E2E Coverage:** Over 40 scenarios spanning buyer shopping, cart operations, payment simulation, seller catalog management, admin inventory control, super admin audits, and order fulfillment safeguards.
 - **Network Interception & Isolation:** `cypress/support/mockApis.ts` mocks external backend REST APIs, ensuring fast, deterministic, reproducible test runs independent of live database states.
+- **Deployed Full-Stack Smoke:** Three Cypress checks use the actual deployed Frontend, Backend, and PostgreSQL data without API mocking after a `main` deployment.
 - **Route Authorization Guarding:** Protected route verification for unauthenticated redirects and role-specific permissions (`USER`, `SELLER`, `ADMIN`, `SUPER_ADMIN`).
 
 ### Recommended Next Steps for Partial Coverage Gaps:
@@ -250,14 +275,15 @@ optracard-frontend/
 │       ├── ci.yml                 # Automated CI (lint, build, Cypress E2E)
 │       └── codeql.yml             # CodeQL static security analysis
 ├── cypress/
-│   ├── e2e/                       # 7 End-to-end test suites
+│   ├── e2e/                       # 8 Cypress test suites
 │   │   ├── 01-public-pages.cy.ts
 │   │   ├── 02-auth-flows.cy.ts
 │   │   ├── 03-buyer-cart-checkout.cy.ts
 │   │   ├── 04-seller-workspace.cy.ts
 │   │   ├── 05-admin-workspace.cy.ts
 │   │   ├── 06-superadmin-workspace.cy.ts
-│   │   └── 07-order-and-catalog-controls.cy.ts
+│   │   ├── 07-order-and-catalog-controls.cy.ts
+│   │   └── 08-deployed-smoke.cy.ts
 │   └── support/                   # Cypress mocks & custom commands
 │       ├── commands.ts
 │       ├── e2e.ts
