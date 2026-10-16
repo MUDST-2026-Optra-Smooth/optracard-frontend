@@ -1,8 +1,7 @@
 type CatalogProduct = { name: string };
 
-// The deployed API URL is public configuration. Cypress 16 exposes it
-// synchronously, while credentials remain available only through cy.env().
-const apiBaseUrl = String(Cypress.expose('API_BASE_URL') || '').replace(/\/$/, '');
+// The deployed API URL is passed via Cypress environment (CYPRESS_API_BASE_URL or --env API_BASE_URL)
+const apiBaseUrl = String(Cypress.env('API_BASE_URL') || '').replace(/\/$/, '');
 
 const loginThroughDeployedUi = () => {
   cy.env(['E2E_EMAIL', 'E2E_PASSWORD']).then(({ E2E_EMAIL, E2E_PASSWORD }) => {
