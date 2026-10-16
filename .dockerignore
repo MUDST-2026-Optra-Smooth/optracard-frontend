@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.github
+cypress/screenshots
+cypress/videos
+cypress/downloads
+*.log
+.env*
+coverage
+
