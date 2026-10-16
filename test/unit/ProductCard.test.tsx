@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { ProductCard } from './ProductCard';
+import { ProductCard } from '../../src/components/ProductCard';
 
 // Mock AuthContext
-vi.mock('../context/AuthContext', () => ({
+vi.mock('../../src/context/AuthContext', () => ({
   useAuth: () => ({
     user: null,
     token: null,
@@ -13,7 +13,7 @@ vi.mock('../context/AuthContext', () => ({
 }));
 
 // Mock cart API
-vi.mock('../api/cart', () => ({
+vi.mock('../../src/api/cart', () => ({
   addProductToCart: vi.fn(),
 }));
 
@@ -75,3 +75,4 @@ describe('ProductCard unit tests', () => {
     expect(cartButton).toBeDisabled();
   });
 });
+

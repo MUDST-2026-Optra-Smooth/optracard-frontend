@@ -1,23 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { Navbar } from './Navbar';
-import * as AuthContextModule from '../context/AuthContext';
-import * as CartHookModule from '../hooks/useCartCount';
+import { Navbar } from '../../src/components/Navbar';
+import * as AuthContextModule from '../../src/context/AuthContext';
+import * as CartHookModule from '../../src/hooks/useCartCount';
 
-vi.mock('../context/AuthContext', () => ({
+vi.mock('../../src/context/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock('../hooks/useCartCount', () => ({
+vi.mock('../../src/hooks/useCartCount', () => ({
   useCartCount: vi.fn(),
 }));
 
-vi.mock('../api/catalog', () => ({
+vi.mock('../../src/api/catalog', () => ({
   loadCatalog: vi.fn().mockResolvedValue([]),
 }));
 
-vi.mock('../api/notifications', () => ({
+vi.mock('../../src/api/notifications', () => ({
   loadOrderNotifications: vi.fn().mockResolvedValue([]),
   markOrderNotificationsRead: vi.fn().mockResolvedValue(undefined),
 }));
@@ -121,3 +121,4 @@ describe('Navbar Integration Tests', () => {
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 });
+

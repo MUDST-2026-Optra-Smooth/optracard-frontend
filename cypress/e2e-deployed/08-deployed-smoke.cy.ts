@@ -4,16 +4,16 @@ type CatalogProduct = { name: string };
 const apiBaseUrl = String(Cypress.env('API_BASE_URL') || '').replace(/\/$/, '');
 
 const loginThroughDeployedUi = () => {
-  cy.env(['E2E_EMAIL', 'E2E_PASSWORD']).then(({ E2E_EMAIL, E2E_PASSWORD }) => {
-    expect(E2E_EMAIL, 'CYPRESS_E2E_EMAIL').to.be.a('string').and.not.be.empty;
-    expect(E2E_PASSWORD, 'CYPRESS_E2E_PASSWORD').to.be.a('string').and.not.be.empty;
+  const email = Cypress.env('E2E_EMAIL');
+  const password = Cypress.env('E2E_PASSWORD');
+  expect(email, 'CYPRESS_E2E_EMAIL').to.be.a('string').and.not.be.empty;
+  expect(password, 'CYPRESS_E2E_PASSWORD').to.be.a('string').and.not.be.empty;
 
-    cy.visit('/login');
-    cy.get('input[name="email"]').type(E2E_EMAIL);
-    cy.get('input[name="password"]').type(E2E_PASSWORD, { log: false });
-    cy.contains('button[type="submit"]', /login/i).click();
-    cy.window().its('localStorage.token').should('be.a', 'string').and('not.be.empty');
-  });
+  cy.visit('/login');
+  cy.get('input[name="email"]').type(email);
+  cy.get('input[name="password"]').type(password, { log: false });
+  cy.contains('button[type="submit"]', /login/i).click();
+  cy.window().its('localStorage.token').should('be.a', 'string').and('not.be.empty');
 };
 
 describe('Deployed full-stack smoke journeys', () => {

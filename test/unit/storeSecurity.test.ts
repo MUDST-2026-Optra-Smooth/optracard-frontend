@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { encodeStoreId, decodeStoreId } from './storeSecurity';
+import { encodeStoreId, decodeStoreId } from '../../src/utils/storeSecurity';
 
 describe('storeSecurity unit tests', () => {
   it('encodes store IDs into obfuscated tokens starting with sp_', () => {

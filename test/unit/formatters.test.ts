@@ -1,11 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { formatPrice, formatDate } from './formatters';
+import { formatPrice, formatDate } from '../../src/context/formatters';
 
 describe('formatters unit tests', () => {
   describe('formatPrice', () => {
     it('formats numbers into Thai Baht currency format', () => {
       const formatted = formatPrice(1500);
-      // In th-TH, 1500 becomes ฿1,500.00 (with possible non-breaking space)
       expect(formatted).toContain('1,500');
       expect(formatted).toMatch(/฿|THB/);
     });

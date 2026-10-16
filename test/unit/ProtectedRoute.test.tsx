@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { ProtectedRoute } from './ProtectedRoute';
-import * as AuthContextModule from '../context/AuthContext';
+import { ProtectedRoute } from '../../src/components/ProtectedRoute';
+import * as AuthContextModule from '../../src/context/AuthContext';
 
-vi.mock('../context/AuthContext', async () => {
-  const actual = await vi.importActual<typeof AuthContextModule>('../context/AuthContext');
+vi.mock('../../src/context/AuthContext', async () => {
+  const actual = await vi.importActual<typeof AuthContextModule>('../../src/context/AuthContext');
   return {
     ...actual,
     useAuth: vi.fn(),
