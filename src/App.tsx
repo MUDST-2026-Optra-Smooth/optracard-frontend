@@ -83,7 +83,11 @@ export function App() {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/team" element={<OurTeam />} />
           <Route path="/ViewAllOOS" element={<ViewAllOOS />} />
+          <Route path="/view-all-oos" element={<Navigate to="/ViewAllOOS" replace />} />
+          <Route path="/viewalloos" element={<Navigate to="/ViewAllOOS" replace />} />
           <Route path="/ViewAllTrading" element={<ViewAllTrading />} />
+          <Route path="/view-all-trading" element={<Navigate to="/ViewAllTrading" replace />} />
+          <Route path="/viewalltrading" element={<Navigate to="/ViewAllTrading" replace />} />
           <Route path="/search" element={<SearchResult />} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/profile/edit" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
@@ -140,6 +144,8 @@ export function App() {
           <Route path="/seller-profile/my" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerProfile isOwnerOnly /></ProtectedRoute>} />
           <Route path="/seller-profile" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerProfile isOwnerOnly /></ProtectedRoute>} />
           <Route path="/seller-profile/:sellerId" element={<SellerProfile />} />
+          {/* Wildcard Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       

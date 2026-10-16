@@ -90,8 +90,9 @@ export const Login = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-gray-700 text-xs font-semibold mb-1">Email</label>
+            <label htmlFor="email" className="block text-gray-700 text-xs font-semibold mb-1">Email</label>
             <input 
+              id="email"
               type="email"
               name="email"
               value={formData.email}
@@ -101,8 +102,9 @@ export const Login = () => {
             />
           </div>
           <div className="mb-6">
-            <label className="block text-gray-700 text-xs font-semibold mb-1">Password</label>
+            <label htmlFor="password" className="block text-gray-700 text-xs font-semibold mb-1">Password</label>
             <input 
+              id="password"
               type="password" 
               name="password"
               value={formData.password}
