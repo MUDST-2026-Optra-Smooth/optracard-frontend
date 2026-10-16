@@ -2,9 +2,13 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
+# Disable Cypress binary download in Docker build (saves ~300MB and prevents hanging)
+ENV CYPRESS_INSTALL_BINARY=0
+
 # Install dependencies deterministically
 COPY package*.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --no-audit
 
 # Copy source code and build
 COPY . .
