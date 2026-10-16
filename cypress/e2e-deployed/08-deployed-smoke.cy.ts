@@ -20,7 +20,8 @@ const loginThroughDeployedUi = () => {
 describe('Deployed full-stack smoke journeys', () => {
   before(() => {
     expect(Cypress.config().baseUrl, 'CYPRESS_BASE_URL').to.match(/^https?:\/\//);
-    cy.env('API_BASE_URL').then((url: unknown) => {
+    cy.env(['API_BASE_URL']).then((env: Record<string, unknown>) => {
+      const url = env?.API_BASE_URL;
       const exposed = typeof Cypress.expose === 'function' ? Cypress.expose('API_BASE_URL') : '';
       const rawUrl =
         (typeof url === 'string' && url) || (typeof exposed === 'string' ? exposed : '') || '';
