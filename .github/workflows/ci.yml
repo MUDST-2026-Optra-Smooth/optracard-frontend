@@ -35,6 +35,9 @@ jobs:
       - name: Lint check
         run: npm run lint
 
+      - name: Run unit & integration tests
+        run: npm run test
+
       - name: Build frontend
         run: npm run build
 
@@ -123,7 +126,7 @@ jobs:
         shell: bash
         run: |
           npm ci
-          npx cypress run --spec cypress/e2e-deployed/08-deployed-smoke.cy.ts --expose API_BASE_URL="${{ secrets.BACKEND_API_URL }}"
+          npx cypress run --spec cypress/e2e-deployed/08-deployed-smoke.cy.ts --env API_BASE_URL="${{ secrets.BACKEND_API_URL }}"
 
       - name: Upload deployed E2E artifacts on failure
         uses: actions/upload-artifact@v4
