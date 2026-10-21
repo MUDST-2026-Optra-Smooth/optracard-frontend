@@ -264,7 +264,7 @@ Open [http://localhost:8080](http://localhost:8080) in your browser (or port `30
 The repository implements automated CI workflows located in `.github/workflows/`:
 
 ### 1. Frontend CI/CD (`.github/workflows/ci.yml`)
-The CI job runs on every `push` and `pull_request` targeting `main` or `develop`:
+The CI job runs on every `push` and `pull_request`. The deployment job remains restricted to successful pushes to `main`.
 1. **Checkout:** Checks out source code via `actions/checkout@v4`.
 2. **Environment Setup:** Configures Node.js 22 with npm dependency caching.
 3. **Deterministic Install:** Executes `npm ci`.
