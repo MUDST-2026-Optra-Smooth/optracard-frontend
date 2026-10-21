@@ -15,9 +15,11 @@ describe('Authentication & User Registration Flows', () => {
   });
 
   it('logs in successfully and redirects to dashboard/home', () => {
+    const testPassword = `test-${Date.now()}-${Cypress._.random(1000, 9999)}`;
+
     cy.visit('/login');
     cy.get('input[name="email"]').type('somchai@optracard.com');
-    cy.get('input[name="password"]').type('password123');
+    cy.get('input[name="password"]').type(testPassword);
 
     cy.get('form').contains('button[type="submit"]', /Login/i).click();
     cy.wait('@authLogin');
@@ -32,6 +34,8 @@ describe('Authentication & User Registration Flows', () => {
   });
 
   it('renders registration page and validates password matching', () => {
+    const testPassword = `test-${Date.now()}-${Cypress._.random(1000, 9999)}`;
+
     cy.visit('/register');
     cy.get('input[name="username"]').should('be.visible');
     cy.get('input[name="email"]').should('be.visible');
@@ -48,7 +52,7 @@ describe('Authentication & User Registration Flows', () => {
     cy.get('input[name="email"]').type('newuser@example.com');
     cy.get('input[name="phone"]').type('0812345678');
     cy.get('textarea[name="address"]').type('123 Sukhumvit Road, Bangkok');
-    cy.get('input[name="password"]').type('password123');
+    cy.get('input[name="password"]').type(testPassword);
     cy.get('input[name="confirmPassword"]').type('mismatch456');
     cy.get('form').contains('button[type="submit"]', /Sign up|Register|Create/i).click().then(() => {
       expect(alertMessage).to.include('Passwords do not match');
