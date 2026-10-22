@@ -224,27 +224,45 @@ export function setupCommonMocks() {
     { id: 3, name: 'Magic: The Gathering' },
     { id: 4, name: 'Yu-Gi-Oh!' },
   ]).as('getAdminCardGames');
-  cy.intercept('GET', '**/api/admin/orders', [
-    {
-      id: 1,
-      orderNumber: 'ORD-2026-001',
-      buyerId: 1,
-      buyerName: 'Somchai',
-      total: 250000,
-      source: 'OFFICIAL',
-      storeId: 1,
-      storeName: 'Optracard Official Store',
-      status: 'PROCESSING',
-      paymentStatus: 'PAID',
-      shippingMethod: 'standard',
-      shippingAddress: 'Bangkok',
-      recipientName: 'Somchai',
-      recipientPhone: '0812345678',
-      trackingNumber: null,
-      createdAt: '2026-09-24T10:00:00Z',
-      items: []
-    }
-  ]).as('getAdminOrders');
+  const officialAdminOrder = {
+    id: 1,
+    orderNumber: 'ORD-2026-001',
+    buyerId: 1,
+    buyerName: 'Somchai',
+    total: 250000,
+    source: 'OFFICIAL',
+    storeId: 1,
+    storeName: 'Optracard Official Store',
+    status: 'PROCESSING',
+    paymentStatus: 'PAID',
+    shippingMethod: 'standard',
+    shippingAddress: 'Bangkok',
+    recipientName: 'Somchai',
+    recipientPhone: '0812345678',
+    trackingNumber: null,
+    createdAt: '2026-09-24T10:00:00Z',
+    items: []
+  };
+  const marketplaceAdminOrder = {
+    ...officialAdminOrder,
+    id: 2,
+    orderNumber: 'ORD-2026-002',
+    total: 77000,
+    source: 'MARKETPLACE',
+    storeId: 2,
+    storeName: 'Moonlight TCG',
+  };
+  cy.intercept('GET', '**/api/admin/orders*', (request) => {
+    const source = String(request.query.source ?? 'OFFICIAL');
+    request.alias = `getAdminOrders${source}`;
+    request.reply(
+      source === 'MARKETPLACE'
+        ? [marketplaceAdminOrder]
+        : source === 'ALL'
+          ? [officialAdminOrder, marketplaceAdminOrder]
+          : [officialAdminOrder],
+    );
+  }).as('getAdminOrders');
 
   const adminStoresMock = [
     {

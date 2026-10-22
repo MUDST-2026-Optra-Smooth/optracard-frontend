@@ -39,7 +39,11 @@ export const updateAdminProductActive = (id: number, active: boolean) => request
 });
 export const deleteAdminProduct = (id: number) => request<void>(`/api/admin/products/${id}`, { method: 'DELETE' });
 
-export const loadAdminOrders = () => request<AdminOrder[]>('/api/admin/orders');
+export type AdminOrderSource = 'OFFICIAL' | 'MARKETPLACE' | 'ALL';
+
+export const loadAdminOrders = (source: AdminOrderSource = 'OFFICIAL') => request<AdminOrder[]>(
+  `/api/admin/orders?source=${encodeURIComponent(source)}`,
+);
 export const loadAdminOrder = (id: number) => request<AdminOrder>(`/api/admin/orders/${id}`);
 export const updateAdminOrderStatus = (id: number, status: string, trackingNumber?: string) => request<AdminOrder>(`/api/admin/orders/${id}/status`, {
   method: 'PUT', body: JSON.stringify({ status, trackingNumber }),
