@@ -254,6 +254,7 @@ export function setupCommonMocks() {
   };
   cy.intercept('GET', '**/api/admin/orders*', (request) => {
     const source = String(request.query.source ?? 'OFFICIAL');
+    request.alias = `getAdminOrders${source}`;
     request.reply(
       source === 'MARKETPLACE'
         ? [marketplaceAdminOrder]

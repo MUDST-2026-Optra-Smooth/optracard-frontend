@@ -24,20 +24,20 @@ describe('Admin Workspace & Operations', () => {
 
   it('defaults to Official Store orders and filters Marketplace orders', () => {
     cy.visit('/admin/orders');
-    cy.wait('@getAdminOrders').its('request.url').should('include', 'source=OFFICIAL');
+    cy.wait('@getAdminOrdersOFFICIAL').its('request.url').should('include', 'source=OFFICIAL');
 
     cy.contains(/Orders/i).should('be.visible');
     cy.contains('ORD-2026-001').should('be.visible');
     cy.contains('Somchai').should('be.visible');
 
     cy.get('[aria-label="Order source"]').contains('button', 'Marketplace').click();
-    cy.wait('@getAdminOrders').its('request.url').should('include', 'source=MARKETPLACE');
+    cy.wait('@getAdminOrdersMARKETPLACE').its('request.url').should('include', 'source=MARKETPLACE');
     cy.contains('ORD-2026-002').should('be.visible');
     cy.contains('Moonlight TCG').should('be.visible');
     cy.contains('ORD-2026-001').should('not.exist');
 
     cy.get('[aria-label="Order source"]').contains('button', 'All orders').click();
-    cy.wait('@getAdminOrders').its('request.url').should('include', 'source=ALL');
+    cy.wait('@getAdminOrdersALL').its('request.url').should('include', 'source=ALL');
     cy.contains('ORD-2026-001').should('be.visible');
     cy.contains('ORD-2026-002').should('be.visible');
   });
