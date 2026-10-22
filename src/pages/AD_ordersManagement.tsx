@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Eye, RefreshCcw, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { loadAdminOrders } from '../api/admin';
+import { loadAdminOrders, type AdminOrderSource } from '../api/admin';
 import {
   AdminError,
   AdminLoading,
@@ -17,24 +17,25 @@ export const ADordersManagement = () => {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('ALL');
+  const [source, setSource] = useState<AdminOrderSource>('OFFICIAL');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      setOrders(await loadAdminOrders());
+      setOrders(await loadAdminOrders(source));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not load orders.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [source]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const visible = useMemo(() => {
     const text = query.trim().toLowerCase();
@@ -54,7 +55,7 @@ export const ADordersManagement = () => {
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Orders Management</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Live database records of customer orders across Official Store and Marketplace sellers.
+            Review Official Store fulfillment and monitor Marketplace orders without changing seller fulfillment.
           </p>
         </div>
         <button
@@ -73,7 +74,26 @@ export const ADordersManagement = () => {
         </div>
       )}
 
-      <div className="mb-5 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row">
+      <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 flex flex-wrap gap-2" aria-label="Order source">
+          {([
+            ['OFFICIAL', 'Official Store'],
+            ['MARKETPLACE', 'Marketplace'],
+            ['ALL', 'All orders'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setSource(value)}
+              className={`rounded-lg px-4 py-2 text-sm font-bold transition cursor-pointer ${source === value
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col gap-3 md:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
@@ -94,6 +114,7 @@ export const ADordersManagement = () => {
           <option value="DELIVERED">Delivered</option>
           <option value="CANCELED">Canceled</option>
         </select>
+        </div>
       </div>
 
       {loading ? (
@@ -129,7 +150,15 @@ export const ADordersManagement = () => {
                     <p className="font-semibold text-slate-900">{order.buyerName}</p>
                     <p className="text-xs text-slate-500">Buyer ID: {order.buyerId}</p>
                   </td>
-                  <td className="px-5 py-4 text-slate-600">{order.storeName ?? 'Optracard Official Store'}</td>
+                  <td className="px-5 py-4">
+                    <p className="text-slate-700">{order.storeName ?? 'Optracard Official Store'}</p>
+                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${order.source === 'MARKETPLACE'
+                      ? 'bg-violet-100 text-violet-700'
+                      : 'bg-blue-100 text-blue-700'}`}
+                    >
+                      {order.source === 'MARKETPLACE' ? 'Marketplace' : 'Official Store'}
+                    </span>
+                  </td>
                   <td className="px-5 py-4 text-slate-500">{formatDate(order.createdAt)}</td>
                   <td className="px-5 py-4 text-right font-bold text-slate-900">{formatCurrency(order.total)}</td>
                   <td className="px-5 py-4">

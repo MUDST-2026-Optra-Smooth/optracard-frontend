@@ -52,7 +52,7 @@ export const ADorderDetail = () => {
   }, [id]);
 
   const changeStatus = async (status: string) => {
-    if (!order) return;
+    if (!order || order.source === 'MARKETPLACE') return;
     if (status.toUpperCase() === 'SHIPPED' && order.status !== 'Shipped' && !trackingNumber.trim()) {
       setError('Enter a tracking number before marking an order as Shipped.');
       return;
@@ -115,6 +115,9 @@ export const ADorderDetail = () => {
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Admin order view</p>
               <h1 className="mt-2 text-3xl font-bold text-slate-900">{order.orderNumber}</h1>
               <p className="mt-1 text-sm text-slate-500">Placed {formatDate(order.createdAt)}</p>
+              {order.source === 'MARKETPLACE' && (
+                <p className="mt-2 text-sm font-semibold text-violet-700">Marketplace order — fulfillment is managed by the seller.</p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -235,7 +238,7 @@ export const ADorderDetail = () => {
             </section>
 
             <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="font-bold text-slate-900">Order control</h2>
+              <h2 className="font-bold text-slate-900">{order.source === 'MARKETPLACE' ? 'Marketplace fulfillment' : 'Order control'}</h2>
               <div className="mt-4">
                 <p className="text-sm text-slate-500">Current status</p>
                 <div className="mt-2">
@@ -243,6 +246,12 @@ export const ADorderDetail = () => {
                 </div>
               </div>
 
+              {order.source === 'MARKETPLACE' ? (
+                <p className="mt-5 rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-800">
+                  This order belongs to {order.storeName ?? 'a Marketplace seller'}. Only that seller can update fulfillment status or tracking details.
+                </p>
+              ) : (
+                <>
               <label className="mt-5 block text-sm font-semibold text-slate-700">
                 Tracking number <span className="text-red-600">(required before shipping)</span>
                 <input
@@ -270,6 +279,8 @@ export const ADorderDetail = () => {
                   <option value="CANCELED">Canceled</option>
                 </select>
               </label>
+                </>
+              )}
 
               <div className="mt-6 border-t border-slate-100 pt-4">
                 <p className="text-sm text-slate-500">Order total</p>
