@@ -86,7 +86,9 @@ jobs:
           DOCKER_USER="${{ secrets.DOCKERHUB_USERNAME || 'saksitboom' }}"
           IMAGE_TAG="$DOCKER_USER/optracard-frontend:${{ github.sha }}"
           LATEST_TAG="$DOCKER_USER/optracard-frontend:latest"
-          docker build --build-arg VITE_API_BASE_URL="${{ secrets.FRONTEND_API_BASE_URL }}" -t "$IMAGE_TAG" -t "$LATEST_TAG" .
+          # The production image uses the same-origin /api Nginx proxy. Do not
+          # embed a localhost or externally port-forwarded backend URL here.
+          docker build -t "$IMAGE_TAG" -t "$LATEST_TAG" .
           if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
             docker push "$IMAGE_TAG"
             docker push "$LATEST_TAG"

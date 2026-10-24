@@ -12,7 +12,9 @@ RUN --mount=type=cache,target=/root/.npm \
 
 # Copy source code and build
 COPY . .
-ARG VITE_API_BASE_URL=http://localhost:8080
+# The Kubernetes image calls its API through the Nginx /api reverse proxy.
+# An empty value is intentional: Vite embeds it as a same-origin relative URL.
+ARG VITE_API_BASE_URL=
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
