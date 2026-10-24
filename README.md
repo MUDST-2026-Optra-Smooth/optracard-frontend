@@ -257,6 +257,15 @@ kubectl port-forward svc/optracard-frontend-service -n optracard-frontend 8080:8
 ```
 Open [http://localhost:8080](http://localhost:8080) in your browser (or port `30080` if accessing the cluster node directly).
 
+The Kubernetes frontend proxies browser requests under `/api` to
+`optracard-backend-service` inside the `optracard-backend` namespace. Build the
+frontend image without a `VITE_API_BASE_URL` value for this deployment. Only the
+frontend port-forward is needed in a browser:
+
+```bash
+kubectl port-forward svc/optracard-frontend-service 30080:80 -n optracard-frontend
+```
+
 ---
 
 ## 🔄 CI/CD Pipeline-as-Code
@@ -286,7 +295,6 @@ After a successful push to `main` (or manual trigger), the deploy job:
 | :--- | :--- | :--- |
 | `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` | Deployment | Push the versioned frontend image to Docker Hub. |
 | `KUBECONFIG_BASE64` | Deployment | Base64-encoded kubeconfig for the Kubernetes cluster. |
-| `FRONTEND_API_BASE_URL` | Build / Deployment | Public Backend API URL embedded in the production frontend bundle. |
 | `FRONTEND_URL` | Deployed Smoke | URL of the live frontend. **Setting this secret enables the smoke test step in CI.** |
 | `BACKEND_API_URL` | Deployed Smoke | URL of the live backend (used by Cypress for live API requests). |
 | `E2E_EMAIL`, `E2E_PASSWORD` | Deployed Smoke | Valid demo buyer credentials used to verify deployed login and profile access. |
