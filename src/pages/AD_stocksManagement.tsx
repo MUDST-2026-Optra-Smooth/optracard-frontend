@@ -35,7 +35,10 @@ export const ADstocks = () => {
     setLoading(true);
     setError(null);
     try {
-      const [loadedProducts, settings] = await Promise.all([loadAdminProducts(), loadStockAlertSettings()]);
+      const [loadedProducts, settings] = await Promise.all([
+        loadAdminProducts(),
+        loadStockAlertSettings().catch(() => ({ defaultThreshold: 5 })),
+      ]);
       setProducts(loadedProducts);
       setThreshold(settings.defaultThreshold);
       setThresholdInput(String(settings.defaultThreshold));
