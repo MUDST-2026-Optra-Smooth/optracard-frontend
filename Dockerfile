@@ -12,13 +12,19 @@ RUN --mount=type=cache,target=/root/.npm \
 
 # Copy source code and build
 COPY . .
-ARG VITE_API_BASE_URL=http://localhost:8080
+# The Kubernetes image calls its API through the Nginx /api reverse proxy.
+# An empty value is intentional: Vite embeds it as a same-origin relative URL.
+ARG VITE_API_BASE_URL=
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Kubernetes supplies its Service DNS name. Docker Compose overrides this with
+# the host-machine Backend exposed on port 8080.
+ENV BACKEND_UPSTREAM=optracard-backend-service.optracard-backend.svc.cluster.local:8080
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80

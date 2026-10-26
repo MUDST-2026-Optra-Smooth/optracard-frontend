@@ -45,6 +45,12 @@ export const Login = () => {
           { userId: data.userId, username: data.username, email: data.email ?? formData.email, role: data.role },
           data.token,
         );
+        // Sellers always land on the customer storefront after a fresh login.
+        // Their workspace remains available from "My Shop" in the navbar.
+        if (data.role === 'SELLER') {
+          navigate('/', { replace: true });
+          return;
+        }
         const requestedPath =
           typeof location.state?.from === 'string'
             ? location.state.from
@@ -53,11 +59,9 @@ export const Login = () => {
           ? '/superadmin/overview'
             : data.role === 'ADMIN'
               ? '/admin/dashboard'
-            : data.role === 'SELLER'
-              ? '/dashboard'
             : '/';
-        const isBackOfficeRole = data.role === 'ADMIN' || data.role === 'SUPER_ADMIN';
-        const destination = isBackOfficeRole
+        const startsAtRoleHome = data.role === 'ADMIN' || data.role === 'SUPER_ADMIN';
+        const destination = startsAtRoleHome
           ? roleHome
           : requestedPath && canOpenPathForRole(data.role, requestedPath)
             ? requestedPath
