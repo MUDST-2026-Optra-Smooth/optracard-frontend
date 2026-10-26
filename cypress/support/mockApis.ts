@@ -1,7 +1,16 @@
+import products from '../fixtures/products.json';
+
 export function setupCommonMocks() {
   // Public catalog & products
   cy.intercept('GET', '**/api/products/home', { fixture: 'products.json' }).as('getProductsHome');
-  cy.intercept('GET', '**/api/products/search*', { fixture: 'products.json' }).as('searchProducts');
+  cy.intercept('GET', '**/api/products/search*', (request) => {
+    const query = String(request.query.q ?? '').trim().toLowerCase()
+      .replace('โปเกมอน', 'pokemon').replace('วันพีซ', 'one piece').replace('pokamon', 'pokemon');
+    request.reply(products.filter((product) =>
+      [product.name, product.game, product.type, product.description, product.store?.name]
+        .some((field) => field?.toLowerCase().includes(query))
+    ));
+  }).as('searchProducts');
   cy.intercept('GET', '**/api/products/1', {
     id: 1,
     name: 'Pikachu Illustrator Promo Card',
