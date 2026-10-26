@@ -313,7 +313,7 @@ export const Seller = () => {
                               className={`inline-flex px-2.5 py-1 rounded-full text-xs font-extrabold ${
                                 product.stock === 0
                                   ? 'bg-rose-100 text-rose-800'
-                                  : product.stock <= 3
+                                  : product.stock <= stockThreshold
                                   ? 'bg-amber-100 text-amber-800'
                                   : 'bg-emerald-100 text-emerald-800'
                               }`}
