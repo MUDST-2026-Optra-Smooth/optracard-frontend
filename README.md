@@ -231,6 +231,8 @@ docker compose logs -f
 docker compose down
 ```
 Access the compose-managed container at [http://localhost:5173](http://localhost:5173).
+The Backend must be running on `http://localhost:8080`; Docker Compose forwards
+browser `/api` requests to that local Backend automatically.
 
 *(Note: `nginx.conf` includes `try_files $uri $uri/ /index.html;` to ensure client-side routing like `/cart` or `/admin/dashboard` does not return 404 upon browser reload).*
 
@@ -399,7 +401,7 @@ optracard-frontend/
 ├── app-pod.yaml                       # Kubernetes deployment manifest
 ├── docker-compose.yml                 # Docker Compose orchestration
 ├── Dockerfile                         # Multi-stage production container build
-├── nginx.conf                         # Nginx SPA routing fallback config
+├── nginx.conf                         # Nginx SPA routing and runtime API proxy template
 ├── eslint.config.ts                   # ESLint 10 flat configuration
 ├── vitest.config.ts                   # Vitest unit & integration test configuration
 ├── vite.config.ts                     # Vite bundler configuration

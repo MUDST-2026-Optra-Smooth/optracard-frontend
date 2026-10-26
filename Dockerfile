@@ -20,7 +20,11 @@ RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Kubernetes supplies its Service DNS name. Docker Compose overrides this with
+# the host-machine Backend exposed on port 8080.
+ENV BACKEND_UPSTREAM=optracard-backend-service.optracard-backend.svc.cluster.local:8080
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 80
