@@ -13,6 +13,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { deleteSellerProduct, loadMyStore, loadSellerProducts } from '../api/seller';
+import { loadStockAlertSettings, loadStockAlerts, type StockAlert } from '../api/stockAlerts';
 import type { SellerProduct, SellerStoreInfo } from '../types/seller';
 import { formatPrice } from '../context/formatters';
 
@@ -56,17 +57,23 @@ export const Seller = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
+  const [stockThreshold, setStockThreshold] = useState(5);
 
   const load = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [loadedStore, loadedProducts] = await Promise.all([
+      const [loadedStore, loadedProducts, loadedAlerts, settings] = await Promise.all([
         loadMyStore().catch(() => null),
         loadSellerProducts(),
+        loadStockAlerts().catch(() => []),
+        loadStockAlertSettings().catch(() => ({ defaultThreshold: 5 })),
       ]);
       setStore(loadedStore);
       setProducts(loadedProducts);
+      setStockAlerts(loadedAlerts);
+      setStockThreshold(settings.defaultThreshold);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not load your products.');
     } finally {
