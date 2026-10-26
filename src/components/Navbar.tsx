@@ -2,7 +2,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCartCount } from '../hooks/useCartCount';
-import { loadCatalog } from '../api/catalog';
+import { searchCatalog } from '../api/catalog';
 import { loadOrderNotifications, markOrderNotificationsRead, type OrderNotification } from '../api/notifications';
 import type { CatalogProduct } from '../types/catalog';
 import { Bell } from 'lucide-react';
@@ -13,7 +13,7 @@ import avatarIcon from '../assets/Generic avatar.png';
 export const Navbar = () => {
   const [query, setQuery] = useState('');
   const [searchParams] = useSearchParams();
-  const [catalogItems, setCatalogItems] = useState<CatalogProduct[]>([]);
+  const [suggestions, setSuggestions] = useState<{ query: string; products: CatalogProduct[] }>({ query: '', products: [] });
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<OrderNotification[]>([]);
@@ -34,18 +34,23 @@ export const Navbar = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    const term = query.trim();
+    if (!term) return;
     let isCurrent = true;
-    void loadCatalog()
-      .then((items) => {
-        if (isCurrent) setCatalogItems(items);
-      })
-      .catch(() => {
-        /* silent catalog preload */
-      });
+    const timer = window.setTimeout(() => {
+      void searchCatalog(term)
+        .then((products) => {
+          if (isCurrent) setSuggestions({ query: term, products: products.slice(0, 5) });
+        })
+        .catch(() => {
+          if (isCurrent) setSuggestions({ query: term, products: [] });
+        });
+    }, 300);
     return () => {
       isCurrent = false;
+      window.clearTimeout(timer);
     };
-  }, []);
+  }, [query]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -133,16 +138,7 @@ export const Navbar = () => {
     return categories.filter((c) => c.toLowerCase().includes(trimmedQuery));
   }, [trimmedQuery]);
 
-  const matchingProducts = useMemo(() => {
-    if (!trimmedQuery) return [];
-    return catalogItems
-      .filter((p) =>
-        p.name.toLowerCase().includes(trimmedQuery) ||
-        p.game.toLowerCase().includes(trimmedQuery) ||
-        p.type.toLowerCase().includes(trimmedQuery)
-      )
-      .slice(0, 5);
-  }, [catalogItems, trimmedQuery]);
+  const matchingProducts = suggestions.query === query.trim() ? suggestions.products : [];
 
   return (
     <nav className="bg-[#0b0f19] text-white py-3 px-6 md:px-10 flex justify-between items-center font-sans border-b border-gray-800">
@@ -189,9 +185,6 @@ export const Navbar = () => {
             placeholder="Search by card game or card name..."
             className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-9 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
             onFocus={() => {
-              if (!catalogItems.length) {
-                void loadCatalog().then(setCatalogItems).catch(() => {});
-              }
               if (query.trim()) setShowDropdown(true);
             }}
           />
