@@ -125,7 +125,8 @@ export const Seller = () => {
   const storeName = store?.storeName || 'My Shop';
   const approvedCount = products.filter((p) => p.approvalStatus === 'APPROVED' && p.active).length;
   const pendingCount = products.filter((p) => p.approvalStatus === 'PENDING').length;
-  const lowStockCount = products.filter((p) => p.active && p.stock <= 3).length;
+  const lowStockCount = stockAlerts.length;
+  const outOfStockCount = stockAlerts.filter((alert) => alert.alertType === 'OUT_OF_STOCK').length;
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800">
@@ -181,6 +182,7 @@ export const Seller = () => {
               <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-4 shadow-xs">
                 <p className="text-xs font-medium text-rose-800 uppercase tracking-wider">Low / Out of Stock</p>
                 <p className="mt-2 text-2xl font-bold text-rose-900">{lowStockCount}</p>
+                <p className="mt-1 text-[10px] text-rose-800">{outOfStockCount} out of stock · live alert data</p>
               </div>
             </div>
 
