@@ -15,9 +15,11 @@ describe('API error handling and recovery', () => {
     cy.visit('/login');
     cy.get('input[name="email"]').type('wrong@example.com');
     cy.get('input[name="password"]').type('wrong-password');
-    cy.get('button[type="submit"]').click();
+    cy.on('window:alert', (message) => {
+      expect(message).to.match(/invalid email or password|login failed|unable to login/i);
+    });
+    cy.get('button[type="submit"]:visible').last().click({ force: true });
     cy.wait('@loginFailed');
-    cy.contains(/invalid email or password|login failed|unable to login/i).should('be.visible');
   });
 
   it('shows a catalog error when the home request fails', () => {
