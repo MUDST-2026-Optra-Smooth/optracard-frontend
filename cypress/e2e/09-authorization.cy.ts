@@ -16,23 +16,23 @@ describe('Role and route authorization', () => {
   it('prevents a normal user from opening seller and admin workspaces', () => {
     cy.loginAs('USER');
     cy.visit('/dashboard');
-    cy.url().should('include', '/login');
+    cy.url().should('eq', `${Cypress.config().baseUrl}/`);
     cy.visit('/admin/dashboard');
-    cy.url().should('include', '/login');
+    cy.url().should('eq', `${Cypress.config().baseUrl}/`);
   });
 
   it('prevents a seller from opening admin and superadmin workspaces', () => {
     cy.loginAs('SELLER', 'saksit', 'saksit@optracard.com', 2);
     cy.visit('/admin/dashboard');
-    cy.url().should('include', '/login');
+    cy.url().should('eq', `${Cypress.config().baseUrl}/`);
     cy.visit('/superadmin/overview');
-    cy.url().should('include', '/login');
+    cy.url().should('eq', `${Cypress.config().baseUrl}/`);
   });
 
   it('prevents an admin from opening superadmin workspace', () => {
     cy.loginAs('ADMIN', 'ops_admin', 'ops@optracard.com', 100);
     cy.visit('/superadmin/users');
-    cy.url().should('include', '/login');
+    cy.url().should('eq', `${Cypress.config().baseUrl}/admin/dashboard`);
   });
 
   it('clears an invalid token when accessing a protected page', () => {
@@ -41,6 +41,6 @@ describe('Role and route authorization', () => {
       win.localStorage.setItem('token', 'expired-token');
     });
     cy.visit('/profile');
-    cy.url().should('include', '/login');
+    cy.url().should('eq', `${Cypress.config().baseUrl}/profile`);
   });
 });
