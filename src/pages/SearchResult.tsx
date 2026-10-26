@@ -14,6 +14,7 @@ const defaultGameOptions: DropdownOption[] = [
 ];
 
 const sortOptions: DropdownOption[] = [
+  { label: 'Most Relevant', value: 'relevance' },
   { label: 'Newest Arrivals', value: 'newest' },
   { label: 'Price: High to Low', value: 'price_desc' },
   { label: 'Price: Low to High', value: 'price_asc' },

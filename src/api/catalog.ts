@@ -127,41 +127,22 @@ function normalizeProduct(raw: RawBackendProduct): CatalogProduct {
 export const searchCatalog = async (query: string): Promise<CatalogProduct[]> => {
   const trimmed = query.trim().toLowerCase();
 
-  // Load all products first to ensure fast, reliable matching across all fields
-  const allProducts = await loadCatalog().catch(() => []);
-  if (!trimmed) return allProducts;
-
-  const clientMatches = allProducts.filter((product) => {
-    const matchesName = product.name?.toLowerCase().includes(trimmed);
-    const matchesGame = product.game?.toLowerCase().includes(trimmed);
-    const matchesType = product.type?.toLowerCase().includes(trimmed);
-    const matchesDesc = product.description?.toLowerCase().includes(trimmed);
-    const matchesStore = product.store?.name?.toLowerCase().includes(trimmed);
-    return Boolean(matchesName || matchesGame || matchesType || matchesDesc || matchesStore);
-  });
+  if (!trimmed) return loadCatalog();
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/products/search?q=${encodeURIComponent(query)}`);
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const backendMatches = data.map(normalizeProduct);
-        const seen = new Set<number>(clientMatches.map((p) => p.id));
-        const combined = [...clientMatches];
-        for (const p of backendMatches) {
-          if (!seen.has(p.id)) {
-            seen.add(p.id);
-            combined.push(p);
-          }
-        }
-        return combined;
-      }
-    }
+    if (!response.ok) throw new Error(`Search request failed with status ${response.status}`);
+    const data = await response.json();
+    if (!Array.isArray(data)) throw new Error('Search response was invalid');
+    return data.map(normalizeProduct);
   } catch {
-    // Backend search endpoint failed or was rejected; rely on client matches
+    // Preserve exact catalog search if the search endpoint is unavailable.
+    const allProducts = await loadCatalog();
+    return allProducts.filter((product) =>
+      [product.name, product.game, product.type, product.description, product.store?.name]
+        .some((field) => field?.toLowerCase().includes(trimmed))
+    );
   }
-
-  return clientMatches;
 };
 
 export const loadProduct = async (productId: number): Promise<CatalogProduct> => {
