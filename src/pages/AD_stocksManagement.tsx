@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Eye, Pencil, Plus, RefreshCcw, Search, Trash2, X, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { deleteAdminProduct, loadAdminProducts } from '../api/admin';
+import { deleteAdminProduct, loadAdminProducts, loadStockAlertSettings, updateStockAlertSettings } from '../api/admin';
 import { AdminError, AdminLoading, AdminWorkspace, formatCurrency } from '../components/AdminWorkspace';
 import type { AdminProduct } from '../types/admin';
 
@@ -27,16 +27,42 @@ export const ADstocks = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [threshold, setThreshold] = useState(5);
+  const [thresholdInput, setThresholdInput] = useState('5');
+  const [savingThreshold, setSavingThreshold] = useState(false);
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      setProducts(await loadAdminProducts());
+      const [loadedProducts, settings] = await Promise.all([loadAdminProducts(), loadStockAlertSettings()]);
+      setProducts(loadedProducts);
+      setThreshold(settings.defaultThreshold);
+      setThresholdInput(String(settings.defaultThreshold));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not load official stock.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveThreshold = async () => {
+    const value = Number(thresholdInput);
+    if (!Number.isInteger(value) || value < 1 || value > 100000) {
+      setError('Stock alert threshold must be a whole number between 1 and 100,000.');
+      return;
+    }
+    setSavingThreshold(true);
+    setError(null);
+    try {
+      const settings = await updateStockAlertSettings(value);
+      setThreshold(settings.defaultThreshold);
+      setThresholdInput(String(settings.defaultThreshold));
+      setSuccessMessage(`Stock alerts now use ${settings.defaultThreshold} as the system threshold.`);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Could not update the stock alert threshold.');
+    } finally {
+      setSavingThreshold(false);
     }
   };
 
@@ -136,6 +162,37 @@ export const ADstocks = () => {
         </div>
       )}
 
+      <section className="mb-5 flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-sm font-bold text-blue-950">System stock alert threshold</h2>
+          <p className="mt-1 max-w-2xl text-xs text-blue-800">
+            Products with stock from 1 through this number trigger Low Stock. A stock of 0 always triggers Out of Stock.
+          </p>
+        </div>
+        <div className="flex items-end gap-2">
+          <label className="text-xs font-bold text-blue-900">
+            Default threshold
+            <input
+              type="number"
+              min="1"
+              max="100000"
+              step="1"
+              value={thresholdInput}
+              onChange={(event) => setThresholdInput(event.target.value)}
+              className="mt-1 block w-32 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500/30"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => void saveThreshold()}
+            disabled={savingThreshold || Number(thresholdInput) === threshold}
+            className="rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+          >
+            {savingThreshold ? 'Saving…' : 'Save threshold'}
+          </button>
+        </div>
+      </section>
+
       <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row">
           <div className="relative flex-1">
@@ -217,7 +274,7 @@ export const ADstocks = () => {
                       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold ${
                         (product.stock ?? 0) === 0
                           ? 'bg-rose-100 text-rose-800'
-                          : (product.stock ?? 0) <= 3
+                        : (product.stock ?? 0) <= threshold
                             ? 'bg-amber-100 text-amber-800'
                             : 'bg-emerald-100 text-emerald-800'
                       }`}
