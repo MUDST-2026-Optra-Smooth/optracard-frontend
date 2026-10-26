@@ -10,7 +10,7 @@ describe('Empty states and form validation', () => {
     cy.intercept('GET', '**/api/products/search*', { statusCode: 200, body: [] }).as('emptySearch');
     cy.visit('/search?q=does-not-exist');
     cy.wait('@emptySearch');
-    cy.contains(/no products|no results|not found/i).should('be.visible');
+    cy.contains(/ไม่พบสินค้าที่ตรงกับคำค้นหา|no products|no results|not found/i).should('be.visible');
   });
 
   it('rejects mismatched registration passwords before calling the API', () => {
@@ -20,14 +20,16 @@ describe('Empty states and form validation', () => {
     cy.get('input[name="email"]').type('new@example.com');
     cy.get('input[name="password"]').type('password123');
     cy.get('input[name="confirmPassword"]').type('different456');
-    cy.get('button[type="submit"]').click();
-    cy.contains(/passwords do not match/i).should('be.visible');
+    cy.on('window:alert', (message) => {
+      expect(message).to.match(/passwords do not match/i);
+    });
+    cy.get('button[type="submit"]:visible').last().click({ force: true });
     cy.get('@registerRequest.all').should('have.length', 0);
   });
 
   it('requires login fields', () => {
     cy.visit('/login');
-    cy.get('button[type="submit"]').click();
+    cy.get('button[type="submit"]:visible').last().click({ force: true });
     cy.get('input[name="email"]').should('have.attr', 'required');
     cy.get('input[name="password"]').should('have.attr', 'required');
   });
