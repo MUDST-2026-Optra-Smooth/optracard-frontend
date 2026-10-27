@@ -46,6 +46,7 @@ import { SPAD_Stores } from './pages/SPAD_Stores';
 import { SPAD_Transactions } from './pages/SPAD_Transactions';
 import { SPAD_Users } from './pages/SPAD_Users';
 import {SellerProfile} from './pages/SellerProfile';
+import { AdminWeeklyReport } from './components/AdminWeeklyReport'; 
 
 const LegacyAdminRedirect = ({ to }: { to: string }) => {
   const location = useLocation();
@@ -144,6 +145,8 @@ export function App() {
           <Route path="/seller-profile/my" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerProfile isOwnerOnly /></ProtectedRoute>} />
           <Route path="/seller-profile" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerProfile isOwnerOnly /></ProtectedRoute>} />
           <Route path="/seller-profile/:sellerId" element={<SellerProfile />} />
+          <Route path="/admin/weekly-report" element={<AdminWeeklyReport />} />
+          
           {/* Wildcard Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
