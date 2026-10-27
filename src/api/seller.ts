@@ -32,6 +32,7 @@ export const updateSellerProductActive = (id: number, active: boolean) => reques
 });
 export const deleteSellerProduct = (id: number) => request<void>(`/api/seller/products/${id}`, { method: 'DELETE' });
 export const loadSellerOrders = () => request<SellerOrder[]>('/api/seller/orders');
+export const loadSellerOrder = (id: number) => request<SellerOrder>(`/api/seller/orders/${id}`);
 export const updateSellerOrderStatus = (id: number, status: string, trackingNumber?: string) => request<SellerOrder>(`/api/seller/orders/${id}/status`, {
   method: 'PUT', body: JSON.stringify({ status, trackingNumber }),
 });

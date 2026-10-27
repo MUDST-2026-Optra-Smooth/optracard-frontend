@@ -3,7 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { OrderDetailPanel } from '../components/OrderDetailPanel';
 import { type OrderStatus } from '../components/OrderHistoryCard';
-import { formatPrice } from '../context/formatters';
+import { OrderSummary } from '../components/OrderSummary';
+import { ReorderResultPanel } from '../components/ReorderResultPanel';
+import { reorderOrder, type ReorderResult } from '../api/orders';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
@@ -32,11 +34,12 @@ type OrderDetail = {
   status: OrderStatus;
   items: OrderLine[];
   subtotal: number;
-  promotionCode?: string | null;
-  promotionName?: string | null;
-  discountAmount: number;
   shippingFee: number;
   total: number;
+  paymentStatus: string | null;
+  discountCode: string | null;
+  discountName: string | null;
+  discountAmount: number;
   shippingMethod: string;
   address: string[];
   trackingNumber?: string | null;
@@ -57,12 +60,16 @@ type RawOrder = {
   storeName?: string;
   status?: string;
   total?: number;
+  subtotal?: number | null;
+  paymentStatus?: string | null;
+  discountCode?: string | null;
+  discountName?: string | null;
+  discountAmount?: number | null;
   shippingMethod?: string;
   shippingFee?: number;
-  subtotal?: number;
+  // Legacy response names are accepted so historical orders remain visible.
   promotionCode?: string | null;
   promotionName?: string | null;
-  discountAmount?: number;
   shippingAddress?: string | null;
   recipientName?: string | null;
   recipientPhone?: string | null;
@@ -143,25 +150,33 @@ const toOrderDetail = (raw: RawOrder): OrderDetail => {
     ? [raw.storeName || 'Store information unavailable', 'Store pickup']
     : [raw.recipientName, raw.shippingAddress, raw.recipientPhone].filter((line): line is string => Boolean(line?.trim()));
 
+  const items = (raw.items ?? []).map((item, index) => ({
+    productId: item.productId ?? index,
+    name: item.name ?? 'Product unavailable',
+    game: item.game ?? 'Card game not specified',
+    imageUrl: item.imageUrl,
+    price: amount(item.price),
+    quantity: item.quantity ?? 0,
+  }));
+  const discountAmount = amount(raw.discountAmount ?? undefined);
+  // Orders placed before discounts existed have no stored subtotal, so rebuild it from the lines.
+  const subtotal = typeof raw.subtotal === 'number'
+    ? raw.subtotal
+    : items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   return {
     orderNumber: raw.orderNumber ?? '—',
     placedAt: raw.createdAt ?? null,
     storeName: raw.storeName ?? 'Store information unavailable',
     status: toOrderStatus(raw.status),
-    items: (raw.items ?? []).map((item, index) => ({
-      productId: item.productId ?? index,
-      name: item.name ?? 'Product unavailable',
-      game: item.game ?? 'Card game not specified',
-      imageUrl: item.imageUrl,
-      price: amount(item.price),
-      quantity: item.quantity ?? 0,
-    })),
-    subtotal: raw.subtotal == null ? Math.max(0, total - shippingFee) : amount(raw.subtotal),
-    promotionCode: raw.promotionCode,
-    promotionName: raw.promotionName,
-    discountAmount: amount(raw.discountAmount),
+    items,
+    subtotal,
     shippingFee,
     total,
+    paymentStatus: raw.paymentStatus ?? null,
+    discountCode: raw.discountCode ?? raw.promotionCode ?? null,
+    discountName: raw.discountName ?? raw.promotionName ?? null,
+    discountAmount,
     shippingMethod,
     address: address.length ? address : ['Delivery address not available'],
     trackingNumber: raw.trackingNumber,
@@ -174,6 +189,9 @@ export function OrderHistoryDetail() {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
+  const [reorderResult, setReorderResult] = useState<ReorderResult | null>(null);
+  const [reorderError, setReorderError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -216,7 +234,13 @@ export function OrderHistoryDetail() {
   }, [navigate, orderNumber]);
 
   const timeline = useMemo(() => order ? timelineFor(order) : [], [order]);
-  const itemCount = order?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const handleReorder = async () => {
+    if (!order) return;
+    setIsReordering(true); setReorderResult(null); setReorderError(null);
+    try { setReorderResult(await reorderOrder(order.orderNumber)); }
+    catch (reorderFailure) { setReorderError(reorderFailure instanceof Error ? reorderFailure.message : 'Could not add this order to your cart.'); }
+    finally { setIsReordering(false); }
+  };
 
   if (isLoading) {
     return <section className="min-h-full bg-[#f6f8fb] px-5 py-24 text-center text-sm text-[#697381]">Loading order details…</section>;
@@ -251,33 +275,33 @@ export function OrderHistoryDetail() {
             <h1 className="text-2xl font-black tracking-tight text-[#171a20] sm:text-3xl">Order #{order.orderNumber}</h1>
             <p className="mt-1 text-[10px] text-[#9198a3]">Placed on {formatOrderDate(order.placedAt)} · Sold by {order.storeName}</p>
           </div>
-          <span className={`w-fit rounded-full px-2.5 py-1.5 text-[10px] font-bold ${statusStyles[order.status]}`}>• {order.status}</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => void handleReorder()} disabled={isReordering} className="rounded-md bg-[#2f65ff] px-3 py-2 text-[10px] font-bold text-white transition hover:bg-[#1647c4] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer">
+              {isReordering ? 'Adding…' : 'Order again'}
+            </button>
+            <span className={`w-fit rounded-full px-2.5 py-1.5 text-[10px] font-bold ${statusStyles[order.status]}`}>• {order.status}</span>
+          </div>
         </div>
+        {reorderError && <p role="alert" className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{reorderError}</p>}
+        {reorderResult && <ReorderResultPanel result={reorderResult} onDismiss={() => setReorderResult(null)} />}
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.9fr)]">
           <div className="space-y-3">
-            <OrderDetailPanel title="Items in your order" subtitle={`${itemCount} ${itemCount === 1 ? 'item' : 'items'} · Sold by ${order.storeName}`} headerRight={<p className="text-[10px] text-[#a1a8b3]">Order total {formatPrice(order.total)}</p>}>
-              <div className="divide-y divide-[#f0f2f5]">
-                {order.items.map((item) => (
-                  <div key={`${item.productId}-${item.name}`} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 py-3 first:pt-0 last:pb-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-11 w-9 flex-shrink-0 items-center justify-center overflow-hidden rounded-sm bg-gray-100">
-                        {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain" /> : <span className="text-[8px] font-bold text-gray-400">No image</span>}
-                      </div>
-                      <div className="min-w-0"><p className="truncate text-[11px] font-bold text-[#303844]">{item.name}</p><p className="mt-0.5 truncate text-[10px] text-[#a1a8b3]">{item.game}</p></div>
-                    </div>
-                    <p className="whitespace-nowrap text-[10px] font-bold text-[#2d3440]">{formatPrice(item.price)}</p>
-                    <p className="whitespace-nowrap text-[10px] text-[#929aa6]">Qty {item.quantity}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-[#edf0f4] pt-3 text-[10px]">
-                <div className="flex justify-between py-1 text-[#929aa6]"><span>Subtotal</span><span>{formatPrice(order.subtotal)}</span></div>
-                {order.discountAmount > 0 && <div className="flex justify-between py-1 text-[#159568]"><span className="truncate pr-3">Discount{order.promotionCode ? ` (${order.promotionCode})` : ''}</span><span className="whitespace-nowrap">−{formatPrice(order.discountAmount)}</span></div>}
-                <div className="flex justify-between py-1 text-[#929aa6]"><span>Shipping fee</span><span className="font-bold text-[#18a36b]">{order.shippingFee === 0 ? 'FREE' : formatPrice(order.shippingFee)}</span></div>
-                <div className="mt-1 flex justify-between border-t border-[#edf0f4] pt-3 text-xs font-black text-[#2d3440]"><span>Total</span><span className="text-[#2f65ff]">{formatPrice(order.total)}</span></div>
-              </div>
-            </OrderDetailPanel>
+            <OrderSummary order={{
+              orderNumber: order.orderNumber,
+              placedAt: formatOrderDate(order.placedAt),
+              storeName: order.storeName,
+              status: order.status,
+              paymentStatus: order.paymentStatus,
+              items: order.items.map((item) => ({ key: `${item.productId}-${item.name}`, name: item.name, game: item.game, price: item.price, quantity: item.quantity })),
+              subtotal: order.subtotal,
+              discountCode: order.discountCode,
+              discountName: order.discountName,
+              discountAmount: order.discountAmount,
+              shippingFee: order.shippingFee,
+              total: order.total,
+              address: order.address,
+            }} />
 
             <div className="flex items-start gap-2 rounded-xl border border-[#e4e8ee] bg-white px-4 py-3 text-[10px] text-[#89929e] shadow-[0_3px_12px_rgba(27,39,63,0.04)]">
               <span className="mt-0.5 text-[#2f65ff]">ⓘ</span><p>Need help with this order? Contact the store first, or reach out to Optracard support if you need further assistance.</p>

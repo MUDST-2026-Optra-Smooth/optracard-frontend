@@ -13,6 +13,7 @@ import { Profile } from './pages/Profile';
 import { StartSelling } from './pages/StartSelling';
 import { OrdersManagement } from './pages/OrdersManagement';
 import { Seller } from './pages/seller';
+import { SellerOrderDetail } from './pages/SellerOrderDetail';
 import { Dashboard } from './pages/Dashboard';
 import { OrderHistory } from './pages/OrderHistory';
 import { OrderHistoryDetail } from './pages/OrderHistoryDetail';
@@ -68,6 +69,7 @@ export function App() {
   const shouldHideNavAndFooter = 
     hideNavAndFooterPaths.includes(location.pathname) || 
     location.pathname.startsWith('/edit-product') ||
+    location.pathname.startsWith('/orders-management/') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/AD') ||
     location.pathname.startsWith('/superadmin');
@@ -136,6 +138,7 @@ export function App() {
           <Route path="/superadmin/staff" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_Staff /></ProtectedRoute>} />
           <Route path="/superadmin/staff/add" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_AddAdmin /></ProtectedRoute>} />
           <Route path="/orders-management" element={<ProtectedRoute allowedRoles={['SELLER']}><OrdersManagement /></ProtectedRoute>} />
+          <Route path="/orders-management/:orderId" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerOrderDetail /></ProtectedRoute>} />
           <Route path="/seller" element={<ProtectedRoute allowedRoles={['SELLER']}><Seller /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['SELLER']}><Dashboard /></ProtectedRoute>} />
           <Route path="/product/:id" element={<ProductDetail />} />
