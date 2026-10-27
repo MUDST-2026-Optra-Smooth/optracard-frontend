@@ -13,7 +13,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { deleteSellerProduct, loadMyStore, loadSellerProducts } from '../api/seller';
-import { loadStockAlertSettings, loadStockAlerts, type StockAlert } from '../api/stockAlerts';
+import { loadStockAlertSettings, loadStockAlerts, type StockAlert, updateStockAlertSettings } from '../api/stockAlerts';
 import type { SellerProduct, SellerStoreInfo } from '../types/seller';
 import { formatPrice } from '../context/formatters';
 
@@ -59,6 +59,9 @@ export const Seller = () => {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
   const [stockThreshold, setStockThreshold] = useState(5);
+  const [thresholdInput, setThresholdInput] = useState('5');
+  const [savingThreshold, setSavingThreshold] = useState(false);
+  const [thresholdMessage, setThresholdMessage] = useState<string | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -74,6 +77,7 @@ export const Seller = () => {
       setProducts(loadedProducts);
       setStockAlerts(loadedAlerts);
       setStockThreshold(settings.defaultThreshold);
+      setThresholdInput(String(settings.defaultThreshold));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not load your products.');
     } finally {
@@ -84,6 +88,28 @@ export const Seller = () => {
   useEffect(() => {
     void load();
   }, []);
+
+  const saveThreshold = async () => {
+    const value = Number(thresholdInput);
+    if (!Number.isInteger(value) || value < 1 || value > 100000) {
+      setError('Stock alert threshold must be a whole number between 1 and 100,000.');
+      return;
+    }
+    setSavingThreshold(true);
+    setError(null);
+    setThresholdMessage(null);
+    try {
+      const settings = await updateStockAlertSettings(value);
+      setStockThreshold(settings.defaultThreshold);
+      setThresholdInput(String(settings.defaultThreshold));
+      setThresholdMessage(`This store now uses ${settings.defaultThreshold} as its stock alert threshold.`);
+      await loadStockAlerts().then(setStockAlerts).catch(() => undefined);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Could not update the store stock alert threshold.');
+    } finally {
+      setSavingThreshold(false);
+    }
+  };
 
   const uniqueGames = useMemo(() => {
     const games = new Set<string>();
@@ -164,6 +190,38 @@ export const Seller = () => {
                 Add New Product
               </button>
             </div>
+
+            <section className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 shadow-xs sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-sm font-bold text-blue-950">Store stock alert threshold</h2>
+                <p className="mt-1 max-w-2xl text-xs text-blue-800">
+                  Only this store&apos;s products use this threshold. Stock at 0 always triggers Out of Stock.
+                </p>
+                {thresholdMessage && <p className="mt-2 text-xs font-semibold text-emerald-700">{thresholdMessage}</p>}
+              </div>
+              <div className="flex items-end gap-2">
+                <label className="text-xs font-bold text-blue-900">
+                  Store threshold
+                  <input
+                    type="number"
+                    min="1"
+                    max="100000"
+                    step="1"
+                    value={thresholdInput}
+                    onChange={(event) => setThresholdInput(event.target.value)}
+                    className="mt-1 block w-32 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500/30"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void saveThreshold()}
+                  disabled={savingThreshold || Number(thresholdInput) === stockThreshold}
+                  className="rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                >
+                  {savingThreshold ? 'Saving…' : 'Save threshold'}
+                </button>
+              </div>
+            </section>
 
             {/* Inventory KPI Summary */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

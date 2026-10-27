@@ -267,6 +267,10 @@ export function setupCommonMocks() {
 
   cy.intercept('GET', '**/api/admin/products', { fixture: 'products.json' }).as('getAdminProducts');
   cy.intercept('GET', '**/api/stock-alerts/settings', { defaultThreshold: 5 }).as('getStockAlertSettings');
+  cy.intercept('PUT', '**/api/stock-alerts/settings', (request) => {
+    const threshold = Number(request.body?.defaultThreshold);
+    request.reply({ defaultThreshold: Number.isInteger(threshold) ? threshold : 5 });
+  }).as('updateStockAlertSettings');
   cy.intercept('GET', '**/api/admin/card-games', [
     { id: 1, name: 'Pokemon' },
     { id: 2, name: 'One Piece' },
