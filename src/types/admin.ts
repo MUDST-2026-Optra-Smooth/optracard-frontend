@@ -63,6 +63,11 @@ export interface AdminOrder {
   recipientPhone: string | null;
   trackingNumber: string | null;
   items: AdminOrderItem[];
+  shippingFee?: number | null;
+  subtotal?: number | null;
+  discountCode?: string | null;
+  discountName?: string | null;
+  discountAmount?: number | null;
 }
 
 export interface AdminStore {
@@ -113,4 +118,32 @@ export interface AdminDashboard {
   lowStockProducts: number;
   monthlyMetrics: AdminMonthlyMetric[];
   recentOrders: AdminOrder[];
+}
+
+export type PromotionDiscountType = 'PERCENTAGE' | 'FIXED_AMOUNT';
+
+export interface AdminPromotion {
+  id: number;
+  code: string;
+  name: string;
+  discountType: PromotionDiscountType;
+  discountValue: number;
+  minimumOrderAmount: number;
+  usageLimit: number | null;
+  usageCount: number;
+  startsAt: string;
+  endsAt: string;
+  active: boolean;
+}
+
+export interface AdminPromotionInput {
+  code: string;
+  name: string;
+  discountType: PromotionDiscountType;
+  discountValue: number;
+  minimumOrderAmount: number;
+  usageLimit: number | null;
+  startsAt: string;
+  endsAt: string;
+  active: boolean;
 }

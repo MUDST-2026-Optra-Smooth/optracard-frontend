@@ -13,6 +13,7 @@ import { Profile } from './pages/Profile';
 import { StartSelling } from './pages/StartSelling';
 import { OrdersManagement } from './pages/OrdersManagement';
 import { Seller } from './pages/seller';
+import { SellerOrderDetail } from './pages/SellerOrderDetail';
 import { Dashboard } from './pages/Dashboard';
 import { OrderHistory } from './pages/OrderHistory';
 import { OrderHistoryDetail } from './pages/OrderHistoryDetail';
@@ -35,6 +36,7 @@ import { ADorderDetail } from './pages/AD_orderDetail';
 import { ADordersManagement } from './pages/AD_ordersManagement';
 import { ADpddetail } from './pages/AD_pddetail';
 import { ADstocks } from './pages/AD_stocksManagement';
+import { ADpromotions } from './pages/AD_promotions';
 import { ADstoreRequest } from './pages/AD_storeRequest';
 import { ADstoreRequestdetail } from './pages/AD_storeRequestdetail';
 import { SPAD_AddAdmin } from './pages/SPAD_AddAdmin';
@@ -67,6 +69,7 @@ export function App() {
   const shouldHideNavAndFooter = 
     hideNavAndFooterPaths.includes(location.pathname) || 
     location.pathname.startsWith('/edit-product') ||
+    location.pathname.startsWith('/orders-management/') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/AD') ||
     location.pathname.startsWith('/superadmin');
@@ -102,6 +105,7 @@ export function App() {
           <Route path="/admin/products/:id" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADpddetail /></ProtectedRoute>} />
           <Route path="/admin/orders" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADordersManagement /></ProtectedRoute>} />
           <Route path="/admin/orders/:orderId" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADorderDetail /></ProtectedRoute>} />
+          <Route path="/admin/promotions" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADpromotions /></ProtectedRoute>} />
           <Route path="/admin/store-requests" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADstoreRequest /></ProtectedRoute>} />
           <Route path="/admin/store-requests/:id?" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADstoreRequestdetail /></ProtectedRoute>} />
           <Route path="/admin/marketplace/products" element={<ProtectedRoute allowedRoles={['ADMIN']}><AD_MarketplaceProducts /></ProtectedRoute>} />
@@ -134,6 +138,7 @@ export function App() {
           <Route path="/superadmin/staff" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_Staff /></ProtectedRoute>} />
           <Route path="/superadmin/staff/add" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_AddAdmin /></ProtectedRoute>} />
           <Route path="/orders-management" element={<ProtectedRoute allowedRoles={['SELLER']}><OrdersManagement /></ProtectedRoute>} />
+          <Route path="/orders-management/:orderId" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerOrderDetail /></ProtectedRoute>} />
           <Route path="/seller" element={<ProtectedRoute allowedRoles={['SELLER']}><Seller /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['SELLER']}><Dashboard /></ProtectedRoute>} />
           <Route path="/product/:id" element={<ProductDetail />} />

@@ -16,6 +16,12 @@ export interface CheckoutDetails {
   shippingAddress: string;
 }
 
+export interface AppliedPromotion {
+  code: string;
+  name: string;
+  discountAmount: number;
+}
+
 export interface CheckoutSellerGroup {
   key: string;
   storeName: string;
@@ -29,6 +35,7 @@ interface CheckoutModalProps {
   subtotal: number;
   sellerGroups: CheckoutSellerGroup[];
   savedAddress: SavedAddress;
+  promotion?: AppliedPromotion | null;
   isOrdering?: boolean;
   error?: string | null;
   onConfirm: (details: CheckoutDetails) => void;
@@ -82,6 +89,7 @@ export const CheckoutModal = ({
   subtotal,
   sellerGroups,
   savedAddress,
+  promotion = null,
   isOrdering = false,
   error = null,
   onConfirm,
@@ -120,7 +128,8 @@ export const CheckoutModal = ({
   const needsAddress = shippingMethod !== 'pickup';
   const selectedShipping = SHIPPING_OPTIONS.find((opt) => opt.id === shippingMethod)!;
   const shippingFee = selectedShipping.fee * sellerCount;
-  const total = subtotal + shippingFee;
+  const discountAmount = promotion?.discountAmount ?? 0;
+  const total = subtotal - discountAmount + shippingFee;
 
   const isNewAddressValid =
     newAddress.name.trim() !== '' && newAddress.phone.trim() !== '' && newAddress.address.trim() !== '';
@@ -405,6 +414,7 @@ export const CheckoutModal = ({
               <span className="text-gray-500">Subtotal</span>
               <span className="font-semibold text-gray-800">{formatPrice(subtotal)}</span>
             </div>
+            {promotion && <div className="flex justify-between text-emerald-700"><span className="truncate pr-3">Discount ({promotion.code})</span><span className="shrink-0 font-semibold">−{formatPrice(discountAmount)}</span></div>}
             <div className="flex justify-between">
               <span className="text-gray-500">{hasMultipleSellers ? `Shipping Fee (${sellerCount} sellers)` : 'Shipping Fee'}</span>
               <span className="font-semibold text-gray-800">
