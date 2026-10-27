@@ -192,7 +192,7 @@ export const Seller = () => {
             </div>
 
             <section className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 shadow-xs sm:flex-row sm:items-end sm:justify-between">
-              <div>
+              <div className="self-start">
                 <h2 className="text-sm font-bold text-blue-950">Store stock alert threshold</h2>
                 <p className="mt-1 max-w-2xl text-xs text-blue-800">
                   Only this store&apos;s products use this threshold. Stock at 0 always triggers Out of Stock.
