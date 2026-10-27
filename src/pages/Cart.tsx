@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, ShoppingBag, TicketPercent, Trash2, X } from 'lucide-react';
 import { formatPrice } from '../context/formatters';
 import {
   CheckoutModal,
@@ -48,6 +48,7 @@ type CartResponse = {
 
 type ProfileData = { userId: number; username: string; email: string; phone?: string; address?: string };
 type SellerGroup = CheckoutSellerGroup & { items: CartItem[]; subtotal: number };
+type PromotionPreview = { code: string; name: string; subtotal: number; discountAmount: number; discountedSubtotal: number };
 
 export const Cart = () => {
   const navigate = useNavigate();
@@ -59,6 +60,9 @@ export const Cart = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOrdering, setIsOrdering] = useState(false);
+  const [promotionCode, setPromotionCode] = useState('');
+  const [promotion, setPromotion] = useState<PromotionPreview | null>(null);
+  const [isApplyingPromotion, setIsApplyingPromotion] = useState(false);
 
   const token = localStorage.getItem('token');
   const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
@@ -77,6 +81,8 @@ export const Cart = () => {
       storeName: item.storeName || 'Optracard Official Store',
       source: item.source === 'MARKETPLACE' ? 'MARKETPLACE' : 'OFFICIAL',
     })));
+    setPromotion(null);
+    setPromotionCode('');
   };
 
   useEffect(() => {
@@ -188,7 +194,7 @@ export const Cart = () => {
       const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify(details),
+        body: JSON.stringify({ ...details, promotionCode: promotion?.code ?? null }),
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(getApiErrorMessage(data, 'Could not place your order.'));
@@ -210,7 +216,7 @@ export const Cart = () => {
         .filter(Boolean);
       const sellerCount = Math.max(sellerGroups.length, 1);
       const shippingFee = details.shippingMethod === 'standard' ? 50 * sellerCount : 0;
-      const total = subtotal + shippingFee;
+      const total = Number(data?.total ?? subtotal - (promotion?.discountAmount ?? 0) + shippingFee);
 
       invalidateCatalogCache();
       setIsCheckoutOpen(false);
@@ -237,6 +243,32 @@ export const Cart = () => {
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const totalItemCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
+  const discountAmount = promotion?.discountAmount ?? 0;
+
+  const applyPromotion = async () => {
+    if (!promotionCode.trim()) {
+      setError('Enter a promotion code to apply it.');
+      return;
+    }
+    setIsApplyingPromotion(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/orders/promotion-preview`, {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promotionCode.trim() }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(getApiErrorMessage(data, 'Could not apply promotion code.'));
+      setPromotion(data as PromotionPreview);
+      setPromotionCode((data as PromotionPreview).code);
+    } catch (requestError) {
+      setPromotion(null);
+      setError(requestError instanceof Error ? requestError.message : 'Could not apply promotion code.');
+    } finally {
+      setIsApplyingPromotion(false);
+    }
+  };
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">Loading cart…</div>;
@@ -303,9 +335,15 @@ export const Cart = () => {
               <h2 className="text-lg font-bold text-gray-900 mb-5">Order Summary</h2>
               <div className="space-y-2.5 text-sm border-b border-gray-100 pb-4">
                 <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-semibold text-gray-800">{formatPrice(subtotal)}</span></div>
+                {promotion && <div className="flex justify-between text-emerald-700"><span>Discount ({promotion.code})</span><span className="font-semibold">−{formatPrice(discountAmount)}</span></div>}
                 <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span className="text-gray-400 text-xs">Calculated per seller at checkout</span></div>
               </div>
-              <div className="flex justify-between items-center py-4"><span className="text-sm font-bold text-gray-900">Estimated Total</span><span className="text-lg font-bold text-blue-600">{formatPrice(subtotal)}</span></div>
+              <div className="mt-4 rounded-lg border border-dashed border-blue-200 bg-blue-50/40 p-3">
+                <label htmlFor="promotion-code" className="flex items-center gap-1.5 text-xs font-bold text-gray-800"><TicketPercent size={14} className="text-blue-600" /> Promotion code</label>
+                <div className="mt-2 flex gap-2"><input id="promotion-code" value={promotionCode} onChange={(event) => { setPromotionCode(event.target.value.toUpperCase()); setPromotion(null); }} placeholder="SAVE10" className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2.5 py-2 font-mono text-sm uppercase outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" /><button type="button" onClick={() => void applyPromotion()} disabled={isApplyingPromotion} className="rounded-md bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60">{isApplyingPromotion ? 'Checking…' : 'Apply'}</button></div>
+                {promotion && <div className="mt-2 flex items-center justify-between gap-2 text-xs text-emerald-700"><span className="truncate font-semibold">{promotion.name} applied</span><button type="button" onClick={() => { setPromotion(null); setPromotionCode(''); }} className="inline-flex items-center gap-1 font-bold hover:text-emerald-900"><X size={13} /> Remove</button></div>}
+              </div>
+              <div className="flex justify-between items-center py-4"><span className="text-sm font-bold text-gray-900">Estimated Total</span><span className="text-lg font-bold text-blue-600">{formatPrice(subtotal - discountAmount)}</span></div>
               <button type="button" disabled={isOrdering} onClick={() => setIsCheckoutOpen(true)} className="w-full bg-blue-600 disabled:opacity-50 text-white font-bold py-3 rounded-full text-sm cursor-pointer">
                 {isOrdering ? 'Processing…' : 'Place Order'}
               </button>
@@ -327,6 +365,7 @@ export const Cart = () => {
         subtotal={subtotal}
         sellerGroups={sellerGroups}
         savedAddress={savedAddress}
+        promotion={promotion ? { code: promotion.code, name: promotion.name, discountAmount: promotion.discountAmount } : null}
         isOrdering={isOrdering}
         error={error}
         onConfirm={handleOrderConfirmed}

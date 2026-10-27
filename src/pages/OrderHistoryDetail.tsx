@@ -32,6 +32,9 @@ type OrderDetail = {
   status: OrderStatus;
   items: OrderLine[];
   subtotal: number;
+  promotionCode?: string | null;
+  promotionName?: string | null;
+  discountAmount: number;
   shippingFee: number;
   total: number;
   shippingMethod: string;
@@ -56,6 +59,10 @@ type RawOrder = {
   total?: number;
   shippingMethod?: string;
   shippingFee?: number;
+  subtotal?: number;
+  promotionCode?: string | null;
+  promotionName?: string | null;
+  discountAmount?: number;
   shippingAddress?: string | null;
   recipientName?: string | null;
   recipientPhone?: string | null;
@@ -149,7 +156,10 @@ const toOrderDetail = (raw: RawOrder): OrderDetail => {
       price: amount(item.price),
       quantity: item.quantity ?? 0,
     })),
-    subtotal: Math.max(0, total - shippingFee),
+    subtotal: raw.subtotal == null ? Math.max(0, total - shippingFee) : amount(raw.subtotal),
+    promotionCode: raw.promotionCode,
+    promotionName: raw.promotionName,
+    discountAmount: amount(raw.discountAmount),
     shippingFee,
     total,
     shippingMethod,
@@ -263,6 +273,7 @@ export function OrderHistoryDetail() {
               </div>
               <div className="border-t border-[#edf0f4] pt-3 text-[10px]">
                 <div className="flex justify-between py-1 text-[#929aa6]"><span>Subtotal</span><span>{formatPrice(order.subtotal)}</span></div>
+                {order.discountAmount > 0 && <div className="flex justify-between py-1 text-[#159568]"><span className="truncate pr-3">Discount{order.promotionCode ? ` (${order.promotionCode})` : ''}</span><span className="whitespace-nowrap">−{formatPrice(order.discountAmount)}</span></div>}
                 <div className="flex justify-between py-1 text-[#929aa6]"><span>Shipping fee</span><span className="font-bold text-[#18a36b]">{order.shippingFee === 0 ? 'FREE' : formatPrice(order.shippingFee)}</span></div>
                 <div className="mt-1 flex justify-between border-t border-[#edf0f4] pt-3 text-xs font-black text-[#2d3440]"><span>Total</span><span className="text-[#2f65ff]">{formatPrice(order.total)}</span></div>
               </div>
