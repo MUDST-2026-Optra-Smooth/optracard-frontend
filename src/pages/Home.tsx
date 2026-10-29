@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
-import { loadCatalog as loadCatalogFromApi } from '../api/catalog';
-import type { CatalogProduct, CatalogSource } from '../types/catalog';
+import { loadCatalogFilterOptions, loadCatalogPage } from '../api/catalog';
+import type { CatalogProduct, CatalogSource, CatalogQuery } from '../types/catalog';
 
 const PRODUCT_TYPES = ['Single', 'Booster', 'Booster Box', 'Accessories'];
+const normalizeFilterValue = (value: string | null | undefined) => (value ?? '').trim().toLowerCase();
 
 const sourceContent: Record<CatalogSource, { title: string; eyebrow: string; viewAll: string }> = {
   MARKETPLACE: {
@@ -21,6 +22,11 @@ const sourceContent: Record<CatalogSource, { title: string; eyebrow: string; vie
 };
 
 export const Home = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [appliedParams, setAppliedParams] = useState(() => new URLSearchParams(searchParams));
+  useEffect(() => {
+    if (!searchParams.has('pending')) setAppliedParams(new URLSearchParams(searchParams));
+  }, [searchParams.toString()]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +36,16 @@ export const Home = () => {
 
     const loadCatalog = async () => {
       try {
-        const data = await loadCatalogFromApi();
+        const active = searchParams.has('pending') ? appliedParams : searchParams;
+        const query = Object.fromEntries(active.entries()) as CatalogQuery;
+        // Home renders two independent sections. Fetch each public source separately so
+        // pagination of one source cannot hide the other source from the first page.
+        const data = query.source
+          ? (await loadCatalogPage(query)).items
+          : (await Promise.all([
+            loadCatalogPage({ ...query, source: 'OFFICIAL', page: '0', pageSize: '24' }),
+            loadCatalogPage({ ...query, source: 'MARKETPLACE', page: '0', pageSize: '24' }),
+          ])).flatMap((result) => result.items);
         if (isCurrent) {
           setProducts(data);
           setError(null);
@@ -44,12 +59,24 @@ export const Home = () => {
 
     void loadCatalog();
     return () => { isCurrent = false; };
-  }, []);
+  }, [searchParams.toString(), appliedParams.toString()]);
+
+  const filteredProducts = useMemo(() => {
+    const active = searchParams.has('pending') ? appliedParams : searchParams;
+    const q = normalizeFilterValue(active.get('q'));
+    const type = normalizeFilterValue(active.get('type')); const game = normalizeFilterValue(active.get('game'));
+    const language = normalizeFilterValue(active.get('language')); const source = normalizeFilterValue(active.get('source')); const storeId = active.get('storeId');
+    const min = Number(active.get('minPrice')); const max = Number(active.get('maxPrice'));
+    return products.filter((product) => (!q || [product.name, product.game, product.type, product.description, product.store.name].some(v => normalizeFilterValue(v).includes(q)))
+      && (!type || normalizeFilterValue(product.type) === type) && (!game || normalizeFilterValue(product.game) === game) && (!language || normalizeFilterValue(product.language) === language)
+      && (!source || normalizeFilterValue(product.source) === source) && (!storeId || String(product.store.id) === storeId)
+      && (!active.get('minPrice') || product.price >= min) && (!active.get('maxPrice') || product.price <= max));
+  }, [products, searchParams.toString(), appliedParams.toString()]);
 
   const productsBySourceAndType = useMemo(() => {
     return (source: CatalogSource, type: string) =>
-      products.filter((product) => product.source === source && product.type === type).slice(0, 4);
-  }, [products]);
+      filteredProducts.filter((product) => product.source === source && normalizeFilterValue(product.type) === normalizeFilterValue(type)).slice(0, 4);
+  }, [filteredProducts]);
 
   const renderOfficialProductSection = (type: string) => {
     const source: CatalogSource = 'OFFICIAL';
@@ -88,7 +115,7 @@ export const Home = () => {
   };
 
   const renderMarketplaceSection = () => {
-    const marketplaceProducts = products.filter((product) => product.source === 'MARKETPLACE').slice(0, 9);
+    const marketplaceProducts = filteredProducts.filter((product) => product.source === 'MARKETPLACE').slice(0, 9);
 
     return (
       <section key="MARKETPLACE" className="mb-16">
@@ -124,6 +151,14 @@ export const Home = () => {
     );
   };
 
+  const updateFilter = (key: string, value: string) => {
+    const next = new URLSearchParams(searchParams); if (value) next.set(key, value); else next.delete(key); setSearchParams(next);
+  };
+  const filteredCount = products.filter((product) => {
+    const source = searchParams.get('source'); const type = searchParams.get('type'); const game = searchParams.get('game'); const language = searchParams.get('language');
+    return (!source || product.source === source) && (!type || product.type === type) && (!game || product.game === game) && (!language || product.language === language);
+  }).length;
+
   return (
     <div className="bg-slate-50">
       <section className="w-full bg-gradient-to-r from-[#082666] via-[#1649bb] to-[#2f65ff] px-6 py-14 text-white">
@@ -135,6 +170,16 @@ export const Home = () => {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        {false && searchParams.get('advanced') === '1' && (
+          <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-lg">
+            <div className="mb-4 flex items-center gap-3 rounded-full bg-slate-100 px-4 py-3"><span>⌕</span><input value={searchParams.get('q') ?? ''} onChange={e => updateFilter('q', e.target.value)} placeholder="Search Keywords" className="w-full bg-transparent outline-none" /></div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {([['type','All Types',Array.from(new Set(products.map(p => p.type)))],['game','All Games',Array.from(new Set(products.map(p => p.game)))],['language','All Languages',Array.from(new Set(products.map(p => p.language).filter(Boolean) as string[]))],['source','Store Source',['OFFICIAL','MARKETPLACE']],['storeId','Store',Array.from(new Map(products.filter(p => p.source === 'MARKETPLACE' && p.store.id).map(p => [String(p.store.id), p.store.name])).entries())]] as const).map(([key,label,values]) => <label key={key} className="text-xs font-semibold text-slate-500">{label}<select value={searchParams.get(key) ?? ''} onChange={e => updateFilter(key, e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-normal"><option value="">All</option>{values.map(v => Array.isArray(v) ? <option key={v[0]} value={v[0]}>{v[1]}</option> : <option key={v} value={v}>{v}</option>)}</select></label>)}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3"><input type="number" min="0" placeholder="Min Price" value={searchParams.get('minPrice') ?? ''} onChange={e => updateFilter('minPrice', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2" /><input type="number" min="0" placeholder="Max Price" value={searchParams.get('maxPrice') ?? ''} onChange={e => updateFilter('maxPrice', e.target.value)} className="rounded-lg border border-slate-200 px-3 py-2" /></div>
+            <p className="mt-3 text-xs text-slate-500">{filteredCount} products match your filters</p>
+          </div>
+        )}
         {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading catalog...</p>}
         {error && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-red-700">{error}</p>}
         {!isLoading && !error && (
@@ -146,7 +191,9 @@ export const Home = () => {
                   <h2 className="mt-1 text-3xl font-black text-slate-900">{sourceContent.OFFICIAL.title}</h2>
                 </div>
               </div>
-              {PRODUCT_TYPES.map(renderOfficialProductSection)}
+              {PRODUCT_TYPES
+                .filter((type) => productsBySourceAndType('OFFICIAL', type).length > 0)
+                .map(renderOfficialProductSection)}
             </section>
             {renderMarketplaceSection()}
           </>
