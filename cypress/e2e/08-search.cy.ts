@@ -22,12 +22,19 @@ describe('Catalog search', () => {
   });
 
   it('keeps relevance ordering while allowing price and game filters', () => {
-    cy.intercept('GET', '**/api/products/search*', {
-      body: [
+    cy.intercept('GET', '**/api/products/catalog?*', {
+      body: {
+        items: [
         { id: 1, name: 'Exact Pokemon', game: 'Pokemon', type: 'Single', price: 500, source: 'OFFICIAL' },
         { id: 2, name: 'Fuzzy Pokamon', game: 'Pokemon', type: 'Single', price: 100, source: 'OFFICIAL' },
         { id: 3, name: 'Other game card', game: 'One Piece', type: 'Single', price: 200, source: 'OFFICIAL' },
-      ],
+        ],
+        page: 0,
+        pageSize: 24,
+        totalItems: 3,
+        totalPages: 1,
+        sort: 'newest',
+      },
     });
     cy.visit('/search?q=pokemon');
     cy.contains('Exact Pokemon').should('be.visible').then(($exact) => {
