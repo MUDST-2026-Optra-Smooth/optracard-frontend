@@ -13,6 +13,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { deleteSellerProduct, loadMyStore, loadSellerProducts } from '../api/seller';
+import { loadStockAlertSettings, loadStockAlerts, type StockAlert } from '../api/stockAlerts';
 import type { SellerProduct, SellerStoreInfo } from '../types/seller';
 import { formatPrice } from '../context/formatters';
 
@@ -56,17 +57,23 @@ export const Seller = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
+  const [stockThreshold, setStockThreshold] = useState(5);
 
   const load = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [loadedStore, loadedProducts] = await Promise.all([
+      const [loadedStore, loadedProducts, loadedAlerts, settings] = await Promise.all([
         loadMyStore().catch(() => null),
         loadSellerProducts(),
+        loadStockAlerts().catch(() => []),
+        loadStockAlertSettings().catch(() => ({ defaultThreshold: 5 })),
       ]);
       setStore(loadedStore);
       setProducts(loadedProducts);
+      setStockAlerts(loadedAlerts);
+      setStockThreshold(settings.defaultThreshold);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not load your products.');
     } finally {
@@ -118,7 +125,8 @@ export const Seller = () => {
   const storeName = store?.storeName || 'My Shop';
   const approvedCount = products.filter((p) => p.approvalStatus === 'APPROVED' && p.active).length;
   const pendingCount = products.filter((p) => p.approvalStatus === 'PENDING').length;
-  const lowStockCount = products.filter((p) => p.active && p.stock <= 3).length;
+  const lowStockCount = stockAlerts.length;
+  const outOfStockCount = stockAlerts.filter((alert) => alert.alertType === 'OUT_OF_STOCK').length;
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800">
@@ -174,6 +182,7 @@ export const Seller = () => {
               <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-4 shadow-xs">
                 <p className="text-xs font-medium text-rose-800 uppercase tracking-wider">Low / Out of Stock</p>
                 <p className="mt-2 text-2xl font-bold text-rose-900">{lowStockCount}</p>
+                <p className="mt-1 text-[10px] text-rose-800">{outOfStockCount} out of stock · live alert data</p>
               </div>
             </div>
 
@@ -304,7 +313,7 @@ export const Seller = () => {
                               className={`inline-flex px-2.5 py-1 rounded-full text-xs font-extrabold ${
                                 product.stock === 0
                                   ? 'bg-rose-100 text-rose-800'
-                                  : product.stock <= 3
+                                  : product.stock <= stockThreshold
                                   ? 'bg-amber-100 text-amber-800'
                                   : 'bg-emerald-100 text-emerald-800'
                               }`}

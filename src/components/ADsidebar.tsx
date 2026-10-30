@@ -8,6 +8,7 @@ import {
   LayoutDashboard, 
   Sparkles, 
   ShoppingCart,
+  BarChart3,
   TicketPercent,
 } from 'lucide-react';
 
@@ -33,6 +34,12 @@ export const ADsidebar: React.FC<ADsidebarProps> = ({ currentTab }) => {
       name: 'Dashboard',
       path: '/admin/dashboard',
       icon: LayoutDashboard,
+    },
+    {
+      id: 'weekly-report',
+      name: 'Weekly Report',
+      path: '/admin/weekly-report',
+      icon: BarChart3,
     },
     {
       id: 'stocks',

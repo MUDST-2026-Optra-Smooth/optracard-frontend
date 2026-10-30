@@ -266,6 +266,7 @@ export function setupCommonMocks() {
   }).as('getAdminDashboard');
 
   cy.intercept('GET', '**/api/admin/products', { fixture: 'products.json' }).as('getAdminProducts');
+  cy.intercept('GET', '**/api/stock-alerts/settings', { defaultThreshold: 5 }).as('getStockAlertSettings');
   cy.intercept('GET', '**/api/admin/card-games', [
     { id: 1, name: 'Pokemon' },
     { id: 2, name: 'One Piece' },
