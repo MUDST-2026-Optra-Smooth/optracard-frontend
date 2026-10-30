@@ -8,7 +8,7 @@ import {
   LayoutDashboard, 
   Sparkles, 
   ShoppingCart,
-  BarChart3
+  BarChart3,
   TicketPercent,
 } from 'lucide-react';
 
