@@ -25,7 +25,6 @@ export function ViewAllOOS() {
   const productType = activeParams.get('type') || 'All';
 
   const [products, setProducts] = useState<CatalogProduct[]>([]);
-  const [selectedGame, setSelectedGame] = useState<DropdownOption>({ label: 'All games', value: 'All', shortLabel: 'All' });
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +32,6 @@ export function ViewAllOOS() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
-    setSelectedGame({ label: 'All games', value: 'All', shortLabel: 'All' });
   }, [productType]);
 
   useEffect(() => {
@@ -65,20 +63,10 @@ export function ViewAllOOS() {
     [products, productType],
   );
 
-  const gameOptions = useMemo<DropdownOption[]>(() => {
-    const games = Array.from(new Set(typeProducts.map((product) => product.game))).sort();
-    return [
-      { label: 'All games', value: 'All', shortLabel: 'All' },
-      ...games.map((game) => ({ label: game, value: game })),
-    ];
-  }, [typeProducts]);
-
   const visibleProducts = useMemo(() => {
     const q = (activeParams.get('q') ?? '').trim().toLowerCase();
     const gameParam = activeParams.get('game')?.toLowerCase(); const language = activeParams.get('language')?.toLowerCase(); const min = Number(activeParams.get('minPrice')); const max = Number(activeParams.get('maxPrice'));
-    const filtered = selectedGame.value === 'All' 
-      ? [...typeProducts]
-      : typeProducts.filter((product) => product.game === selectedGame.value);
+    const filtered = [...typeProducts];
     const advanced = filtered.filter((product) => (!q || [product.name, product.game, product.type, product.description, product.store.name].some(value => value?.toLowerCase().includes(q)))
       && (!gameParam || product.game.toLowerCase() === gameParam) && (!language || product.language?.toLowerCase() === language)
       && (!activeParams.get('minPrice') || product.price >= min) && (!activeParams.get('maxPrice') || product.price <= max));
@@ -89,7 +77,7 @@ export function ViewAllOOS() {
     if (selectedSort.value === 'a-z') return advanced.sort((a, b) => a.name.localeCompare(b.name));
     if (selectedSort.value === 'z-a') return advanced.sort((a, b) => b.name.localeCompare(a.name));
     return advanced;
-  }, [selectedGame, selectedSort, typeProducts, searchParams.toString(), appliedParams.toString()]);
+  }, [selectedSort, typeProducts, searchParams.toString(), appliedParams.toString()]);
 
   const applyFilters = (params: URLSearchParams) => {
     params.delete('pending');
