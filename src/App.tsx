@@ -8,6 +8,7 @@ import { OurTeam } from './pages/OurTeam';
 import { AboutUs } from './pages/Aboutus';
 import { ViewAllOOS } from './pages/ViewAllOOS';
 import { ViewAllTrading } from './pages/ViewAllTrading'; 
+import { ViewAllCatalog } from './pages/ViewAllCatalog';
 import { SearchResult } from './pages/SearchResult'; 
 import { Profile } from './pages/Profile';
 import { StartSelling } from './pages/StartSelling';
@@ -89,6 +90,7 @@ export function App() {
           <Route path="/view-all-oos" element={<Navigate to="/ViewAllOOS" replace />} />
           <Route path="/viewalloos" element={<Navigate to="/ViewAllOOS" replace />} />
           <Route path="/ViewAllTrading" element={<ViewAllTrading />} />
+          <Route path="/ViewAll" element={<ViewAllCatalog />} />
           <Route path="/view-all-trading" element={<Navigate to="/ViewAllTrading" replace />} />
           <Route path="/viewalltrading" element={<Navigate to="/ViewAllTrading" replace />} />
           <Route path="/search" element={<SearchResult />} />

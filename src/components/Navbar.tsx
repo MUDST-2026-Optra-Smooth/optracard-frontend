@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams, type NavigateOptions } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCartCount } from '../hooks/useCartCount';
@@ -19,7 +19,22 @@ export const Navbar = () => {
   const [notifications, setNotifications] = useState<OrderNotification[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const notificationContainerRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+  const routerNavigate = useNavigate();
+  const location = useLocation();
+  const navigate = (to: string, options?: NavigateOptions) => {
+    const submittingAdvanced = to.startsWith('/search');
+    if (to.startsWith('/?')) to = `${location.pathname}${to.slice(1)}`;
+    if (to.startsWith('/search?') && location.pathname !== '/search') to = `${location.pathname}${to.slice(7)}`;
+    if (to === '/search' && location.pathname !== '/search') to = location.pathname;
+    const queryString = to.includes('?') ? to.slice(to.indexOf('?') + 1) : '';
+    const params = new URLSearchParams(queryString);
+    if (submittingAdvanced) params.delete('pending');
+    if (to.includes('?')) to = `${to.slice(0, to.indexOf('?'))}?${params.toString()}`;
+    const source = new URLSearchParams(queryString).get('source');
+    if (source === 'MARKETPLACE' && location.pathname === '/ViewAllOOS') to = `/ViewAllTrading${queryString ? `?${queryString}` : ''}`;
+    if (source === 'OFFICIAL' && location.pathname === '/ViewAllTrading') to = `/ViewAllOOS${queryString ? `?${queryString}` : ''}`;
+    routerNavigate(to, options);
+  };
   const { user, logout } = useAuth();
   const cartCount = useCartCount();
   const isAdminUser = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -100,11 +115,10 @@ export const Navbar = () => {
   const handleSearch = (targetQuery?: string) => {
     const term = (targetQuery ?? query).trim();
     setShowDropdown(false);
-    if (term) {
-      navigate(`/search?q=${encodeURIComponent(term)}`);
-    } else {
-      navigate('/search');
-    }
+    const next = new URLSearchParams(searchParams);
+    if (term) next.set('q', term); else next.delete('q');
+    next.set('advanced', '1');
+    navigate(`/?${next.toString()}`);
   };
 
   const handleCategoryClick = (category: string) => {
@@ -139,7 +153,6 @@ export const Navbar = () => {
   }, [trimmedQuery]);
 
   const matchingProducts = suggestions.query === query.trim() ? suggestions.products : [];
-
   return (
     <nav className="bg-[#0b0f19] text-white py-3 px-6 md:px-10 flex justify-between items-center font-sans border-b border-gray-800">
       {isAdminUser ? (
@@ -173,7 +186,8 @@ export const Navbar = () => {
             type="text"
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
+              const value = e.target.value;
+              setQuery(value);
               setShowDropdown(true);
             }}
             onKeyDown={(e) => {
@@ -194,6 +208,9 @@ export const Navbar = () => {
               type="button"
               onClick={() => {
                 setQuery('');
+                const next = new URLSearchParams(searchParams);
+                next.delete('q');
+                navigate(`/?${next.toString()}`);
                 setShowDropdown(false);
               }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-sm cursor-pointer"

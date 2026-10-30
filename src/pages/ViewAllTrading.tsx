@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { TradingListingCard } from '../components/TradingListingCard';
 import { FilterDropdown, type DropdownOption } from '../components/FilterDropdown';
-import { loadCatalog } from '../api/catalog';
+import { CatalogFilterDrawer } from '../components/CatalogFilterDrawer';
+import { loadCatalogPage } from '../api/catalog';
+import type { CatalogQuery } from '../types/catalog';
 import type { CatalogProduct } from '../types/catalog';
 
 const sortOptions: DropdownOption[] = [
@@ -16,11 +18,15 @@ const sortOptions: DropdownOption[] = [
 
 export function ViewAllTrading() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [appliedParams, setAppliedParams] = useState(() => new URLSearchParams(searchParams));
+  useEffect(() => { if (!searchParams.has('pending')) setAppliedParams(new URLSearchParams(searchParams)); }, [searchParams.toString()]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<DropdownOption>({ label: 'All types', value: 'All', shortLabel: 'All' });
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
+  const [showFilters, setShowFilters] = useState(false);
 
   const typeOptions = useMemo<DropdownOption[]>(() => {
     const types = Array.from(new Set(products.map((product) => product.type))).sort((a, b) => a.localeCompare(b));
@@ -31,17 +37,23 @@ export function ViewAllTrading() {
   }, [products]);
 
   useEffect(() => {
+    const activeParams = searchParams.has('pending') ? appliedParams : searchParams;
+    const typeFromUrl = activeParams.get('type');
+    if (typeFromUrl && typeOptions.some((option) => option.value === typeFromUrl)) {
+      setSelectedType({ label: typeFromUrl, value: typeFromUrl });
+    }
     if (!typeOptions.some((option) => option.value === selectedType.value)) {
       setSelectedType(typeOptions[0]);
     }
-  }, [selectedType.value, typeOptions]);
+  }, [selectedType.value, typeOptions, searchParams.toString(), appliedParams.toString()]);
 
   useEffect(() => {
     let isCurrent = true;
 
     const loadMarketplace = async () => {
       try {
-        const data = await loadCatalog();
+        const active = searchParams.has('pending') ? appliedParams : searchParams;
+        const data = (await loadCatalogPage({ ...Object.fromEntries(active.entries()), source: 'MARKETPLACE' } as CatalogQuery)).items;
         if (isCurrent) {
           setProducts(data.filter((product) => product.source === 'MARKETPLACE'));
           setError(null);
@@ -55,24 +67,41 @@ export function ViewAllTrading() {
 
     void loadMarketplace();
     return () => { isCurrent = false; };
-  }, []);
+  }, [searchParams.toString(), appliedParams.toString()]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   const visibleProducts = useMemo(() => {
+    const activeParams = searchParams.has('pending') ? appliedParams : searchParams;
+    const q = (activeParams.get('q') ?? '').trim().toLowerCase();
+    const game = activeParams.get('game')?.toLowerCase(); const language = activeParams.get('language')?.toLowerCase();
+    const min = Number(activeParams.get('minPrice')); const max = Number(activeParams.get('maxPrice'));
     const filtered = selectedType.value === 'All' 
       ? [...products] 
       : products.filter((product) => product.type === selectedType.value);
+    const advanced = filtered.filter((product) => (!q || [product.name, product.game, product.type, product.description, product.store.name].some(value => value?.toLowerCase().includes(q)))
+      && (!game || product.game.toLowerCase() === game) && (!language || product.language?.toLowerCase() === language)
+      && (!activeParams.get('storeId') || String(product.store.id) === activeParams.get('storeId'))
+      && (!activeParams.get('minPrice') || product.price >= min) && (!activeParams.get('maxPrice') || product.price <= max));
 
-    if (selectedSort.value === 'stock') return filtered.sort((a, b) => b.stock - a.stock);
-    if (selectedSort.value === 'price-low') return filtered.sort((a, b) => a.price - b.price);
-    if (selectedSort.value === 'price-high') return filtered.sort((a, b) => b.price - a.price);
-    if (selectedSort.value === 'a-z') return filtered.sort((a, b) => a.name.localeCompare(b.name));
-    if (selectedSort.value === 'z-a') return filtered.sort((a, b) => b.name.localeCompare(a.name));
-    return filtered;
-  }, [products, selectedType.value, selectedSort.value]);
+    if (selectedSort.value === 'stock') return advanced.sort((a, b) => b.stock - a.stock);
+    if (selectedSort.value === 'price-low') return advanced.sort((a, b) => a.price - b.price);
+    if (selectedSort.value === 'price-high') return advanced.sort((a, b) => b.price - a.price);
+    if (selectedSort.value === 'a-z') return advanced.sort((a, b) => a.name.localeCompare(b.name));
+    if (selectedSort.value === 'z-a') return advanced.sort((a, b) => b.name.localeCompare(a.name));
+    return advanced;
+  }, [products, selectedType.value, selectedSort.value, searchParams.toString(), appliedParams.toString()]);
+
+  const applyFilters = (params: URLSearchParams) => {
+    params.delete('pending');
+    const target = params.get('source') === 'OFFICIAL' ? '/ViewAllOOS' : params.get('source') === 'MARKETPLACE' ? '/ViewAllTrading' : '/ViewAll';
+    if (target === '/ViewAll') params.delete('source');
+    else params.set('source', target === '/ViewAllOOS' ? 'OFFICIAL' : 'MARKETPLACE');
+    setShowFilters(false);
+    navigate(`${target}?${params.toString()}`);
+  };
 
   return (
     <section className="min-h-full bg-[#f8f9fb] font-sans text-[#20242b]">
@@ -99,12 +128,7 @@ export function ViewAllTrading() {
         </div>
 
         <div className="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between">
-          <FilterDropdown
-            label="Type:"
-            options={typeOptions}
-            selected={selectedType}
-            onSelect={setSelectedType}
-          />
+          <button type="button" onClick={() => setShowFilters(true)} className="inline-flex items-center gap-2 rounded-lg border border-[#44516a] bg-white px-4 py-2.5 text-sm font-semibold text-[#263b61] shadow-sm hover:border-blue-500"><span>☰</span> Filters</button>
 
           <div className="flex flex-col items-start gap-2 sm:items-end">
              <FilterDropdown
@@ -117,6 +141,8 @@ export function ViewAllTrading() {
             <p className="text-xs font-medium text-[#9198a3]">Showing {visibleProducts.length} products</p>
           </div>
         </div>
+
+        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} onClose={() => setShowFilters(false)} onApply={applyFilters} />
 
         {/* ปรับ Grid เป็น lg:grid-cols-3 และลบ xl:grid-cols-4 ออก เพื่อให้การ์ดแนวนอนไม่แคบเกินไป */}
         {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading marketplace listings...</p>}

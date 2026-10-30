@@ -3,6 +3,45 @@ import products from '../fixtures/products.json';
 export function setupCommonMocks() {
   // Public catalog & products
   cy.intercept('GET', '**/api/products/home', { fixture: 'products.json' }).as('getProductsHome');
+  cy.intercept('GET', '**/api/products/catalog/filter-options', {
+    types: ['Single', 'Booster', 'Booster Box', 'Accessories'],
+    games: [
+      { id: 1, name: 'Pokemon' },
+      { id: 2, name: 'One Piece' },
+      { id: 3, name: 'Yu-Gi-Oh!' },
+    ],
+    languages: ['English', 'Japanese', 'Thai'],
+    sources: ['OFFICIAL', 'MARKETPLACE'],
+    stores: [{ id: 2, name: 'PokeVault Central' }, { id: 3, name: 'GrandLine Hobbies' }],
+    price: { min: 0, max: 250000 },
+  }).as('getCatalogFilterOptions');
+  cy.intercept('GET', '**/api/products/catalog?*', (request) => {
+    const normalized = (value: unknown) => String(value ?? '').trim().toLowerCase();
+    const query = normalized(request.query.q)
+      .replace('โปเกมอน', 'pokemon').replace('วันพีซ', 'one piece').replace('pokamon', 'pokemon');
+    const type = normalized(request.query.type);
+    const game = normalized(request.query.game);
+    const language = normalized(request.query.language);
+    const source = normalized(request.query.source);
+    const storeId = String(request.query.storeId ?? '');
+    const minPrice = Number(request.query.minPrice);
+    const maxPrice = Number(request.query.maxPrice);
+    const filtered = products.filter((product) => {
+      const matchesKeyword = !query || [product.name, product.game, product.type, product.description, product.store?.name]
+        .some((field) => normalized(field).includes(query));
+      return matchesKeyword
+        && (!type || normalized(product.type) === type)
+        && (!game || normalized(product.game) === game)
+        && (!language || normalized(product.language) === language)
+        && (!source || normalized(product.source) === source)
+        && (!storeId || String(product.store?.id ?? '') === storeId)
+        && (!request.query.minPrice || product.price >= minPrice)
+        && (!request.query.maxPrice || product.price <= maxPrice);
+    });
+    const page = Math.max(0, Number(request.query.page ?? 0));
+    const pageSize = Math.min(100, Math.max(1, Number(request.query.pageSize ?? 24)));
+    request.reply({ body: { items: filtered.slice(page * pageSize, (page + 1) * pageSize), page, pageSize, totalItems: filtered.length, totalPages: Math.ceil(filtered.length / pageSize), sort: String(request.query.sort ?? 'newest') } });
+  }).as('getCatalog');
   cy.intercept('GET', '**/api/products/search*', (request) => {
     const query = String(request.query.q ?? '').trim().toLowerCase()
       .replace('โปเกมอน', 'pokemon').replace('วันพีซ', 'one piece').replace('pokamon', 'pokemon');
