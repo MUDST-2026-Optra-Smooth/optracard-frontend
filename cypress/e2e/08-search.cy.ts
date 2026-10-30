@@ -3,14 +3,14 @@ import { setupCommonMocks } from '../support/mockApis';
 describe('Catalog search', () => {
   beforeEach(() => setupCommonMocks());
 
-  it('shows matching suggestions for a typo and retains them on the results page', () => {
+  it('shows matching suggestions for a typo and retains them on the current page', () => {
     cy.visit('/');
     cy.get('nav input[placeholder*="Search"]').type('pokamon');
     cy.wait('@searchProducts').its('request.url').should('include', 'q=pokamon');
     cy.get('nav').contains('Pikachu Illustrator Promo Card').should('be.visible');
     cy.get('nav input[placeholder*="Search"]').type('{enter}');
+    cy.location('pathname').should('eq', '/');
     cy.location('search').should('include', 'q=pokamon');
-    cy.contains('h1', 'pokamon');
     cy.contains('Pikachu Illustrator Promo Card').should('be.visible');
     cy.contains('Blue-Eyes White Dragon 1st Edition').should('not.exist');
   });

@@ -61,17 +61,10 @@ export const Home = () => {
     return () => { isCurrent = false; };
   }, [searchParams.toString(), appliedParams.toString()]);
 
-  const filteredProducts = useMemo(() => {
-    const active = searchParams.has('pending') ? appliedParams : searchParams;
-    const q = normalizeFilterValue(active.get('q'));
-    const type = normalizeFilterValue(active.get('type')); const game = normalizeFilterValue(active.get('game'));
-    const language = normalizeFilterValue(active.get('language')); const source = normalizeFilterValue(active.get('source')); const storeId = active.get('storeId');
-    const min = Number(active.get('minPrice')); const max = Number(active.get('maxPrice'));
-    return products.filter((product) => (!q || [product.name, product.game, product.type, product.description, product.store.name].some(v => normalizeFilterValue(v).includes(q)))
-      && (!type || normalizeFilterValue(product.type) === type) && (!game || normalizeFilterValue(product.game) === game) && (!language || normalizeFilterValue(product.language) === language)
-      && (!source || normalizeFilterValue(product.source) === source) && (!storeId || String(product.store.id) === storeId)
-      && (!active.get('minPrice') || product.price >= min) && (!active.get('maxPrice') || product.price <= max));
-  }, [products, searchParams.toString(), appliedParams.toString()]);
+  // Catalog responses are already filtered by the backend. Keep the client-side
+  // list untouched so backend normalization (for example typo/synonym matching)
+  // is not undone by a second, inconsistent filter pass in the browser.
+  const filteredProducts = useMemo(() => products, [products]);
 
   const productsBySourceAndType = useMemo(() => {
     return (source: CatalogSource, type: string) =>
