@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ADsidebar } from './ADsidebar';
-import { useAuth } from '../context/AuthContext';
 import { 
   Calendar, 
   Download, 
@@ -36,8 +35,6 @@ type SortField = 'name' | 'quantitySold' | 'totalRevenue';
 type SortDirection = 'asc' | 'desc';
 
 export const AdminWeeklyReport: React.FC = () => {
-  const { user } = useAuth();
-
   const getInitialDates = () => {
     const today = new Date();
     const lastWeek = new Date();
@@ -67,8 +64,7 @@ export const AdminWeeklyReport: React.FC = () => {
       const authToken = 
         localStorage.getItem('token') || 
         localStorage.getItem('jwt_token') || 
-        localStorage.getItem('accessToken') || 
-        (user as any)?.token;
+        localStorage.getItem('accessToken');
 
       const response = await fetch(
         `/api/admin/reports/weekly?startDate=${startDate}&endDate=${endDate}`,
@@ -93,8 +89,9 @@ export const AdminWeeklyReport: React.FC = () => {
 
       const data: WeeklyReportResponse = await response.json();
       setReport(data);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred while fetching the report.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred while fetching the report.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -269,9 +266,21 @@ export const AdminWeeklyReport: React.FC = () => {
 <table className="w-full text-left border-collapse">
   <thead>
     <tr className="border-b text-sm text-gray-500 uppercase">
-      <th className="py-3 px-4 font-semibold">Product Name</th>
-      <th className="py-3 px-4 font-semibold text-center">Quantity Sold</th>
-      <th className="py-3 px-4 font-semibold text-right">Total Revenue</th>
+      <th className="py-3 px-4 font-semibold">
+        <button type="button" onClick={() => handleSort('name')} className="cursor-pointer">
+          Product Name{renderSortIcon('name')}
+        </button>
+      </th>
+      <th className="py-3 px-4 font-semibold text-center">
+        <button type="button" onClick={() => handleSort('quantitySold')} className="cursor-pointer">
+          Quantity Sold{renderSortIcon('quantitySold')}
+        </button>
+      </th>
+      <th className="py-3 px-4 font-semibold text-right">
+        <button type="button" onClick={() => handleSort('totalRevenue')} className="cursor-pointer">
+          Total Revenue{renderSortIcon('totalRevenue')}
+        </button>
+      </th>
       <th className="py-3 px-4 font-semibold text-center">Current Stock</th>
       <th className="py-3 px-4 font-semibold text-center">Days Until Out</th>
       <th className="py-3 px-4 font-semibold text-center">Restock Qty</th>
@@ -281,7 +290,7 @@ export const AdminWeeklyReport: React.FC = () => {
   
   <tbody>
     {report?.topProducts && report.topProducts.length > 0 ? (
-      report.topProducts.map((product: TopProductDto, index: number) => (
+      sortedProducts.map((product, index) => (
         <tr key={product.productId || index} className="border-b hover:bg-gray-50">
           <td className="py-3 px-4 text-gray-800 font-medium">{product.name}</td>
           <td className="py-3 px-4 text-center text-blue-600 font-semibold">{product.quantitySold}</td>
