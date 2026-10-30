@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
-import { loadCatalog as loadCatalogFromApi } from '../api/catalog';
-import type { CatalogProduct, CatalogSource } from '../types/catalog';
+import { loadCatalogPage } from '../api/catalog';
+import type { CatalogProduct, CatalogSource, CatalogQuery } from '../types/catalog';
 
 const PRODUCT_TYPES = ['Single', 'Booster', 'Booster Box', 'Accessories'];
+const normalizeFilterValue = (value: string | null | undefined) => (value ?? '').trim().toLowerCase();
 
 const sourceContent: Record<CatalogSource, { title: string; eyebrow: string; viewAll: string }> = {
   MARKETPLACE: {
@@ -21,6 +22,11 @@ const sourceContent: Record<CatalogSource, { title: string; eyebrow: string; vie
 };
 
 export const Home = () => {
+  const [searchParams] = useSearchParams();
+  const [appliedParams, setAppliedParams] = useState(() => new URLSearchParams(searchParams));
+  useEffect(() => {
+    if (!searchParams.has('pending')) setAppliedParams(new URLSearchParams(searchParams));
+  }, [searchParams.toString()]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +36,16 @@ export const Home = () => {
 
     const loadCatalog = async () => {
       try {
-        const data = await loadCatalogFromApi();
+        const active = searchParams.has('pending') ? appliedParams : searchParams;
+        const query = Object.fromEntries(active.entries()) as CatalogQuery;
+        // Home renders two independent sections. Fetch each public source separately so
+        // pagination of one source cannot hide the other source from the first page.
+        const data = query.source
+          ? (await loadCatalogPage(query)).items
+          : (await Promise.all([
+            loadCatalogPage({ ...query, source: 'OFFICIAL', page: '0', pageSize: '24' }),
+            loadCatalogPage({ ...query, source: 'MARKETPLACE', page: '0', pageSize: '24' }),
+          ])).flatMap((result) => result.items);
         if (isCurrent) {
           setProducts(data);
           setError(null);
@@ -44,12 +59,17 @@ export const Home = () => {
 
     void loadCatalog();
     return () => { isCurrent = false; };
-  }, []);
+  }, [searchParams.toString(), appliedParams.toString()]);
+
+  // Catalog responses are already filtered by the backend. Keep the client-side
+  // list untouched so backend normalization (for example typo/synonym matching)
+  // is not undone by a second, inconsistent filter pass in the browser.
+  const filteredProducts = useMemo(() => products, [products]);
 
   const productsBySourceAndType = useMemo(() => {
     return (source: CatalogSource, type: string) =>
-      products.filter((product) => product.source === source && product.type === type).slice(0, 4);
-  }, [products]);
+      filteredProducts.filter((product) => product.source === source && normalizeFilterValue(product.type) === normalizeFilterValue(type)).slice(0, 4);
+  }, [filteredProducts]);
 
   const renderOfficialProductSection = (type: string) => {
     const source: CatalogSource = 'OFFICIAL';
@@ -88,7 +108,7 @@ export const Home = () => {
   };
 
   const renderMarketplaceSection = () => {
-    const marketplaceProducts = products.filter((product) => product.source === 'MARKETPLACE').slice(0, 9);
+    const marketplaceProducts = filteredProducts.filter((product) => product.source === 'MARKETPLACE').slice(0, 9);
 
     return (
       <section key="MARKETPLACE" className="mb-16">
@@ -146,7 +166,9 @@ export const Home = () => {
                   <h2 className="mt-1 text-3xl font-black text-slate-900">{sourceContent.OFFICIAL.title}</h2>
                 </div>
               </div>
-              {PRODUCT_TYPES.map(renderOfficialProductSection)}
+              {PRODUCT_TYPES
+                .filter((type) => productsBySourceAndType('OFFICIAL', type).length > 0)
+                .map(renderOfficialProductSection)}
             </section>
             {renderMarketplaceSection()}
           </>

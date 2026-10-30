@@ -3,7 +3,8 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
 import { FilterDropdown, type DropdownOption } from '../components/FilterDropdown';
-import { searchCatalog } from '../api/catalog';
+import { loadCatalogPage } from '../api/catalog';
+import type { CatalogQuery } from '../types/catalog';
 import type { CatalogProduct } from '../types/catalog';
 
 const defaultGameOptions: DropdownOption[] = [
@@ -14,6 +15,7 @@ const defaultGameOptions: DropdownOption[] = [
 ];
 
 const sortOptions: DropdownOption[] = [
+  { label: 'Most Relevant', value: 'relevance' },
   { label: 'Newest Arrivals', value: 'newest' },
   { label: 'Price: High to Low', value: 'price_desc' },
   { label: 'Price: Low to High', value: 'price_asc' },
@@ -23,6 +25,9 @@ export const SearchResult = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const query = searchParams.get('q') ?? '';
+
+  useEffect(() => {
+  }, [navigate, searchParams]);
 
   const [selectedGame, setSelectedGame] = useState<DropdownOption>(defaultGameOptions[0]);
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
@@ -37,7 +42,7 @@ export const SearchResult = () => {
 
     const fetchResults = async () => {
       try {
-        const data = await searchCatalog(query);
+        const data = (await loadCatalogPage(Object.fromEntries(searchParams.entries()) as CatalogQuery)).items;
         if (isCurrent) {
           setProducts(data);
           setError(null);

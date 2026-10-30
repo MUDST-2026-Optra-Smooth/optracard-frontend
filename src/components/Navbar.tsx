@@ -1,8 +1,8 @@
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams, type NavigateOptions } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCartCount } from '../hooks/useCartCount';
-import { loadCatalog } from '../api/catalog';
+import { searchCatalog } from '../api/catalog';
 import { loadOrderNotifications, markOrderNotificationsRead, type OrderNotification } from '../api/notifications';
 import type { CatalogProduct } from '../types/catalog';
 import { Bell } from 'lucide-react';
@@ -13,13 +13,28 @@ import avatarIcon from '../assets/Generic avatar.png';
 export const Navbar = () => {
   const [query, setQuery] = useState('');
   const [searchParams] = useSearchParams();
-  const [catalogItems, setCatalogItems] = useState<CatalogProduct[]>([]);
+  const [suggestions, setSuggestions] = useState<{ query: string; products: CatalogProduct[] }>({ query: '', products: [] });
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<OrderNotification[]>([]);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const notificationContainerRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+  const routerNavigate = useNavigate();
+  const location = useLocation();
+  const navigate = (to: string, options?: NavigateOptions) => {
+    const submittingAdvanced = to.startsWith('/search');
+    if (to.startsWith('/?')) to = `${location.pathname}${to.slice(1)}`;
+    if (to.startsWith('/search?') && location.pathname !== '/search') to = `${location.pathname}${to.slice(7)}`;
+    if (to === '/search' && location.pathname !== '/search') to = location.pathname;
+    const queryString = to.includes('?') ? to.slice(to.indexOf('?') + 1) : '';
+    const params = new URLSearchParams(queryString);
+    if (submittingAdvanced) params.delete('pending');
+    if (to.includes('?')) to = `${to.slice(0, to.indexOf('?'))}?${params.toString()}`;
+    const source = new URLSearchParams(queryString).get('source');
+    if (source === 'MARKETPLACE' && location.pathname === '/ViewAllOOS') to = `/ViewAllTrading${queryString ? `?${queryString}` : ''}`;
+    if (source === 'OFFICIAL' && location.pathname === '/ViewAllTrading') to = `/ViewAllOOS${queryString ? `?${queryString}` : ''}`;
+    routerNavigate(to, options);
+  };
   const { user, logout } = useAuth();
   const cartCount = useCartCount();
   const isAdminUser = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -34,18 +49,23 @@ export const Navbar = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    const term = query.trim();
+    if (!term) return;
     let isCurrent = true;
-    void loadCatalog()
-      .then((items) => {
-        if (isCurrent) setCatalogItems(items);
-      })
-      .catch(() => {
-        /* silent catalog preload */
-      });
+    const timer = window.setTimeout(() => {
+      void searchCatalog(term)
+        .then((products) => {
+          if (isCurrent) setSuggestions({ query: term, products: products.slice(0, 5) });
+        })
+        .catch(() => {
+          if (isCurrent) setSuggestions({ query: term, products: [] });
+        });
+    }, 300);
     return () => {
       isCurrent = false;
+      window.clearTimeout(timer);
     };
-  }, []);
+  }, [query]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -95,11 +115,10 @@ export const Navbar = () => {
   const handleSearch = (targetQuery?: string) => {
     const term = (targetQuery ?? query).trim();
     setShowDropdown(false);
-    if (term) {
-      navigate(`/search?q=${encodeURIComponent(term)}`);
-    } else {
-      navigate('/search');
-    }
+    const next = new URLSearchParams(searchParams);
+    if (term) next.set('q', term); else next.delete('q');
+    next.set('advanced', '1');
+    navigate(`/?${next.toString()}`);
   };
 
   const handleCategoryClick = (category: string) => {
@@ -133,17 +152,7 @@ export const Navbar = () => {
     return categories.filter((c) => c.toLowerCase().includes(trimmedQuery));
   }, [trimmedQuery]);
 
-  const matchingProducts = useMemo(() => {
-    if (!trimmedQuery) return [];
-    return catalogItems
-      .filter((p) =>
-        p.name.toLowerCase().includes(trimmedQuery) ||
-        p.game.toLowerCase().includes(trimmedQuery) ||
-        p.type.toLowerCase().includes(trimmedQuery)
-      )
-      .slice(0, 5);
-  }, [catalogItems, trimmedQuery]);
-
+  const matchingProducts = suggestions.query === query.trim() ? suggestions.products : [];
   return (
     <nav className="bg-[#0b0f19] text-white py-3 px-6 md:px-10 flex justify-between items-center font-sans border-b border-gray-800">
       {isAdminUser ? (
@@ -177,7 +186,8 @@ export const Navbar = () => {
             type="text"
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
+              const value = e.target.value;
+              setQuery(value);
               setShowDropdown(true);
             }}
             onKeyDown={(e) => {
@@ -189,9 +199,6 @@ export const Navbar = () => {
             placeholder="Search by card game or card name..."
             className="w-full bg-[#1a1f2b] text-sm text-gray-200 rounded-md pl-10 pr-9 py-2 focus:outline-none focus:ring-1 focus:ring-[#2f65ff]"
             onFocus={() => {
-              if (!catalogItems.length) {
-                void loadCatalog().then(setCatalogItems).catch(() => {});
-              }
               if (query.trim()) setShowDropdown(true);
             }}
           />
@@ -201,6 +208,9 @@ export const Navbar = () => {
               type="button"
               onClick={() => {
                 setQuery('');
+                const next = new URLSearchParams(searchParams);
+                next.delete('q');
+                navigate(`/?${next.toString()}`);
                 setShowDropdown(false);
               }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-sm cursor-pointer"

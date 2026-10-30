@@ -2,6 +2,8 @@ import type {
   AdminCardGame,
   AdminDashboard,
   AdminOrder,
+  AdminPromotion,
+  AdminPromotionInput,
   AdminProduct,
   AdminProductInput,
   AdminStore,
@@ -44,6 +46,15 @@ export const updateAdminProductActive = (id: number, active: boolean) => request
   method: 'PUT', body: JSON.stringify({ active }),
 });
 export const deleteAdminProduct = (id: number) => request<void>(`/api/admin/products/${id}`, { method: 'DELETE' });
+
+export const loadAdminPromotions = () => request<AdminPromotion[]>('/api/admin/promotions');
+export const createAdminPromotion = (promotion: AdminPromotionInput) => request<AdminPromotion>('/api/admin/promotions', {
+  method: 'POST', body: JSON.stringify(promotion),
+});
+export const updateAdminPromotion = (id: number, promotion: AdminPromotionInput) => request<AdminPromotion>(`/api/admin/promotions/${id}`, {
+  method: 'PUT', body: JSON.stringify(promotion),
+});
+export const deleteAdminPromotion = (id: number) => request<void>(`/api/admin/promotions/${id}`, { method: 'DELETE' });
 
 export type AdminOrderSource = 'OFFICIAL' | 'MARKETPLACE' | 'ALL';
 
