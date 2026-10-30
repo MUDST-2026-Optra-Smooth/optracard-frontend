@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { FilterDropdown, type DropdownOption } from '../components/FilterDropdown';
-import { loadCatalog } from '../api/catalog';
+import { CatalogFilterDrawer } from '../components/CatalogFilterDrawer';
+import { loadCatalogPage } from '../api/catalog';
+import type { CatalogQuery } from '../types/catalog';
 import type { CatalogProduct } from '../types/catalog';
 
 const sortOptions: DropdownOption[] = [
@@ -17,11 +19,15 @@ const sortOptions: DropdownOption[] = [
 export function ViewAllOOS() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const productType = searchParams.get('type') || 'Single';
+  const [appliedParams, setAppliedParams] = useState(() => new URLSearchParams(searchParams));
+  useEffect(() => { if (!searchParams.has('pending')) setAppliedParams(new URLSearchParams(searchParams)); }, [searchParams.toString()]);
+  const activeParams = searchParams.has('pending') ? appliedParams : searchParams;
+  const productType = activeParams.get('type') || 'All';
 
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [selectedGame, setSelectedGame] = useState<DropdownOption>({ label: 'All games', value: 'All', shortLabel: 'All' });
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
+  const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +41,10 @@ export function ViewAllOOS() {
 
     const loadProducts = async () => {
       try {
-        const data = await loadCatalog();
+        const active = searchParams.has('pending') ? appliedParams : searchParams;
+        const query = { ...Object.fromEntries(active.entries()), source: 'OFFICIAL' } as CatalogQuery;
+        if (productType !== 'All') query.type = productType;
+        const data = (await loadCatalogPage(query)).items;
         if (isCurrent) {
           setProducts(data);
           setError(null);
@@ -49,10 +58,10 @@ export function ViewAllOOS() {
 
     void loadProducts();
     return () => { isCurrent = false; };
-  }, []);
+  }, [searchParams.toString(), appliedParams.toString(), productType]);
 
   const typeProducts = useMemo(
-    () => products.filter((product) => product.source === 'OFFICIAL' && product.type === productType),
+    () => products.filter((product) => product.source === 'OFFICIAL' && (productType === 'All' || product.type === productType)),
     [products, productType],
   );
 
@@ -65,17 +74,31 @@ export function ViewAllOOS() {
   }, [typeProducts]);
 
   const visibleProducts = useMemo(() => {
+    const q = (activeParams.get('q') ?? '').trim().toLowerCase();
+    const gameParam = activeParams.get('game')?.toLowerCase(); const language = activeParams.get('language')?.toLowerCase(); const min = Number(activeParams.get('minPrice')); const max = Number(activeParams.get('maxPrice'));
     const filtered = selectedGame.value === 'All' 
       ? [...typeProducts]
       : typeProducts.filter((product) => product.game === selectedGame.value);
+    const advanced = filtered.filter((product) => (!q || [product.name, product.game, product.type, product.description, product.store.name].some(value => value?.toLowerCase().includes(q)))
+      && (!gameParam || product.game.toLowerCase() === gameParam) && (!language || product.language?.toLowerCase() === language)
+      && (!activeParams.get('minPrice') || product.price >= min) && (!activeParams.get('maxPrice') || product.price <= max));
 
-    if (selectedSort.value === 'stock') return filtered.sort((a, b) => b.stock - a.stock);
-    if (selectedSort.value === 'price-low') return filtered.sort((a, b) => a.price - b.price);
-    if (selectedSort.value === 'price-high') return filtered.sort((a, b) => b.price - a.price);
-    if (selectedSort.value === 'a-z') return filtered.sort((a, b) => a.name.localeCompare(b.name));
-    if (selectedSort.value === 'z-a') return filtered.sort((a, b) => b.name.localeCompare(a.name));
-    return filtered;
-  }, [selectedGame, selectedSort, typeProducts]);
+    if (selectedSort.value === 'stock') return advanced.sort((a, b) => b.stock - a.stock);
+    if (selectedSort.value === 'price-low') return advanced.sort((a, b) => a.price - b.price);
+    if (selectedSort.value === 'price-high') return advanced.sort((a, b) => b.price - a.price);
+    if (selectedSort.value === 'a-z') return advanced.sort((a, b) => a.name.localeCompare(b.name));
+    if (selectedSort.value === 'z-a') return advanced.sort((a, b) => b.name.localeCompare(a.name));
+    return advanced;
+  }, [selectedGame, selectedSort, typeProducts, searchParams.toString(), appliedParams.toString()]);
+
+  const applyFilters = (params: URLSearchParams) => {
+    params.delete('pending');
+    const target = params.get('source') === 'MARKETPLACE' ? '/ViewAllTrading' : params.get('source') === 'OFFICIAL' ? '/ViewAllOOS' : '/ViewAll';
+    if (target === '/ViewAll') params.delete('source');
+    else params.set('source', target === '/ViewAllTrading' ? 'MARKETPLACE' : 'OFFICIAL');
+    setShowFilters(false);
+    navigate(`${target}?${params.toString()}`);
+  };
 
   return (
     <section className="min-h-full bg-[#f8f9fb] font-sans text-[#20242b]">
@@ -102,12 +125,7 @@ export function ViewAllOOS() {
         </div>
 
         <div className="flex flex-col gap-4 py-6 sm:flex-row sm:items-start sm:justify-between ">
-          <FilterDropdown
-            label="Game:"
-            options={gameOptions}
-            selected={selectedGame}
-            onSelect={setSelectedGame}
-          />
+          <button type="button" onClick={() => setShowFilters(true)} className="inline-flex items-center gap-2 rounded-lg border border-[#44516a] bg-white px-4 py-2.5 text-sm font-semibold text-[#263b61] shadow-sm hover:border-blue-500"><span>☰</span> Filters</button>
 
           <div className="flex flex-col items-start gap-2 sm:items-end">
             <FilterDropdown
@@ -120,6 +138,8 @@ export function ViewAllOOS() {
             <p className="text-xs font-medium text-[#9198a3]">Showing {visibleProducts.length} products</p>
           </div>
         </div>
+
+        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} onClose={() => setShowFilters(false)} onApply={applyFilters} />
 
         {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading official products...</p>}
         {error && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-red-700">{error}</p>}
