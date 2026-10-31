@@ -16,6 +16,7 @@ describe('Seller stock alert controls', () => {
     }).as('saveSellerThreshold');
 
     cy.visit('/seller');
+    cy.wait('@getStockAlertSettings');
     cy.wait('@getSellerStockAlerts');
     cy.contains('Store stock alert threshold').should('be.visible');
     cy.contains('label', 'Store threshold').find('input').click().type('{backspace}8');
@@ -28,6 +29,7 @@ describe('Seller stock alert controls', () => {
     cy.intercept('PUT', '**/api/stock-alerts/settings').as('invalidSellerThreshold');
 
     cy.visit('/seller');
+    cy.wait('@getStockAlertSettings');
     // A number input may reject decimal keystrokes before React receives them.
     // Use zero instead: it is a valid numeric value for the control, but outside
     // the permitted threshold range, so this exercises the client-side guard.
