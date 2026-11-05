@@ -122,9 +122,9 @@ export const SearchResult = () => {
         <>
           {officialProducts.length > 0 && (
             <section className="mb-12">
-              <div className="mb-8 border-b border-slate-200 pb-5">
+              <div className="mb-8 border-b border-slate-200 pb-5 text-center">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Sold and fulfilled by Optracard</p>
-                <h2 className="mt-1 text-3xl font-black text-slate-900">Optracard Official Store</h2>
+                <h2 className="mt-1 text-3xl font-black text-blue-600">Optracard Official Store</h2>
               </div>
               
               {officialCategories.map((type) => {
@@ -172,19 +172,19 @@ export const SearchResult = () => {
 
           {marketplaceListings.length > 0 && (
             <section className="mb-12">
-              <div className="mb-6 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative mb-6 border-b border-slate-200 pb-4 text-center">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-500">Independent seller listings</p>
                   <Link
                     to="/ViewAllTrading"
-                    className="mt-1 text-2xl font-black text-slate-900 hover:text-blue-600 transition-colors cursor-pointer block"
+                    className="mt-1 block text-2xl font-black text-orange-500 transition-colors hover:text-orange-600"
                   >
                     Marketplace & Trading
                   </Link>
                 </div>
                 <Link
                   to="/ViewAllTrading"
-                  className="shrink-0 rounded-md bg-[#1e5bff] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
+                  className="mt-4 inline-flex rounded-md bg-[#1e5bff] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700 sm:absolute sm:bottom-4 sm:right-0 sm:mt-0"
                 >
                   View all marketplace →
                 </Link>
