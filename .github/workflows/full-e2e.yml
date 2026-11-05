@@ -32,7 +32,6 @@ jobs:
 
   staging-readonly:
     name: Staging unmocked read-only checks
-    if: ${{ secrets.STAGING_FRONTEND_URL != '' && secrets.STAGING_BACKEND_URL != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +40,20 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Check staging configuration
+        id: staging
+        env:
+          STAGING_FRONTEND_URL: ${{ secrets.STAGING_FRONTEND_URL }}
+          STAGING_BACKEND_URL: ${{ secrets.STAGING_BACKEND_URL }}
+        run: |
+          if [ -n "$STAGING_FRONTEND_URL" ] && [ -n "$STAGING_BACKEND_URL" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Staging URLs are not configured; skipping unmocked staging checks."
+          fi
       - run: npm run test:e2e:staging
+        if: steps.staging.outputs.enabled == 'true'
         env:
           CYPRESS_BASE_URL: ${{ secrets.STAGING_FRONTEND_URL }}
           CYPRESS_API_BASE_URL: ${{ secrets.STAGING_BACKEND_URL }}
