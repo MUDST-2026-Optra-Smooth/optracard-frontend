@@ -48,7 +48,18 @@ type CartResponse = {
 
 type ProfileData = { userId: number; username: string; email: string; phone?: string; address?: string };
 type SellerGroup = CheckoutSellerGroup & { items: CartItem[]; subtotal: number };
-type PromotionPreview = { code: string; name: string; subtotal: number; discountAmount: number; discountedSubtotal: number };
+type PromotionPreview = {
+  code: string;
+  name: string;
+  subtotal: number;
+  discountAmount: number;
+  discountedSubtotal: number;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountValue: number;
+  maximumDiscountAmount: number | null;
+  minimumOrderAmount: number;
+  perUserLimit: number | null;
+};
 
 const promotionFailure = (reason: string) => {
   const normalized = reason.trim().toLowerCase();
@@ -59,6 +70,18 @@ const promotionFailure = (reason: string) => {
   if (normalized === 'this promotion has reached its usage limit') return 'This promotion has reached its total usage limit.';
   if (normalized === 'you have reached the per-customer limit for this promotion') return 'You have already used this promotion the maximum number of times.';
   return reason;
+};
+
+const promotionRules = (promotion: PromotionPreview) => {
+  const discount = promotion.discountType === 'PERCENTAGE'
+    ? `${promotion.discountValue}% off`
+    : `${formatPrice(promotion.discountValue)} off`;
+  return [
+    discount,
+    promotion.maximumDiscountAmount !== null ? `Maximum discount ${formatPrice(promotion.maximumDiscountAmount)}` : null,
+    promotion.minimumOrderAmount > 0 ? `Minimum order ${formatPrice(promotion.minimumOrderAmount)}` : null,
+    promotion.perUserLimit === null ? null : promotion.perUserLimit === 1 ? 'One use per customer' : `${promotion.perUserLimit} uses per customer`,
+  ].filter((rule): rule is string => rule !== null);
 };
 
 export const Cart = () => {
@@ -356,7 +379,7 @@ export const Cart = () => {
                 <label htmlFor="promotion-code" className="flex items-center gap-1.5 text-xs font-bold text-gray-800"><TicketPercent size={14} className="text-blue-600" /> Promotion code</label>
                 <div className="mt-2 flex gap-2"><input id="promotion-code" value={promotionCode} onChange={(event) => { setPromotionCode(event.target.value.toUpperCase()); setPromotion(null); setPromotionError(null); }} placeholder="SAVE10" aria-invalid={Boolean(promotionError)} aria-describedby={promotionError ? 'promotion-code-error' : undefined} className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2.5 py-2 font-mono text-sm uppercase outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" /><button type="button" onClick={() => void applyPromotion()} disabled={isApplyingPromotion} className="rounded-md bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60">{isApplyingPromotion ? 'Checking…' : 'Apply'}</button></div>
                 {promotionError && <p id="promotion-code-error" role="alert" className="mt-2 rounded-md border border-red-200 bg-red-50 px-2.5 py-2 text-xs leading-relaxed text-red-700"><span className="font-bold">This code cannot be applied:</span> {promotionError}</p>}
-                {promotion && <div className="mt-2 flex items-center justify-between gap-2 text-xs text-emerald-700"><span className="truncate font-semibold">{promotion.name} applied</span><button type="button" onClick={() => { setPromotion(null); setPromotionCode(''); }} className="inline-flex items-center gap-1 font-bold hover:text-emerald-900"><X size={13} /> Remove</button></div>}
+                {promotion && <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-xs text-emerald-800"><div className="flex items-center justify-between gap-2"><span className="truncate font-semibold">{promotion.name} applied</span><button type="button" onClick={() => { setPromotion(null); setPromotionCode(''); }} className="inline-flex shrink-0 items-center gap-1 font-bold hover:text-emerald-900"><X size={13} /> Remove</button></div><p className="mt-1.5 leading-relaxed"><span className="font-bold">Promotion rules:</span> {promotionRules(promotion).join(' • ')}</p></div>}
               </div>
               <div className="flex justify-between items-center py-4"><span className="text-sm font-bold text-gray-900">Estimated Total</span><span className="text-lg font-bold text-blue-600">{formatPrice(subtotal - discountAmount)}</span></div>
               <button type="button" disabled={isOrdering} onClick={() => setIsCheckoutOpen(true)} className="w-full bg-blue-600 disabled:opacity-50 text-white font-bold py-3 rounded-full text-sm cursor-pointer">
