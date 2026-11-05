@@ -20,6 +20,7 @@ Coverage reports are baselined and retained as CI artifacts; this phase delibera
 ```bash
 npm run lint
 npm run test
+npm run test:coverage     # reports baseline only; no threshold gate
 npm run build
 npm run test:e2e           # PR-critical mocked Cypress subset
 npm run test:e2e:full      # all mocked local Cypress specs
