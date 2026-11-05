@@ -10,9 +10,13 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "cypress:run": "node scripts/cypress-run.js run",
+    "cypress:run:critical": "node scripts/cypress-run.js run --spec cypress/e2e/01-public-pages.cy.ts,cypress/e2e/02-auth-flows.cy.ts,cypress/e2e/03-buyer-cart-checkout.cy.ts,cypress/e2e/08-search.cy.ts,cypress/e2e/09-buyer-promotion-and-reorder.cy.ts,cypress/e2e/12-accessibility-and-access.cy.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "start-server-and-test dev:test http://localhost:3001 \"node scripts/cypress-run.js run\""
+    "test:e2e": "start-server-and-test dev:test http://localhost:3001 \"npm run cypress:run:critical\"",
+    "test:e2e:full": "start-server-and-test dev:test http://localhost:3001 \"npm run cypress:run\"",
+    "test:e2e:staging": "node scripts/cypress-run.js run --spec cypress/e2e-staging/**/*.cy.ts",
+    "test:e2e:deployed": "node scripts/cypress-run.js run --spec cypress/e2e-deployed/**/*.cy.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

@@ -118,6 +118,7 @@ jobs:
         env:
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
           CYPRESS_BASE_URL: ${{ secrets.FRONTEND_URL }}
+          CYPRESS_API_BASE_URL: ${{ secrets.BACKEND_API_URL }}
           CYPRESS_E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           CYPRESS_E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
         shell: bash
@@ -144,7 +145,7 @@ jobs:
             echo "Using existing node_modules on self-hosted runner..."
           fi
 
-          npx cypress run --config specPattern="cypress/e2e-deployed/**/*.cy.{js,jsx,ts,tsx}",video=false --spec "cypress/e2e-deployed/08-deployed-smoke.cy.ts" --env API_BASE_URL="${{ secrets.BACKEND_API_URL }}"
+          npm run test:e2e:deployed -- --config video=false
 
       - name: Upload deployed E2E artifacts on failure
         uses: actions/upload-artifact@v4
