@@ -114,7 +114,7 @@ export const Home = () => {
       <section key="MARKETPLACE" className="mb-16">
         <div className="mb-8 flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">{sourceContent.MARKETPLACE.eyebrow}</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-500">{sourceContent.MARKETPLACE.eyebrow}</p>
             <h2 className="mt-1 text-3xl font-black text-slate-900">{sourceContent.MARKETPLACE.title}</h2>
           </div>
           <Link
