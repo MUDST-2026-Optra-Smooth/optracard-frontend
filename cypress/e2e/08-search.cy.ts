@@ -41,8 +41,9 @@ describe('Catalog search', () => {
         expect($fuzzy[0].compareDocumentPosition($exact[0]) & Node.DOCUMENT_POSITION_FOLLOWING).to.not.equal(0);
       });
     });
-    cy.contains('button', 'Game:').click();
-    cy.contains('button', 'One Piece').click();
+    cy.contains('button', 'Filters').click();
+    cy.contains('label', 'Game').find('select').select('One Piece');
+    cy.contains('button', 'Apply filters').click();
     cy.contains('Other game card').should('be.visible');
     cy.contains('Exact Pokemon').should('not.exist');
   });
