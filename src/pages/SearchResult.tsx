@@ -131,45 +131,8 @@ export const SearchResult = () => {
 
       {!isLoading && !error && filteredProducts.length > 0 && (
         <>
-          {marketplaceListings.length > 0 && (
-            <section className="mb-12">
-              <div className="mb-6 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Independent seller listings</p>
-                  <Link
-                    to="/ViewAllTrading"
-                    className="mt-1 text-2xl font-black text-slate-900 hover:text-blue-600 transition-colors cursor-pointer block"
-                  >
-                    Marketplace & Trading
-                  </Link>
-                </div>
-                <Link
-                  to="/ViewAllTrading"
-                  className="shrink-0 rounded-md bg-[#1e5bff] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
-                >
-                  View all marketplace →
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {marketplaceListings.map((listing) => (
-                  <TradingListingCard 
-                    key={listing.id}
-                    productId={listing.id}
-                    cardName={listing.name}
-                    gameName={listing.game}
-                    itemCount={listing.stock}
-                    startingPrice={listing.price}
-                    imageUrl={listing.imageUrl ?? undefined}
-                    storeName={listing.store?.name}
-                    source="MARKETPLACE"
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
           {officialProducts.length > 0 && (
-            <section className="text-center">
+            <section className="mb-12 text-center">
               <h2 className="text-3xl font-bold text-blue-600 mb-8">Optracard Official Store</h2>
               
               {officialCategories.map((type) => {
@@ -212,6 +175,43 @@ export const SearchResult = () => {
                   </div>
                 );
               })}
+            </section>
+          )}
+
+          {marketplaceListings.length > 0 && (
+            <section className="mb-12">
+              <div className="mb-6 flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Independent seller listings</p>
+                  <Link
+                    to="/ViewAllTrading"
+                    className="mt-1 text-2xl font-black text-slate-900 hover:text-blue-600 transition-colors cursor-pointer block"
+                  >
+                    Marketplace & Trading
+                  </Link>
+                </div>
+                <Link
+                  to="/ViewAllTrading"
+                  className="shrink-0 rounded-md bg-[#1e5bff] px-4 py-2 text-sm font-medium text-white transition-all hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
+                >
+                  View all marketplace →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {marketplaceListings.map((listing) => (
+                  <TradingListingCard
+                    key={listing.id}
+                    productId={listing.id}
+                    cardName={listing.name}
+                    gameName={listing.game}
+                    itemCount={listing.stock}
+                    startingPrice={listing.price}
+                    imageUrl={listing.imageUrl ?? undefined}
+                    storeName={listing.store?.name}
+                    source="MARKETPLACE"
+                  />
+                ))}
+              </div>
             </section>
           )}
 
