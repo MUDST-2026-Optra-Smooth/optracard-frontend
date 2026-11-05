@@ -115,10 +115,9 @@ export const Navbar = () => {
   const handleSearch = (targetQuery?: string) => {
     const term = (targetQuery ?? query).trim();
     setShowDropdown(false);
-    const next = new URLSearchParams(searchParams);
-    if (term) next.set('q', term); else next.delete('q');
-    next.set('advanced', '1');
-    navigate(`/?${next.toString()}`);
+    // The dedicated results page uses the ranked backend endpoint, which
+    // supports typo tolerance and Thai game-name aliases.
+    routerNavigate(term ? `/search?q=${encodeURIComponent(term)}` : '/search');
   };
 
   const handleCategoryClick = (category: string) => {

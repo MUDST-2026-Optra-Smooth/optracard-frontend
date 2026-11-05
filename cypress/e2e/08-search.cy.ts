@@ -3,13 +3,13 @@ import { setupCommonMocks } from '../support/mockApis';
 describe('Catalog search', () => {
   beforeEach(() => setupCommonMocks());
 
-  it('shows matching suggestions for a typo and retains them on the current page', () => {
+  it('opens ranked results for a typo after showing matching suggestions', () => {
     cy.visit('/');
     cy.get('nav input[placeholder*="Search"]').type('pokamon');
     cy.wait('@searchProducts').its('request.url').should('include', 'q=pokamon');
     cy.get('nav').contains('Pikachu Illustrator Promo Card').should('be.visible');
     cy.get('nav input[placeholder*="Search"]').type('{enter}');
-    cy.location('pathname').should('eq', '/');
+    cy.location('pathname').should('eq', '/search');
     cy.location('search').should('include', 'q=pokamon');
     cy.contains('Pikachu Illustrator Promo Card').should('be.visible');
     cy.contains('Blue-Eyes White Dragon 1st Edition').should('not.exist');
@@ -22,21 +22,13 @@ describe('Catalog search', () => {
   });
 
   it('keeps relevance ordering while allowing price and game filters', () => {
-    cy.intercept('GET', '**/api/products/catalog?*', {
-      body: {
-        items: [
+    cy.intercept('GET', '**/api/products/search*', [
         { id: 1, name: 'Exact Pokemon', game: 'Pokemon', type: 'Single', price: 500, source: 'OFFICIAL' },
         { id: 2, name: 'Fuzzy Pokamon', game: 'Pokemon', type: 'Single', price: 100, source: 'OFFICIAL' },
         { id: 3, name: 'Other game card', game: 'One Piece', type: 'Single', price: 200, source: 'OFFICIAL' },
-        ],
-        page: 0,
-        pageSize: 24,
-        totalItems: 3,
-        totalPages: 1,
-        sort: 'newest',
-      },
-    });
+    ]).as('rankedSearch');
     cy.visit('/search?q=pokemon');
+    cy.wait('@rankedSearch');
     cy.contains('Exact Pokemon').should('be.visible').then(($exact) => {
       cy.contains('Fuzzy Pokamon').then(($fuzzy) => {
         expect($exact[0].compareDocumentPosition($fuzzy[0]) & Node.DOCUMENT_POSITION_FOLLOWING).to.not.equal(0);
@@ -49,8 +41,9 @@ describe('Catalog search', () => {
         expect($fuzzy[0].compareDocumentPosition($exact[0]) & Node.DOCUMENT_POSITION_FOLLOWING).to.not.equal(0);
       });
     });
-    cy.contains('button', 'Game:').click();
-    cy.contains('button', 'One Piece').click();
+    cy.contains('button', 'Filters').click();
+    cy.contains('label', 'Game').find('select').select('One Piece');
+    cy.contains('button', 'Apply filters').click();
     cy.contains('Other game card').should('be.visible');
     cy.contains('Exact Pokemon').should('not.exist');
   });

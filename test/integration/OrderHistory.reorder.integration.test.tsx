@@ -50,7 +50,7 @@ describe('Order history reorder', () => {
     expect(screen.getByText(`Nothing from order #${order.orderNumber} could be added to your cart.`)).toBeInTheDocument();
   });
 
-  it('confirms a successful reorder and links to the cart', async () => {
+  it('floats a confirmation after a successful reorder and links to the cart', async () => {
     vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
       if (init?.method === 'POST') {
         return json({
@@ -64,8 +64,9 @@ describe('Order history reorder', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Order again' }));
 
-    expect(await screen.findByText(`1 item from order #${order.orderNumber} added to your cart.`)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Go to cart' })).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: 'Cart updated' })).toHaveClass('fixed', 'bg-emerald-50');
+    expect(screen.getByText(`2 items from order #${order.orderNumber} are now in your cart.`)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Review cart' })).toBeInTheDocument();
   });
 
   it('shows an error when the reorder request fails', async () => {

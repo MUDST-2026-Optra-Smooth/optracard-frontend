@@ -59,6 +59,14 @@ export function CatalogFilterDrawer({ open, initialParams, onClose, onApply }: C
 
   const clear = () => setDraft(new URLSearchParams());
 
+  const minPrice = parsePrice(draft.get('minPrice'));
+  const maxPrice = parsePrice(draft.get('maxPrice'));
+  const hasInvalidPriceRange = minPrice !== null && maxPrice !== null && minPrice > maxPrice;
+
+  const apply = () => {
+    if (!hasInvalidPriceRange) onApply(draft);
+  };
+
   return (
     <>
       <button type="button" aria-label="Close filters" onClick={onClose} className="fixed inset-0 z-[70] bg-black/35" />
@@ -76,15 +84,16 @@ export function CatalogFilterDrawer({ open, initialParams, onClose, onApply }: C
           <div>
             <p className="mb-2 text-sm font-semibold text-slate-600">Price range</p>
             <div className="grid grid-cols-2 gap-3">
-              <input type="number" min="0" value={draft.get('minPrice') ?? ''} onChange={(event) => setFilter('minPrice', event.target.value)} placeholder="Min Price" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 outline-none focus:border-blue-500" />
-              <input type="number" min="0" value={draft.get('maxPrice') ?? ''} onChange={(event) => setFilter('maxPrice', event.target.value)} placeholder="Max Price" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 outline-none focus:border-blue-500" />
+              <input type="number" min="0" max={maxPrice ?? undefined} aria-invalid={hasInvalidPriceRange} value={draft.get('minPrice') ?? ''} onChange={(event) => setFilter('minPrice', event.target.value)} placeholder="Min Price" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 outline-none focus:border-blue-500 aria-[invalid=true]:border-red-500" />
+              <input type="number" min={minPrice ?? 0} aria-invalid={hasInvalidPriceRange} value={draft.get('maxPrice') ?? ''} onChange={(event) => setFilter('maxPrice', event.target.value)} placeholder="Max Price" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 outline-none focus:border-blue-500 aria-[invalid=true]:border-red-500" />
             </div>
+            {hasInvalidPriceRange && <p className="mt-2 text-sm text-red-600" role="alert">Minimum price cannot exceed maximum price.</p>}
           </div>
         </div>
 
         <div className="flex gap-3 border-t border-slate-200 px-6 py-5">
           <button type="button" onClick={clear} className="flex-1 rounded-full border border-blue-600 px-5 py-3 font-semibold text-blue-600 hover:bg-blue-50">Clear all</button>
-          <button type="button" onClick={() => onApply(draft)} className="flex-1 rounded-full bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">Apply filters</button>
+          <button type="button" disabled={hasInvalidPriceRange} onClick={apply} className="flex-1 rounded-full bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300">Apply filters</button>
         </div>
       </aside>
     </>
@@ -93,4 +102,10 @@ export function CatalogFilterDrawer({ open, initialParams, onClose, onApply }: C
 
 function FilterSelect({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
   return <label className="block text-sm font-semibold text-slate-600">{label}<select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-blue-500"><option value="">All</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>;
+}
+
+function parsePrice(value: string | null): number | null {
+  if (value === null || value.trim() === '') return null;
+  const price = Number(value);
+  return Number.isFinite(price) ? price : null;
 }
