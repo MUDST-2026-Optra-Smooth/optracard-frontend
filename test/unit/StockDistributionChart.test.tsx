@@ -45,3 +45,4 @@ describe('StockDistributionChart Unit Tests', () => {
     expect(screen.getByText('Pokemon')).toBeInTheDocument();
   });
 });
+
