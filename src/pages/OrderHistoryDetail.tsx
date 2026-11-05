@@ -5,6 +5,7 @@ import { OrderDetailPanel } from '../components/OrderDetailPanel';
 import { type OrderStatus } from '../components/OrderHistoryCard';
 import { OrderSummary } from '../components/OrderSummary';
 import { ReorderResultPanel } from '../components/ReorderResultPanel';
+import { ReorderSuccessToast } from '../components/ReorderSuccessToast';
 import { reorderOrder, type ReorderResult } from '../api/orders';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
@@ -191,6 +192,7 @@ export function OrderHistoryDetail() {
   const [error, setError] = useState<string | null>(null);
   const [isReordering, setIsReordering] = useState(false);
   const [reorderResult, setReorderResult] = useState<ReorderResult | null>(null);
+  const [reorderToast, setReorderToast] = useState<ReorderResult | null>(null);
   const [reorderError, setReorderError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -236,8 +238,12 @@ export function OrderHistoryDetail() {
   const timeline = useMemo(() => order ? timelineFor(order) : [], [order]);
   const handleReorder = async () => {
     if (!order) return;
-    setIsReordering(true); setReorderResult(null); setReorderError(null);
-    try { setReorderResult(await reorderOrder(order.orderNumber)); }
+    setIsReordering(true); setReorderResult(null); setReorderToast(null); setReorderError(null);
+    try {
+      const result = await reorderOrder(order.orderNumber);
+      setReorderResult(result);
+      if (result.addedCount > 0) setReorderToast(result);
+    }
     catch (reorderFailure) { setReorderError(reorderFailure instanceof Error ? reorderFailure.message : 'Could not add this order to your cart.'); }
     finally { setIsReordering(false); }
   };
@@ -258,6 +264,7 @@ export function OrderHistoryDetail() {
   const hasTrackingNumber = Boolean(order.trackingNumber?.trim());
   const deliveryHeading = order.shippingMethod.toLowerCase() === 'pickup' ? 'Pickup information' : 'Shipping address';
   const deliverySubheading = order.shippingMethod.toLowerCase() === 'pickup' ? 'Collection details' : 'Delivery address';
+  const reorderNeedsDetails = reorderResult && (reorderResult.addedCount === 0 || reorderResult.skippedCount > 0 || reorderResult.added.some((line) => line.reason));
 
   return (
     <section className="min-h-full bg-[#f6f8fb] font-sans text-[#20242b]">
@@ -283,7 +290,7 @@ export function OrderHistoryDetail() {
           </div>
         </div>
         {reorderError && <p role="alert" className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{reorderError}</p>}
-        {reorderResult && <ReorderResultPanel result={reorderResult} onDismiss={() => setReorderResult(null)} />}
+        {reorderNeedsDetails && <ReorderResultPanel result={reorderResult} onDismiss={() => setReorderResult(null)} />}
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.9fr)]">
           <div className="space-y-3">
@@ -342,6 +349,7 @@ export function OrderHistoryDetail() {
           </div>
         </div>
       </div>
+      {reorderToast && <ReorderSuccessToast result={reorderToast} onDismiss={() => setReorderToast(null)} />}
     </section>
   );
 }
