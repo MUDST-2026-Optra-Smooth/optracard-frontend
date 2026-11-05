@@ -128,8 +128,10 @@ export interface AdminPromotion {
   name: string;
   discountType: PromotionDiscountType;
   discountValue: number;
+  maximumDiscountAmount: number | null;
   minimumOrderAmount: number;
   usageLimit: number | null;
+  perUserLimit: number | null;
   usageCount: number;
   startsAt: string;
   endsAt: string;
@@ -141,8 +143,10 @@ export interface AdminPromotionInput {
   name: string;
   discountType: PromotionDiscountType;
   discountValue: number;
+  maximumDiscountAmount: number | null;
   minimumOrderAmount: number;
   usageLimit: number | null;
+  perUserLimit: number | null;
   startsAt: string;
   endsAt: string;
   active: boolean;
