@@ -3,15 +3,9 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
 import { FilterDropdown, type DropdownOption } from '../components/FilterDropdown';
+import { CatalogFilterDrawer } from '../components/CatalogFilterDrawer';
 import { searchCatalog } from '../api/catalog';
 import type { CatalogProduct } from '../types/catalog';
-
-const defaultGameOptions: DropdownOption[] = [
-  { label: 'All Games', value: 'all', shortLabel: 'All' },
-  { label: 'Pokemon', value: 'Pokemon' },
-  { label: 'Battle of Talingchan', value: 'Battle of Talingchan' },
-  { label: 'One Piece', value: 'One Piece' },
-];
 
 const sortOptions: DropdownOption[] = [
   { label: 'Most Relevant', value: 'relevance' },
@@ -25,8 +19,8 @@ export const SearchResult = () => {
   const navigate = useNavigate();
   const query = searchParams.get('q') ?? '';
 
-  const [selectedGame, setSelectedGame] = useState<DropdownOption>(defaultGameOptions[0]);
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
+  const [showFilters, setShowFilters] = useState(false);
   
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,23 +48,8 @@ export const SearchResult = () => {
     return () => { isCurrent = false; };
   }, [query]);
 
-  const gameOptions = useMemo<DropdownOption[]>(() => {
-    const games = Array.from(new Set(products.map((p) => p.game).filter(Boolean))).sort();
-    if (games.length === 0) return defaultGameOptions;
-    return [
-      { label: 'All Games', value: 'all', shortLabel: 'All' },
-      ...games.map((g) => ({ label: g, value: g })),
-    ];
-  }, [products]);
-
   const filteredProducts = useMemo(() => {
-    let result = products;
-
-    if (selectedGame.value !== 'all') {
-      result = result.filter(
-        (p) => p.game.toLowerCase() === selectedGame.value.toLowerCase() || p.game === selectedGame.label
-      );
-    }
+    let result = products.filter((product) => matchesFilters(product, searchParams));
 
     if (selectedSort.value === 'price_asc') {
       result = [...result].sort((a, b) => a.price - b.price);
@@ -81,7 +60,7 @@ export const SearchResult = () => {
     }
 
     return result;
-  }, [products, selectedGame, selectedSort]);
+  }, [products, searchParams.toString(), selectedSort]);
 
   const marketplaceListings = useMemo(
     () => filteredProducts.filter((p) => p.source === 'MARKETPLACE'),
@@ -106,6 +85,14 @@ export const SearchResult = () => {
     });
   }, [officialProducts]);
 
+  const applyFilters = (params: URLSearchParams) => {
+    params.delete('pending');
+    if (query) params.set('q', query);
+    else params.delete('q');
+    navigate(`/search?${params.toString()}`);
+    setShowFilters(false);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -118,9 +105,11 @@ export const SearchResult = () => {
       </div>
 
       <div className="flex justify-between items-center mb-10">
-        <FilterDropdown label="Game:" options={gameOptions} selected={selectedGame} onSelect={setSelectedGame} />
+        <button type="button" onClick={() => setShowFilters(true)} className="inline-flex items-center gap-2 rounded-lg border border-[#44516a] bg-white px-4 py-2.5 text-sm font-semibold text-[#263b61] shadow-sm hover:border-blue-500"><span>☰</span> Filters</button>
         <FilterDropdown label="Sort by :" options={sortOptions} selected={selectedSort} onSelect={setSelectedSort} align="right" />
       </div>
+
+      <CatalogFilterDrawer open={showFilters} initialParams={searchParams} onClose={() => setShowFilters(false)} onApply={applyFilters} />
 
       {isLoading && <p className="text-center py-10">กำลังค้นหาสินค้า...</p>}
       {error && <p className="text-center text-red-600 py-10">{error}</p>}
@@ -132,8 +121,11 @@ export const SearchResult = () => {
       {!isLoading && !error && filteredProducts.length > 0 && (
         <>
           {officialProducts.length > 0 && (
-            <section className="mb-12 text-center">
-              <h2 className="text-3xl font-bold text-blue-600 mb-8">Optracard Official Store</h2>
+            <section className="mb-12">
+              <div className="mb-8 border-b border-slate-200 pb-5">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Sold and fulfilled by Optracard</p>
+                <h2 className="mt-1 text-3xl font-black text-slate-900">Optracard Official Store</h2>
+              </div>
               
               {officialCategories.map((type) => {
                 const items = officialProducts.filter((p) => p.type === type);
@@ -220,3 +212,24 @@ export const SearchResult = () => {
     </div>
   );
 };
+
+function matchesFilters(product: CatalogProduct, params: URLSearchParams): boolean {
+  const matches = (value: string | null, productValue: string | null | undefined) =>
+    !value || productValue?.trim().toLowerCase() === value.trim().toLowerCase();
+  const minPrice = parsePrice(params.get('minPrice'));
+  const maxPrice = parsePrice(params.get('maxPrice'));
+
+  return matches(params.get('type'), product.type)
+    && matches(params.get('game'), product.game)
+    && matches(params.get('language'), product.language)
+    && matches(params.get('source'), product.source)
+    && (!params.get('storeId') || String(product.store.id ?? '') === params.get('storeId'))
+    && (minPrice === null || product.price >= minPrice)
+    && (maxPrice === null || product.price <= maxPrice);
+}
+
+function parsePrice(value: string | null): number | null {
+  if (value === null || value.trim() === '') return null;
+  const price = Number(value);
+  return Number.isFinite(price) ? price : null;
+}
