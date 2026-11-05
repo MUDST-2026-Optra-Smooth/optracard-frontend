@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Banknote, Boxes, ClipboardCheck, Eye, PackageCheck, RefreshCcw, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Banknote, ClipboardCheck, Eye, PackageCheck, RefreshCcw, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { loadAdminDashboard } from '../api/admin';
 import { AdminError, AdminLoading, AdminWorkspace, formatCurrency, formatDate, StatusBadge } from '../components/AdminWorkspace';
