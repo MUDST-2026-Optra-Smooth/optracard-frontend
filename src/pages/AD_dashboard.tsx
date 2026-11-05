@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { loadAdminDashboard } from '../api/admin';
 import { AdminError, AdminLoading, AdminWorkspace, formatCurrency, formatDate, StatusBadge } from '../components/AdminWorkspace';
 import type { AdminDashboard } from '../types/admin';
+import { RevenueBarChart } from '../components/dashboard/RevenueBarChart';
+import { OrderStatusDonutChart } from '../components/dashboard/OrderStatusDonutChart';
+import { StockDistributionChart } from '../components/dashboard/StockDistributionChart';
 
 const Stat = ({
   label,
@@ -154,43 +157,7 @@ export const ADdashboard = () => {
 
           {/* Monthly Breakdown & Action Items */}
           <div className="grid gap-6 lg:grid-cols-3">
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-              <div className="mb-4 flex items-center gap-2">
-                <Boxes className="h-5 w-5 text-blue-600" />
-                <div>
-                  <h2 className="font-bold text-slate-900">Revenue & expenses by month</h2>
-                  <p className="text-xs text-slate-500">Derived from recorded customer orders and product costs.</p>
-                </div>
-              </div>
-              {dashboard.monthlyMetrics.length === 0 ? (
-                <p className="py-8 text-center text-sm text-slate-500">No order history available in the database yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="border-b text-left text-xs uppercase tracking-wide text-slate-400">
-                      <tr>
-                        <th className="pb-3">Month</th>
-                        <th className="pb-3 text-right">Revenue</th>
-                        <th className="pb-3 text-right">Expenses</th>
-                        <th className="pb-3 text-right">Profit</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dashboard.monthlyMetrics.map((metric) => (
-                        <tr key={metric.month} className="border-b border-slate-100 last:border-0">
-                          <td className="py-3 font-semibold">{metric.month}</td>
-                          <td className="py-3 text-right text-emerald-700">{formatCurrency(metric.revenue)}</td>
-                          <td className="py-3 text-right text-orange-700">{formatCurrency(metric.expenses)}</td>
-                          <td className="py-3 text-right font-bold text-blue-700">
-                            {formatCurrency(metric.revenue - metric.expenses)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+            <RevenueBarChart metrics={dashboard.monthlyMetrics} className="lg:col-span-2" />
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
@@ -238,6 +205,21 @@ export const ADdashboard = () => {
                 </button>
               </div>
             </section>
+          </div>
+          {/* Visual Statistics: Order Status and Inventory Health */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <OrderStatusDonutChart
+              orders={dashboard.recentOrders}
+              title="Recent Orders Breakdown"
+              subtitle="Current fulfillment status distribution across recent customer orders."
+            />
+            <StockDistributionChart
+              inStockCount={Math.max(dashboard.activeOfficialProducts - dashboard.lowStockProducts, 0)}
+              lowStockCount={dashboard.lowStockProducts}
+              outOfStockCount={0}
+              title="Official Inventory Health"
+              subtitle="Stock status breakdown across active official catalog listings."
+            />
           </div>
 
           {/* Recent Orders Table */}
