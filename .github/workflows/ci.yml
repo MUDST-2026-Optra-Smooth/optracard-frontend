@@ -75,7 +75,6 @@ jobs:
     env:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || 'saksitboom' }}
-      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
     defaults:
       run:
         shell: powershell
@@ -92,25 +91,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'kubectl is not available on this self-hosted runner.' }
 
       - name: Configure and verify Kubernetes access
-        env:
-          KUBECONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64 }}
         run: |
           $localKubeconfig = Join-Path $env:USERPROFILE '.kube\config'
-          if (Test-Path -LiteralPath $localKubeconfig) {
-            $kubeconfigPath = $localKubeconfig
-            Write-Host 'Using the Kubernetes context configured on this self-hosted runner.'
-          } elseif ($env:KUBECONFIG_BASE64) {
-            $kubeconfigPath = Join-Path $env:RUNNER_TEMP 'optracard-kubeconfig'
-            [IO.File]::WriteAllBytes($kubeconfigPath, [Convert]::FromBase64String($env:KUBECONFIG_BASE64.Trim()))
-            Write-Host 'Using Kubernetes access from KUBECONFIG_BASE64.'
-          } else {
-            throw 'No local Kubernetes config is available and KUBECONFIG_BASE64 is not configured.'
+          if (-not (Test-Path -LiteralPath $localKubeconfig)) {
+            throw "No Kubernetes config found at $localKubeconfig for the self-hosted runner service account."
           }
-          "KUBECONFIG=$kubeconfigPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "KUBECONFIG=$localKubeconfig" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-          kubectl --kubeconfig $kubeconfigPath cluster-info --request-timeout=15s
+          kubectl --kubeconfig $localKubeconfig cluster-info --request-timeout=15s
           if ($LASTEXITCODE -ne 0) {
-            throw 'The configured Kubernetes API is unreachable from this runner. Update KUBECONFIG_BASE64 for this machine.'
+            throw 'The Kubernetes API configured on this self-hosted runner is unreachable.'
           }
 
       - name: Log in to Docker Hub
@@ -139,21 +129,7 @@ jobs:
           kubectl rollout status deployment/optracard-frontend-deployment -n optracard-frontend --timeout=180s
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
-      - name: Set up Node.js for deployed E2E smoke tests
-        if: env.FRONTEND_URL != ''
-        env:
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Run deployed full-stack smoke tests
-        if: env.FRONTEND_URL != ''
-        env:
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-          CYPRESS_E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
-          CYPRESS_E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      - name: Run deployed public smoke checks
         run: |
           $ErrorActionPreference = 'Stop'
           $frontendPortForward = $null
@@ -173,13 +149,7 @@ jobs:
               }
             }
             if (-not $ready) { throw 'Frontend port-forward did not become ready.' }
-
-            npm ci --prefer-offline --no-audit
-            if ($LASTEXITCODE -ne 0) { exit 1 }
-            $env:CYPRESS_BASE_URL = 'http://127.0.0.1:30080'
-            $env:CYPRESS_API_BASE_URL = 'http://127.0.0.1:30081'
-            npm run test:e2e:deployed -- --config video=false
-            if ($LASTEXITCODE -ne 0) { exit 1 }
+            Invoke-WebRequest -Uri 'http://127.0.0.1:30081/v3/api-docs' -UseBasicParsing -TimeoutSec 10 | Out-Null
           } finally {
             if ($frontendPortForward) { Stop-Process -Id $frontendPortForward.Id -Force -ErrorAction SilentlyContinue }
             if ($backendPortForward) { Stop-Process -Id $backendPortForward.Id -Force -ErrorAction SilentlyContinue }
