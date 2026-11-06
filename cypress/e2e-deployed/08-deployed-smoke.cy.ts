@@ -21,12 +21,44 @@ describe('Deployed full-stack smoke journeys', () => {
 
   it('loads the deployed frontend storefront successfully', () => {
     cy.visit('/');
-    cy.get('body').should('be.visible');
+    cy.get('nav').should('contain.text', 'Optracard');
   });
 
-  it.skip('shows catalog data from the deployed backend in the storefront', () => {
+  it('returns public catalog, search, and a product response from the deployed backend', () => {
+    cy.then(() => {
+      cy.request(`${apiBaseUrl}/api/products/home`).then((catalog) => {
+        expect(catalog.status).to.eq(200);
+        expect(catalog.body).to.be.an('array');
+
+        cy.request(`${apiBaseUrl}/api/products/search?q=pokemon`).then((search) => {
+          expect(search.status).to.eq(200);
+          expect(search.body).to.be.an('array');
+        });
+
+        const productId = catalog.body[0]?.id ?? catalog.body[0]?.proId;
+        if (productId !== undefined) {
+          cy.request(`${apiBaseUrl}/api/products/${productId}`).its('status').should('eq', 200);
+        }
+      });
+    });
   });
 
-  it.skip('authenticates through the UI and can read the protected profile API', () => {
+  it('authenticates a dedicated smoke user and reads only profile and history', function () {
+    const email = Cypress.env('E2E_EMAIL');
+    const password = Cypress.env('E2E_PASSWORD');
+    if (!email || !password) this.skip();
+
+    cy.then(() => {
+      cy.request('POST', `${apiBaseUrl}/api/auth/login`, { email, password }).then((login) => {
+        expect(login.status).to.eq(200);
+        expect(login.body.token).to.be.a('string').and.not.be.empty;
+        const headers = { Authorization: `Bearer ${login.body.token}` };
+        cy.request({ url: `${apiBaseUrl}/api/profile`, headers }).then((profile) => {
+          expect(profile.status).to.eq(200);
+          expect(profile.body.email).to.eq(email);
+        });
+        cy.request({ url: `${apiBaseUrl}/api/orders`, headers }).its('status').should('eq', 200);
+      });
+    });
   });
 });

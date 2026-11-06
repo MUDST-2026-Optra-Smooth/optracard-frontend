@@ -49,19 +49,30 @@ describe('Catalog search', () => {
   });
 
   it('does not show stale suggestions after a newer query', () => {
+    let oldRequestStarted = false;
+    let releaseOldResponse: (() => void) | undefined;
     cy.intercept('GET', '**/api/products/search*', (request) => {
       if (request.query.q === 'old') {
-        request.reply({ delay: 1200, body: [{ id: 1, name: 'Old result', game: 'Old', type: 'Single' }] });
+        oldRequestStarted = true;
+        return new Promise((resolve) => {
+          releaseOldResponse = () => resolve({ body: [{ id: 1, name: 'Old result', game: 'Old', type: 'Single' }] });
+        });
       } else {
         request.reply({ body: [{ id: 2, name: 'New result', game: 'New', type: 'Single' }] });
       }
-    }).as('delayedSearch');
+    }).as('searchSuggestions');
     cy.visit('/');
+    cy.clock();
     cy.get('nav input[placeholder*="Search"]').type('old');
-    cy.wait(400);
+    cy.tick(300);
+    cy.wrap(null).should(() => expect(oldRequestStarted).to.eq(true));
     cy.get('nav input[placeholder*="Search"]').clear().type('new');
+    cy.tick(300);
     cy.get('nav').contains('New result').should('be.visible');
-    cy.wait(1400);
+    cy.then(() => {
+      expect(releaseOldResponse).to.be.a('function');
+      releaseOldResponse?.();
+    });
     cy.get('nav').contains('Old result').should('not.exist');
   });
 });
