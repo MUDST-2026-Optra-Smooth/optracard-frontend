@@ -25,6 +25,8 @@ interface OrderHistoryCardProps {
     label: string;
     variant: 'link' | 'outline' | 'primary';
     to?: string;
+    onClick?: () => void;
+    disabled?: boolean;
   }>;
 }
 
@@ -118,7 +120,9 @@ export const OrderHistoryCard = ({
               <button
                 key={action.label}
                 type="button"
-                className={`rounded-md px-3 py-2 text-[10px] font-bold transition ${actionStyles[action.variant]}`}
+                onClick={action.onClick}
+                disabled={action.disabled}
+                className={`rounded-md px-3 py-2 text-[10px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${actionStyles[action.variant]}`}
               >
                 {action.label}
               </button>

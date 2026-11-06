@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import logoIcon from '../assets/logo-icon.png';
 import { useAuth } from '../context/AuthContext';
+import { StockAlertBell } from './StockAlertBell';
 
 interface AdminHeaderProps {
   fixed?: boolean;
@@ -12,12 +13,16 @@ interface AdminHeaderProps {
 export const AdminHeader = ({ fixed = false, workspaceName }: AdminHeaderProps) => {
   const { user } = useAuth();
   const [hidden, setHidden] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const headerName = workspaceName ?? user?.username;
 
   useEffect(() => {
     if (!fixed) return;
 
     const handleScroll = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node && headerRef.current?.contains(target)) return;
+
       const source = event.target;
       const scrollTop = source instanceof HTMLElement ? source.scrollTop : window.scrollY;
       setHidden(scrollTop > 8);
@@ -28,7 +33,7 @@ export const AdminHeader = ({ fixed = false, workspaceName }: AdminHeaderProps) 
   }, [fixed]);
 
   return (
-    <header className={`${fixed ? 'absolute inset-x-0 top-0 z-50' : ''} ${hidden ? '-translate-y-full' : 'translate-y-0'} flex h-16 items-center justify-between border-0 bg-[#08152a] px-5 text-white sm:px-8 transition-transform`}>
+    <header ref={headerRef} className={`${fixed ? 'absolute inset-x-0 top-0 z-50' : ''} ${hidden ? '-translate-y-full' : 'translate-y-0'} flex h-16 items-center justify-between border-0 bg-[#08152a] px-5 text-white sm:px-8 transition-transform`}>
       <div className="flex items-center">
         <Link to="/" className="flex items-center gap-2.5 hover:opacity-90 transition" title="Go to storefront">
           <img src={logoIcon} alt="Optracard logo" className="h-8 w-8 object-contain" />
@@ -43,6 +48,7 @@ export const AdminHeader = ({ fixed = false, workspaceName }: AdminHeaderProps) 
       </div>
 
       <div className="flex items-center gap-4">
+        <StockAlertBell />
         <Link
           to="/"
           className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-slate-800/60 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:border-slate-500 hover:bg-slate-800 hover:text-white transition cursor-pointer"

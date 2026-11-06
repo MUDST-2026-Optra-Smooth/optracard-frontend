@@ -24,6 +24,9 @@ spec:
         - name: optracard-frontend-container
           image: saksitboom/optracard-frontend:latest
           imagePullPolicy: Always
+          env:
+            - name: BACKEND_UPSTREAM
+              value: optracard-backend-service.optracard-backend.svc.cluster.local:8080
           ports:
             - containerPort: 80
 ---

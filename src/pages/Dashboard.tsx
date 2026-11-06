@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { SalesTrendLineChart } from '../components/dashboard/SalesTrendLineChart';
+import { OrderStatusDonutChart } from '../components/dashboard/OrderStatusDonutChart';
+import { StockDistributionChart } from '../components/dashboard/StockDistributionChart';
 import {
   BarChart3,
   CheckCircle2,
@@ -64,6 +67,27 @@ export const Dashboard = () => {
   const lowStockProducts = products.filter((p) => p.active && p.stock <= 3);
 
   const storeName = store?.storeName || 'My Shop';
+
+  const salesTrendData = useMemo(() => {
+    const map: Record<string, { revenue: number; orders: number }> = {};
+    const sorted = [...orders]
+      .filter((o) => o.status !== 'Canceled' && o.createdAt)
+      .sort((a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime());
+
+    sorted.forEach((o) => {
+      const date = new Date(o.createdAt!);
+      const label = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      if (!map[label]) map[label] = { revenue: 0, orders: 0 };
+      map[label].revenue += Number(o.total || 0);
+      map[label].orders += 1;
+    });
+
+    return Object.entries(map).map(([label, val]) => ({
+      label,
+      revenue: val.revenue,
+      orders: val.orders,
+    }));
+  }, [orders]);
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800">
@@ -201,6 +225,26 @@ export const Dashboard = () => {
                       {orders.length} total orders <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
+                </div>
+
+                {/* Visual Statistics & Trends */}
+                <SalesTrendLineChart
+                  data={salesTrendData}
+                  title="Shop Sales & Revenue Trajectory"
+                  subtitle="Recorded customer order volume and daily sales trends for your store."
+                />
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <OrderStatusDonutChart
+                    orders={orders}
+                    title="Order Fulfillment Breakdown"
+                    subtitle="Distribution of pending, shipped, and completed store orders."
+                  />
+                  <StockDistributionChart
+                    products={products}
+                    title="Product Stock Health & Games"
+                    subtitle="Inventory levels and card game variety currently in your catalog."
+                  />
                 </div>
 
                 {/* Grid: Recent Orders & Stock Alerts */}

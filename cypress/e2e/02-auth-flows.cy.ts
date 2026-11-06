@@ -31,6 +31,25 @@ describe('Authentication & User Registration Flows', () => {
     });
   });
 
+  it('sends a seller to the storefront after login, even when they started at the seller dashboard', () => {
+    cy.intercept('POST', '**/api/auth/login', {
+      token: 'fake-jwt-token-seller',
+      userId: 2,
+      username: 'demo-seller',
+      email: 'seller@optracard.local',
+      role: 'SELLER',
+    }).as('sellerLogin');
+
+    cy.visit('/dashboard');
+    cy.url().should('include', '/login');
+    cy.get('input[name="email"]').type('seller@optracard.local');
+    cy.get('input[name="password"]').type('password123');
+    cy.get('form').contains('button[type="submit"]', /Login/i).click();
+
+    cy.wait('@sellerLogin');
+    cy.url().should('eq', `${Cypress.config().baseUrl}/`);
+  });
+
   it('renders registration page and validates password matching', () => {
     cy.visit('/register');
     cy.get('input[name="username"]').should('be.visible');

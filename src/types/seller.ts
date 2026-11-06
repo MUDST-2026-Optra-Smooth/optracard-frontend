@@ -47,6 +47,12 @@ export interface SellerOrder {
   recipientPhone: string | null;
   trackingNumber: string | null;
   items: SellerOrderItem[];
+  storeName?: string | null;
+  shippingFee?: number | null;
+  subtotal?: number | null;
+  discountCode?: string | null;
+  discountName?: string | null;
+  discountAmount?: number | null;
 }
 
 export interface SellerProductInput {

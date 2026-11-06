@@ -12,6 +12,7 @@ import {
   PackageCheck,
   CheckCircle2,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { loadMyStore, loadSellerOrders, updateSellerOrderStatus } from '../api/seller';
 import type { SellerOrder, SellerStoreInfo } from '../types/seller';
@@ -562,7 +563,13 @@ export const OrdersManagement = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end">
+            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-2">
+              <Link
+                to={`/orders-management/${activeModalOrder.orderId}`}
+                className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition"
+              >
+                Summary / PDF
+              </Link>
               <button
                 type="button"
                 onClick={() => setActiveModalOrder(null)}
