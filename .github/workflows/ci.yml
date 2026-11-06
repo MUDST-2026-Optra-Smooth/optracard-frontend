@@ -69,49 +69,70 @@ jobs:
     name: Build, Push & Deploy Frontend
     needs: build-and-test
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
-    runs-on: self-hosted
+    # Deployments need Docker Desktop and Kubernetes access, so they run only
+    # on the Windows self-hosted runner. The CI job above remains GitHub-hosted.
+    runs-on: [self-hosted, Windows, X64]
     env:
-      DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: '1'
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || 'saksitboom' }}
       FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+    defaults:
+      run:
+        shell: powershell
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
-        if: env.DOCKERHUB_TOKEN != ''
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || 'saksitboom' }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        shell: bash
+      - name: Verify self-hosted deployment prerequisites
         run: |
-          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker version
+          if ($LASTEXITCODE -ne 0) { throw 'Docker Desktop is not available to this runner service.' }
+          kubectl version --client
+          if ($LASTEXITCODE -ne 0) { throw 'kubectl is not available on this self-hosted runner.' }
+
+      - name: Configure and verify Kubernetes access
+        env:
+          KUBECONFIG_BASE64: ${{ secrets.KUBECONFIG_BASE64 }}
+        run: |
+          if (-not $env:KUBECONFIG_BASE64) {
+            throw 'Missing GitHub Secret KUBECONFIG_BASE64. Add a kubeconfig that is reachable from this self-hosted runner.'
+          }
+
+          $kubeconfigPath = Join-Path $env:RUNNER_TEMP 'optracard-kubeconfig'
+          [IO.File]::WriteAllBytes($kubeconfigPath, [Convert]::FromBase64String($env:KUBECONFIG_BASE64.Trim()))
+          "KUBECONFIG=$kubeconfigPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          kubectl --kubeconfig $kubeconfigPath cluster-info --request-timeout=15s
+          if ($LASTEXITCODE -ne 0) {
+            throw 'The configured Kubernetes API is unreachable from this runner. Update KUBECONFIG_BASE64 for this machine.'
+          }
+
+      - name: Log in to Docker Hub
+        run: |
+          if (-not $env:DOCKERHUB_TOKEN) { throw 'Missing GitHub Secret DOCKERHUB_TOKEN.' }
+          $env:DOCKERHUB_TOKEN | docker login --username $env:DOCKERHUB_USERNAME --password-stdin
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Build and push frontend image
-        shell: bash
         run: |
-          DOCKER_USER="${{ secrets.DOCKERHUB_USERNAME || 'saksitboom' }}"
-          IMAGE_TAG="$DOCKER_USER/optracard-frontend:${{ github.sha }}"
-          LATEST_TAG="$DOCKER_USER/optracard-frontend:latest"
-          # The production image uses the same-origin /api Nginx proxy. Do not
-          # embed a localhost or externally port-forwarded backend URL here.
-          docker build -t "$IMAGE_TAG" -t "$LATEST_TAG" .
-          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            docker push "$IMAGE_TAG"
-            docker push "$LATEST_TAG"
-          fi
+          $imageTag = "$($env:DOCKERHUB_USERNAME)/optracard-frontend:${{ github.sha }}"
+          $latestTag = "$($env:DOCKERHUB_USERNAME)/optracard-frontend:latest"
+          docker build -t $imageTag -t $latestTag .
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          docker push $imageTag
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          docker push $latestTag
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Apply manifest and roll out frontend
-        shell: bash
         run: |
-          DOCKER_USER="${{ secrets.DOCKERHUB_USERNAME || 'saksitboom' }}"
           kubectl apply -f app-pod.yaml
-          kubectl set image deployment/optracard-frontend-deployment \
-            optracard-frontend-container="$DOCKER_USER/optracard-frontend:${{ github.sha }}" \
-            -n optracard-frontend
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          kubectl set image deployment/optracard-frontend-deployment "optracard-frontend-container=$($env:DOCKERHUB_USERNAME)/optracard-frontend:${{ github.sha }}" -n optracard-frontend
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           kubectl rollout status deployment/optracard-frontend-deployment -n optracard-frontend --timeout=180s
+          if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: Set up Node.js for deployed E2E smoke tests
         if: env.FRONTEND_URL != ''
@@ -126,35 +147,38 @@ jobs:
         if: env.FRONTEND_URL != ''
         env:
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-          CYPRESS_BASE_URL: ${{ secrets.FRONTEND_URL }}
-          CYPRESS_API_BASE_URL: ${{ secrets.BACKEND_API_URL }}
           CYPRESS_E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           CYPRESS_E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-        shell: bash
         run: |
-          taskkill //F //IM kubectl.exe 2>/dev/null || true
+          $ErrorActionPreference = 'Stop'
+          $frontendPortForward = $null
+          $backendPortForward = $null
+          try {
+            $frontendPortForward = Start-Process kubectl -ArgumentList @('port-forward', 'svc/optracard-frontend-service', '30080:80', '-n', 'optracard-frontend') -PassThru -NoNewWindow
+            $backendPortForward = Start-Process kubectl -ArgumentList @('port-forward', 'svc/optracard-backend-service', '30081:8080', '-n', 'optracard-backend') -PassThru -NoNewWindow
 
-          kubectl port-forward svc/optracard-frontend-service 30080:80 -n optracard-frontend & PF_FE_PID=$!
-          kubectl port-forward svc/optracard-backend-service 30081:8080 -n optracard-backend & PF_BE_PID=$!
-          
-          trap "kill $PF_FE_PID $PF_BE_PID 2>/dev/null || true; taskkill //F //IM kubectl.exe 2>/dev/null || true" EXIT
+            $ready = $false
+            foreach ($attempt in 1..15) {
+              try {
+                Invoke-WebRequest -Uri 'http://127.0.0.1:30080' -UseBasicParsing -TimeoutSec 2 | Out-Null
+                $ready = $true
+                break
+              } catch {
+                Start-Sleep -Seconds 2
+              }
+            }
+            if (-not $ready) { throw 'Frontend port-forward did not become ready.' }
 
-          for i in {1..15}; do
-            if curl -s -f -o /dev/null http://127.0.0.1:30080; then
-              echo "Frontend port-forward is ready!"
-              break
-            fi
-            sleep 2
-          done
-
-          if [ ! -d "node_modules/cypress" ]; then
-            echo "Installing dependencies..."
             npm ci --prefer-offline --no-audit
-          else
-            echo "Using existing node_modules on self-hosted runner..."
-          fi
-
-          npm run test:e2e:deployed -- --config video=false
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+            $env:CYPRESS_BASE_URL = 'http://127.0.0.1:30080'
+            $env:CYPRESS_API_BASE_URL = 'http://127.0.0.1:30081'
+            npm run test:e2e:deployed -- --config video=false
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          } finally {
+            if ($frontendPortForward) { Stop-Process -Id $frontendPortForward.Id -Force -ErrorAction SilentlyContinue }
+            if ($backendPortForward) { Stop-Process -Id $backendPortForward.Id -Force -ErrorAction SilentlyContinue }
+          }
 
       - name: Upload deployed E2E artifacts on failure
         uses: actions/upload-artifact@v4
