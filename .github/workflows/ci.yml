@@ -73,8 +73,7 @@ jobs:
     # on the Windows self-hosted runner. The CI job above remains GitHub-hosted.
     runs-on: [self-hosted, Windows, X64]
     env:
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || 'saksitboom' }}
+      IMAGE_OWNER: saksitboom
     defaults:
       run:
         shell: powershell
@@ -87,6 +86,8 @@ jobs:
         run: |
           docker version
           if ($LASTEXITCODE -ne 0) { throw 'Docker Desktop is not available to this runner service.' }
+          docker info | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw 'Docker Desktop is not ready for this runner service.' }
           kubectl version --client
           if ($LASTEXITCODE -ne 0) { throw 'kubectl is not available on this self-hosted runner.' }
 
@@ -103,16 +104,10 @@ jobs:
             throw 'The Kubernetes API configured on this self-hosted runner is unreachable.'
           }
 
-      - name: Log in to Docker Hub
-        run: |
-          if (-not $env:DOCKERHUB_TOKEN) { throw 'Missing GitHub Secret DOCKERHUB_TOKEN.' }
-          $env:DOCKERHUB_TOKEN | docker login --username $env:DOCKERHUB_USERNAME --password-stdin
-          if ($LASTEXITCODE -ne 0) { exit 1 }
-
       - name: Build and push frontend image
         run: |
-          $imageTag = "$($env:DOCKERHUB_USERNAME)/optracard-frontend:${{ github.sha }}"
-          $latestTag = "$($env:DOCKERHUB_USERNAME)/optracard-frontend:latest"
+          $imageTag = "$($env:IMAGE_OWNER)/optracard-frontend:${{ github.sha }}"
+          $latestTag = "$($env:IMAGE_OWNER)/optracard-frontend:latest"
           docker build -t $imageTag -t $latestTag .
           if ($LASTEXITCODE -ne 0) { exit 1 }
           docker push $imageTag
@@ -124,7 +119,7 @@ jobs:
         run: |
           kubectl apply -f app-pod.yaml
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          kubectl set image deployment/optracard-frontend-deployment "optracard-frontend-container=$($env:DOCKERHUB_USERNAME)/optracard-frontend:${{ github.sha }}" -n optracard-frontend
+          kubectl set image deployment/optracard-frontend-deployment "optracard-frontend-container=$($env:IMAGE_OWNER)/optracard-frontend:${{ github.sha }}" -n optracard-frontend
           if ($LASTEXITCODE -ne 0) { exit 1 }
           kubectl rollout status deployment/optracard-frontend-deployment -n optracard-frontend --timeout=180s
           if ($LASTEXITCODE -ne 0) { exit 1 }
