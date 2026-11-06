@@ -76,7 +76,10 @@ jobs:
       IMAGE_OWNER: saksitboom
     defaults:
       run:
-        shell: powershell
+        # The Windows runner has a restrictive local execution policy.  GitHub
+        # Actions writes each `run` block to a temporary .ps1 file, so invoke
+        # it with a process-scoped bypass rather than changing machine policy.
+        shell: powershell -ExecutionPolicy Bypass -Command "{0}"
 
     steps:
       - name: Checkout repository
