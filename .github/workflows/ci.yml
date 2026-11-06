@@ -111,12 +111,29 @@ jobs:
         run: |
           $imageTag = "$($env:IMAGE_OWNER)/optracard-frontend:${{ github.sha }}"
           $latestTag = "$($env:IMAGE_OWNER)/optracard-frontend:latest"
+
+          function Push-DockerImage {
+            param([Parameter(Mandatory = $true)][string]$Image)
+
+            foreach ($attempt in 1..3) {
+              docker push $Image
+              if ($LASTEXITCODE -eq 0) {
+                return
+              }
+
+              if ($attempt -eq 3) {
+                throw "Could not push $Image after $attempt attempts."
+              }
+
+              Write-Warning "Docker push failed (attempt $attempt of 3); retrying in 15 seconds."
+              Start-Sleep -Seconds 15
+            }
+          }
+
           docker build -t $imageTag -t $latestTag .
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          docker push $imageTag
-          if ($LASTEXITCODE -ne 0) { exit 1 }
-          docker push $latestTag
-          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Push-DockerImage $imageTag
+          Push-DockerImage $latestTag
 
       - name: Apply manifest and roll out frontend
         run: |
