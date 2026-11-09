@@ -42,7 +42,7 @@ export const AuctionHub = () => {
     <div className="mx-auto min-h-screen max-w-6xl px-5 py-10 text-slate-800">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-600">Live bidding</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-purple-600">Live bidding</p>
           <h1 className="mt-1 text-3xl font-extrabold">Auction Hub</h1>
           <p className="mt-2 text-sm text-slate-500">Bid directly on one-of-a-kind listings. The highest valid bid wins.</p>
         </div>

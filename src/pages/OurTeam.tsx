@@ -1,4 +1,5 @@
 import { ArrowLeft, HeartHandshake } from 'lucide-react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaGithub, FaInstagram } from 'react-icons/fa';
 import raffyImg from '../assets/raffy.jpg';
@@ -21,6 +22,7 @@ const teamMembers = [
 
 export const OurTeam = () => {
   const navigate = useNavigate();
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'auto' }); }, []);
   return <div className="min-h-screen bg-slate-50 text-slate-800">
     <section className="bg-[#0b0f19] px-5 py-14 text-white sm:py-20"><div className="mx-auto max-w-6xl"><button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm font-bold text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4" />Back</button><div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-300">The people behind Optracard</p><h1 className="mt-3 text-4xl font-black sm:text-5xl">Our Team</h1><p className="mt-4 max-w-xl text-base leading-7 text-slate-300">A group of builders and collectors creating a more welcoming TCG marketplace.</p></div><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white"><HeartHandshake className="h-7 w-7" /></div></div></div></section>
     <main className="mx-auto max-w-6xl px-5 py-12 sm:py-16"><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{teamMembers.map((member) => <article key={member.name} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><div className="aspect-[4/3] overflow-hidden bg-slate-100"><img src={member.img} alt={member.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" /></div><div className="flex items-center justify-between gap-3 p-4"><div><h2 className="font-bold text-slate-900">{member.name}</h2><p className="mt-1 text-xs text-slate-500">Optracard Team</p></div><div className="flex gap-2"><a href={member.instagram} target="_blank" rel="noopener noreferrer" aria-label={`${member.name}'s Instagram`} className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600 text-white transition hover:scale-105"><FaInstagram className="h-4 w-4" /></a><a href={member.github} target="_blank" rel="noopener noreferrer" aria-label={`${member.name}'s GitHub`} className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition hover:scale-105 hover:bg-slate-50"><FaGithub className="h-4 w-4" /></a></div></div></article>)}</div></main>

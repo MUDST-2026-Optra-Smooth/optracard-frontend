@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Clock3, Gavel } from 'lucide-react';
+import { Clock3, Gavel } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
 import { loadCatalogPage } from '../api/catalog';
@@ -95,7 +95,7 @@ export const Home = () => {
   }, []);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setBannerIndex((current) => (current + 1) % banners.length), 6000);
+    const timer = window.setInterval(() => setBannerIndex((current) => (current + 1) % banners.length), 10_000);
     return () => window.clearInterval(timer);
   }, [banners.length]);
 
@@ -157,7 +157,7 @@ export const Home = () => {
           </div>
           <Link
             to={sourceContent.MARKETPLACE.viewAll}
-            className="shrink-0 rounded-md bg-[#1e5bff] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            className="shrink-0 rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
           >
             View all →
           </Link>
@@ -201,14 +201,8 @@ export const Home = () => {
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-100">{currentBanner.eyebrow}</p>
             <h1 className="mt-3 text-3xl font-black leading-tight sm:text-5xl">{currentBanner.title}</h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-blue-100">{currentBanner.description}</p>
-            <Link to="/auctions" className="mt-7 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-[#102c70] transition hover:bg-blue-50">
-              <Gavel className="h-4 w-4" /> Explore auctions
-            </Link>
           </div>
         </div>
-        <button type="button" onClick={() => setBannerIndex((current) => (current - 1 + banners.length) % banners.length)} aria-label="Previous banner" className="absolute left-3 top-1/2 rounded-full bg-slate-950/35 p-2 text-white transition hover:bg-slate-950/65"><ChevronLeft className="h-5 w-5" /></button>
-        <button type="button" onClick={() => setBannerIndex((current) => (current + 1) % banners.length)} aria-label="Next banner" className="absolute right-3 top-1/2 rounded-full bg-slate-950/35 p-2 text-white transition hover:bg-slate-950/65"><ChevronRight className="h-5 w-5" /></button>
-        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2">{banners.map((_, index) => <button key={index} type="button" onClick={() => setBannerIndex(index)} aria-label={`Show banner ${index + 1}`} className={`h-2 rounded-full transition-all ${bannerIndex === index ? 'w-7 bg-white' : 'w-2 bg-white/50'}`} />)}</div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
