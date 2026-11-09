@@ -193,10 +193,10 @@ export const Home = () => {
 
   return (
     <div className="bg-slate-50">
-      <section className="relative min-h-[330px] overflow-hidden bg-[#081b4d] text-white sm:min-h-[390px]">
+      <section className="relative h-[330px] overflow-hidden bg-[#081b4d] text-white sm:h-[390px]">
         <img src={currentBanner.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#061431]/95 via-[#09245b]/75 to-[#061431]/10" />
-        <div className="relative mx-auto flex min-h-[330px] max-w-7xl items-center px-6 py-14 sm:min-h-[390px]">
+        <div className="relative mx-auto flex h-[330px] max-w-7xl items-center px-6 py-14 sm:h-[390px]">
           <div className="max-w-2xl">
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-100">{currentBanner.eyebrow}</p>
             <h1 className="mt-3 text-3xl font-black leading-tight sm:text-5xl">{currentBanner.title}</h1>
