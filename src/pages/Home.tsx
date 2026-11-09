@@ -39,7 +39,7 @@ export const Home = () => {
   const [error, setError] = useState<string | null>(null);
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [bannerIndex, setBannerIndex] = useState(0);
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState(() => window.sessionStorage.getItem('optracard-storefront-intro-seen') !== 'true');
 
   const banners = [
     {
@@ -102,9 +102,11 @@ export const Home = () => {
   }, [banners.length]);
 
   useEffect(() => {
+    if (!showIntro) return;
+    window.sessionStorage.setItem('optracard-storefront-intro-seen', 'true');
     const timer = window.setTimeout(() => setShowIntro(false), 2500);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [showIntro]);
 
   // Catalog responses are already filtered by the backend. Keep the client-side
   // list untouched so backend normalization (for example typo/synonym matching)
