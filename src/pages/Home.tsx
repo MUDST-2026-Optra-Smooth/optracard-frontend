@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Clock3, Gavel, Sparkles } from 'lucide-react';
+import { Clock3, Gavel } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
 import { loadCatalogPage } from '../api/catalog';
@@ -10,6 +10,7 @@ import type { Auction } from '../types/auction';
 import pokemonBanner from '../assets/marketplace-pokemon-banner.png';
 import auctionBanner from '../assets/marketplace-auction-banner.png';
 import collectorBanner from '../assets/marketplace-collector-banner.png';
+import logoIcon from '../assets/logo-icon.png';
 
 const PRODUCT_TYPES = ['Single', 'Booster', 'Booster Box', 'Accessories'];
 const normalizeFilterValue = (value: string | null | undefined) => (value ?? '').trim().toLowerCase();
@@ -101,7 +102,7 @@ export const Home = () => {
   }, [banners.length]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setShowIntro(false), 1350);
+    const timer = window.setTimeout(() => setShowIntro(false), 2500);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -199,8 +200,9 @@ export const Home = () => {
 
   return (
     <div className="bg-slate-50">
-      {showIntro && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#071432] px-6 text-white transition-opacity duration-500">
-        <div className="text-center animate-pulse"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/20 text-blue-200"><Sparkles className="h-7 w-7" /></div><p className="mt-5 text-xs font-bold uppercase tracking-[0.28em] text-blue-200">Optracard</p><h2 className="mt-2 text-3xl font-black sm:text-4xl">Collect. Trade. Discover.</h2><div className="mx-auto mt-6 h-1 w-32 overflow-hidden rounded-full bg-white/20"><div className="h-full w-2/3 animate-pulse rounded-full bg-blue-300" /></div></div>
+      {showIntro && <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-hidden bg-[#050a18] px-6 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(47,101,255,0.45),transparent_42%)]" />
+        <div className="relative text-center"><div className="relative mx-auto flex h-24 w-24 items-center justify-center"><div className="absolute inset-0 animate-ping rounded-[2rem] border border-blue-300/70" /><div className="absolute inset-2 animate-pulse rounded-3xl bg-blue-500/30" /><div className="relative flex h-16 w-16 animate-bounce items-center justify-center rounded-2xl bg-[#2f65ff] shadow-[0_0_45px_rgba(80,130,255,0.85)]"><img src={logoIcon} alt="Optracard" className="h-10 w-10 object-contain" /></div></div><p className="mt-7 text-4xl font-black tracking-tight sm:text-5xl">Optracard</p><p className="mt-3 text-xs font-bold uppercase tracking-[0.32em] text-blue-200">Collect · Trade · Discover</p><div className="mx-auto mt-7 flex items-center justify-center gap-1.5"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-200" /><span className="h-1.5 w-5 animate-pulse rounded-full bg-blue-400" /><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-200" /></div></div>
       </div>}
       <section className="relative h-[330px] overflow-hidden bg-[#081b4d] text-white sm:h-[390px]">
         <img src={currentBanner.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
