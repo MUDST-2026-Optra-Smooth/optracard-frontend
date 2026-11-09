@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Package, ClipboardList, LayoutDashboard, Store } from 'lucide-react';
+import { Package, ClipboardList, LayoutDashboard, Store, Gavel } from 'lucide-react';
 import { AdminHeader } from './AdminHeader';
 import { loadMyStore } from '../api/seller';
 import type { SellerStoreInfo } from '../types/seller';
@@ -82,6 +82,11 @@ export const Sidebar: React.FC<SidebarProps> = () => {
             <NavLink to="/orders-management" className={navItemClass}>
               <ClipboardList className="w-5 h-5" />
               <span>Orders Management</span>
+            </NavLink>
+
+            <NavLink to="/seller/auctions" className={navItemClass}>
+              <Gavel className="w-5 h-5" />
+              <span>Auction Listings</span>
             </NavLink>
           </nav>
         </div>

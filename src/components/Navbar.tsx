@@ -321,6 +321,7 @@ export const Navbar = () => {
       <div className="flex items-center gap-6 text-sm font-medium">
         <div className="hidden lg:flex gap-5 text-gray-300 items-center">
           <Link to={shopPath} onClick={handleProtectedNavigation(shopPath)} className="hover:text-white transition">My Shop</Link>
+          <Link to="/auctions" className="hover:text-white transition">Auctions</Link>
           <Link to="/order-history" onClick={handleProtectedNavigation('/order-history')} className="hover:text-white transition">Order history</Link>
           <Link to="/about" className="hover:text-white transition">About Us</Link>
           <Link to="/team" className="hover:text-white transition">Our Team</Link>
