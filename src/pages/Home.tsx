@@ -168,7 +168,7 @@ export const Home = () => {
             to={sourceContent.MARKETPLACE.viewAll}
             className="shrink-0 rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
           >
-            View all →
+            View All →
           </Link>
         </div>
 
@@ -229,7 +229,7 @@ export const Home = () => {
               <h2 className="mt-1 text-3xl font-black text-slate-900">Auctions</h2>
               <p className="mt-1 text-sm text-slate-500">Rare finds and one-of-a-kind lots. Place your bid before time runs out.</p>
             </div>
-            <Link to="/auctions" className="shrink-0 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700">View all auctions →</Link>
+            <Link to="/auctions" className="shrink-0 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700">View All Auctions →</Link>
           </div>
           {auctions.length === 0 ? <div className="rounded-xl border border-dashed border-purple-200 bg-purple-50/50 p-7 text-sm text-purple-900">There are no live auctions right now. Check back soon for the next rare find.</div> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {auctions.slice(0, 3).map((auction) => <Link key={auction.id} to={`/auctions/${auction.id}`} className="group overflow-hidden rounded-xl border border-purple-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-purple-400 hover:shadow-md">
