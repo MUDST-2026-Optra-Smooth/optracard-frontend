@@ -44,6 +44,9 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
     if (cartQuantity >= itemCount) {
       setAdded(false);
       setFeedback({ tone: 'error', message: `You already have the maximum available quantity (${itemCount}) in your cart.` });
+      window.dispatchEvent(new CustomEvent('cart-feedback', { detail: {
+        tone: 'error', message: `You already have the maximum available quantity (${itemCount}) of ${cardName} in your cart.`,
+      } }));
       return;
     }
 
@@ -54,10 +57,16 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
       setCartQuantity(updatedQuantity);
       setAdded(true);
       setFeedback({ tone: 'success', message: `Added to cart (${updatedQuantity} of ${itemCount} available).` });
+      window.dispatchEvent(new CustomEvent('cart-feedback', { detail: {
+        tone: 'success', message: `${cardName} was added to your cart (${updatedQuantity} of ${itemCount} available).`,
+      } }));
       window.setTimeout(() => setAdded(false), 1400);
     } catch (error) {
       setAdded(false);
       setFeedback({ tone: 'error', message: error instanceof Error ? error.message : 'Could not add this product to your cart.' });
+      window.dispatchEvent(new CustomEvent('cart-feedback', { detail: {
+        tone: 'error', message: error instanceof Error ? error.message : 'Could not add this product to your cart.',
+      } }));
     } finally {
       setIsAdding(false);
     }

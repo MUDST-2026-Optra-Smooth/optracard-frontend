@@ -58,6 +58,9 @@ export const ProductCard = ({
         tone: 'error',
         message: `You already have the maximum available quantity (${stock}) in your cart.`,
       });
+      window.dispatchEvent(new CustomEvent('cart-feedback', { detail: {
+        tone: 'error', message: `You already have the maximum available quantity (${stock}) of ${title} in your cart.`,
+      } }));
       return;
     }
 
@@ -73,6 +76,11 @@ export const ProductCard = ({
           ? `Added to cart (${updatedQuantity} of ${stock} available).`
           : 'Added to cart.',
       });
+      window.dispatchEvent(new CustomEvent('cart-feedback', { detail: {
+        tone: 'success', message: typeof stock === 'number'
+          ? `${title} was added to your cart (${updatedQuantity} of ${stock} available).`
+          : `${title} was added to your cart.`,
+      } }));
       window.setTimeout(() => setAdded(false), 1400);
     } catch (error) {
       setAdded(false);
@@ -80,6 +88,9 @@ export const ProductCard = ({
         tone: 'error',
         message: error instanceof Error ? error.message : 'Could not add this product to your cart.',
       });
+      window.dispatchEvent(new CustomEvent('cart-feedback', { detail: {
+        tone: 'error', message: error instanceof Error ? error.message : 'Could not add this product to your cart.',
+      } }));
     } finally {
       setIsAdding(false);
     }

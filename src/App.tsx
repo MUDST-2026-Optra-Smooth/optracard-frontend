@@ -56,6 +56,7 @@ import { AuctionCheckout } from './pages/AuctionCheckout';
 import { SellerAuctions } from './pages/SellerAuctions';
 import { AuctionForm } from './pages/AuctionForm';
 import { ADAuctions } from './pages/ADAuctions';
+import { CartFeedbackToast } from './components/CartFeedbackToast';
 
 const LegacyAdminRedirect = ({ to }: { to: string }) => {
   const location = useLocation();
@@ -175,6 +176,7 @@ export function App() {
       </main>
       
       {!shouldHideNavAndFooter && <Footer />}
+      <CartFeedbackToast />
     </div>
   );
 }
