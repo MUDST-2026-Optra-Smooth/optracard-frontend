@@ -1,8 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FaFacebookF, FaGithub, FaInstagram } from 'react-icons/fa';
 import logoIcon from '../assets/logo-icon.png';
 
-export const Footer = () => (
+export const Footer = () => {
+  const location = useLocation();
+  const modalState = { backgroundLocation: location };
+  return (
   <footer className="border-t border-slate-800 bg-[#0b0f19] px-6 py-12 font-sans text-white md:px-10">
     <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.4fr_0.8fr_0.8fr] md:gap-16">
       <div>
@@ -30,11 +33,12 @@ export const Footer = () => (
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-300">Company</p>
         <nav className="mt-4 flex flex-col gap-3 text-sm text-slate-300">
-          <Link to="/about" className="transition hover:text-white">About Us</Link>
-          <Link to="/team" className="transition hover:text-white">Our Team</Link>
+          <Link to="/about" state={modalState} className="transition hover:text-white">About Us</Link>
+          <Link to="/team" state={modalState} className="transition hover:text-white">Our Team</Link>
         </nav>
       </div>
     </div>
     <div className="mx-auto mt-10 max-w-7xl border-t border-slate-800 pt-5 text-xs text-slate-500">© {new Date().getFullYear()} Optracard. Built for Thailand&apos;s TCG community.</div>
   </footer>
-);
+  );
+};

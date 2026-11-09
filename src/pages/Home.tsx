@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Clock3, Gavel } from 'lucide-react';
+import { Clock3, Gavel, Sparkles } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { TradingListingCard } from '../components/TradingListingCard';
 import { loadCatalogPage } from '../api/catalog';
@@ -38,6 +38,7 @@ export const Home = () => {
   const [error, setError] = useState<string | null>(null);
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [bannerIndex, setBannerIndex] = useState(0);
+  const [showIntro, setShowIntro] = useState(true);
 
   const banners = [
     {
@@ -98,6 +99,11 @@ export const Home = () => {
     const timer = window.setInterval(() => setBannerIndex((current) => (current + 1) % banners.length), 10_000);
     return () => window.clearInterval(timer);
   }, [banners.length]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowIntro(false), 1350);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // Catalog responses are already filtered by the backend. Keep the client-side
   // list untouched so backend normalization (for example typo/synonym matching)
@@ -193,6 +199,9 @@ export const Home = () => {
 
   return (
     <div className="bg-slate-50">
+      {showIntro && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#071432] px-6 text-white transition-opacity duration-500">
+        <div className="text-center animate-pulse"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/20 text-blue-200"><Sparkles className="h-7 w-7" /></div><p className="mt-5 text-xs font-bold uppercase tracking-[0.28em] text-blue-200">Optracard</p><h2 className="mt-2 text-3xl font-black sm:text-4xl">Collect. Trade. Discover.</h2><div className="mx-auto mt-6 h-1 w-32 overflow-hidden rounded-full bg-white/20"><div className="h-full w-2/3 animate-pulse rounded-full bg-blue-300" /></div></div>
+      </div>}
       <section className="relative h-[330px] overflow-hidden bg-[#081b4d] text-white sm:h-[390px]">
         <img src={currentBanner.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#061431]/95 via-[#09245b]/75 to-[#061431]/10" />

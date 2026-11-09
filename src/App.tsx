@@ -71,6 +71,7 @@ const LegacyAdminRedirect = ({ to }: { to: string }) => {
 
 export function App() {
   const location = useLocation();
+  const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
   // เพิ่ม '/add-product' เข้าไปในรายการที่ต้องซ่อน Navbar และ Footer
   const hideNavAndFooterPaths = ['/dashboard', '/orders-management', '/seller', '/add-product'];
@@ -89,7 +90,7 @@ export function App() {
       {!shouldHideNavAndFooter && <Navbar />}
       
       <main className="flex-grow">
-        <Routes>
+        <Routes location={backgroundLocation ?? location}>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -174,6 +175,12 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      {backgroundLocation && (
+        <Routes>
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/team" element={<OurTeam />} />
+        </Routes>
+      )}
       
       {!shouldHideNavAndFooter && <Footer />}
       <CartFeedbackToast />
