@@ -202,7 +202,7 @@ export const Home = () => {
     <div className="bg-slate-50">
       {showIntro && <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-hidden bg-[#050a18] px-6 text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(47,101,255,0.45),transparent_42%)]" />
-        <div className="relative text-center"><div className="relative mx-auto flex h-24 w-24 items-center justify-center"><div className="absolute inset-0 animate-ping rounded-[2rem] border border-blue-300/70" /><div className="absolute inset-2 animate-pulse rounded-3xl bg-blue-500/30" /><div className="relative flex h-16 w-16 animate-bounce items-center justify-center rounded-2xl bg-[#2f65ff] shadow-[0_0_45px_rgba(80,130,255,0.85)]"><img src={logoIcon} alt="Optracard" className="h-10 w-10 object-contain" /></div></div><p className="mt-7 text-4xl font-black tracking-tight sm:text-5xl">Optracard</p><p className="mt-3 text-xs font-bold uppercase tracking-[0.32em] text-blue-200">Collect · Trade · Discover</p><div className="mx-auto mt-7 flex items-center justify-center gap-1.5"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-200" /><span className="h-1.5 w-5 animate-pulse rounded-full bg-blue-400" /><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-200" /></div></div>
+        <div className="relative text-center"><div className="relative mx-auto flex h-24 w-24 items-center justify-center"><div className="absolute inset-0 animate-ping rounded-[2rem] border border-blue-300/70" /><div className="absolute inset-2 animate-pulse rounded-3xl bg-blue-500/30" /><div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-[#2f65ff] shadow-[0_0_45px_rgba(80,130,255,0.85)]"><img src={logoIcon} alt="Optracard" className="h-10 w-10 object-contain" /></div></div><p className="mt-7 text-4xl font-black tracking-tight sm:text-5xl">Optracard</p><p className="mt-3 text-xs font-bold uppercase tracking-[0.32em] text-blue-200">Collect · Trade · Discover</p><div className="mx-auto mt-7 flex items-center justify-center gap-1.5"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-200" /><span className="h-1.5 w-5 animate-pulse rounded-full bg-blue-400" /><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-200" /></div></div>
       </div>}
       <section className="relative h-[330px] overflow-hidden bg-[#081b4d] text-white sm:h-[390px]">
         <img src={currentBanner.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -213,6 +213,9 @@ export const Home = () => {
             <h1 className="mt-3 text-3xl font-black leading-tight sm:text-5xl">{currentBanner.title}</h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-blue-100">{currentBanner.description}</p>
           </div>
+        </div>
+        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2">
+          {banners.map((banner, index) => <button key={banner.image} type="button" onClick={() => setBannerIndex(index)} aria-label={`Show banner ${index + 1}`} className={`h-2 rounded-full transition-all duration-300 ${bannerIndex === index ? 'w-7 bg-white' : 'w-2 bg-white/55 hover:bg-white/85'}`} />)}
         </div>
       </section>
 
