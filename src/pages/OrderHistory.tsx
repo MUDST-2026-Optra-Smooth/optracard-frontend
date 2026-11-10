@@ -5,6 +5,7 @@ import { OrderHistoryCard, type OrderItem, type OrderStatus } from '../component
 import { OrderHistoryStat } from '../components/OrderHistoryStat';
 import { ReorderResultPanel } from '../components/ReorderResultPanel';
 import { ReorderSuccessToast } from '../components/ReorderSuccessToast';
+import { ReorderErrorToast } from '../components/ReorderErrorToast';
 import { reorderOrder, type ReorderResult } from '../api/orders';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
@@ -36,6 +37,7 @@ export function OrderHistory() {
   const [reorderResult, setReorderResult] = useState<ReorderResult | null>(null);
   const [reorderToast, setReorderToast] = useState<ReorderResult | null>(null);
   const [reorderError, setReorderError] = useState<string | null>(null);
+  const [reorderErrorToast, setReorderErrorToast] = useState<string | null>(null);
   const [message] = useState(typeof location.state?.message === 'string' ? location.state.message : null);
 
   useEffect(() => {
@@ -50,13 +52,14 @@ export function OrderHistory() {
   }, [navigate]);
 
   const handleReorder = async (orderNumber: string) => {
-    setReorderingOrder(orderNumber); setReorderResult(null); setReorderToast(null); setReorderError(null);
+    setReorderingOrder(orderNumber); setReorderResult(null); setReorderToast(null); setReorderError(null); setReorderErrorToast(null);
     try {
       const result = await reorderOrder(orderNumber);
       setReorderResult(result);
       if (result.addedCount > 0) setReorderToast(result);
+      else setReorderErrorToast(result.skipped[0]?.message ?? `Nothing from order #${result.orderNumber} can be added to your cart right now.`);
     }
-    catch (e) { setReorderError(e instanceof Error ? e.message : 'Could not add this order to your cart.'); }
+    catch (e) { const message = e instanceof Error ? e.message : 'Could not add this order to your cart.'; setReorderError(message); setReorderErrorToast(message); }
     finally { setReorderingOrder(null); }
   };
 
@@ -70,5 +73,5 @@ export function OrderHistory() {
     <div className="mt-7 grid gap-3 sm:grid-cols-3"><OrderHistoryStat label="Total orders" value={String(counts.all)} detail="From database" /><OrderHistoryStat label="Open orders" value={String(open)} detail="Track now" detailTone="blue" /><OrderHistoryStat label="Delivered" value={String(delivered)} detail={counts.all ? `${Math.round((delivered / counts.all) * 100)}% completed` : '0% completed'} /></div>
     <div className="mt-4 flex flex-col gap-3 rounded-xl border border-[#e6e9ef] bg-white px-2 py-2 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-3"><div className="flex flex-wrap items-center gap-1">{tabs.map((tab) => <button key={tab.label} type="button" onClick={() => setSelectedTab(tab.label)} className={`rounded-md px-3 py-2 text-[10px] font-bold ${selectedTab === tab.label ? 'bg-[#edf4ff] text-[#2f65ff]' : 'text-[#8e97a3] hover:bg-[#f7f9fc]'}`}>{tab.label} ({tab.count})</button>)}</div><FilterDropdown label="Sort:" options={sortOptions} selected={selectedSort} onSelect={setSelectedSort} align="right" /></div>
     {isLoading ? <p className="py-16 text-center text-base text-slate-500">Loading order history…</p> : <div className="mt-4 space-y-3">{visibleOrders.length > 0 ? visibleOrders.map((order) => <OrderHistoryCard key={order.orderNumber} {...order} actions={[...order.actions, { label: reorderingOrder === order.orderNumber ? 'Adding…' : 'Order again', variant: 'outline', onClick: () => void handleReorder(order.orderNumber), disabled: reorderingOrder !== null }]} />) : <div className="rounded-xl border border-dashed border-[#dfe4eb] bg-white px-6 py-12 text-center"><p className="text-sm font-bold text-[#59616d]">No orders in this category yet.</p><p className="mt-1 text-xs text-[#a1a8b3]">Your next purchase will appear here.</p></div>}</div>}
-  </div>{reorderToast && <ReorderSuccessToast result={reorderToast} onDismiss={() => setReorderToast(null)} />}</section>;
+  </div>{reorderToast && <ReorderSuccessToast result={reorderToast} onDismiss={() => setReorderToast(null)} />}{reorderErrorToast && <ReorderErrorToast message={reorderErrorToast} onDismiss={() => setReorderErrorToast(null)} />}</section>;
 }

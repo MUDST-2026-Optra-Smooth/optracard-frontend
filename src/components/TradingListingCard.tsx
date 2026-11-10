@@ -25,14 +25,12 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
   const [added, setAdded] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [cartQuantity, setCartQuantity] = useState(0);
-  const [feedback, setFeedback] = useState<{ message: string; tone: 'success' | 'error' } | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     setImageFailed(false);
     setCartQuantity(0);
-    setFeedback(null);
   }, [imageUrl, productId]);
 
   const handleAddToCart = async () => {
@@ -43,7 +41,6 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
     }
     if (cartQuantity >= itemCount) {
       setAdded(false);
-      setFeedback({ tone: 'error', message: `You already have the maximum available quantity (${itemCount}) in your cart.` });
       window.dispatchEvent(new CustomEvent('cart-feedback', { detail: {
         tone: 'error', message: `You already have the maximum available quantity (${itemCount}) of ${cardName} in your cart.`,
       } }));
@@ -56,14 +53,12 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
       const updatedQuantity = cart.items.find((item) => item.productId === productId)?.quantity ?? cartQuantity + 1;
       setCartQuantity(updatedQuantity);
       setAdded(true);
-      setFeedback({ tone: 'success', message: `Added to cart (${updatedQuantity} of ${itemCount} available).` });
       window.dispatchEvent(new CustomEvent('cart-feedback', { detail: {
         tone: 'success', message: `${cardName} was added to your cart (${updatedQuantity} of ${itemCount} available).`,
       } }));
       window.setTimeout(() => setAdded(false), 1400);
     } catch (error) {
       setAdded(false);
-      setFeedback({ tone: 'error', message: error instanceof Error ? error.message : 'Could not add this product to your cart.' });
       window.dispatchEvent(new CustomEvent('cart-feedback', { detail: {
         tone: 'error', message: error instanceof Error ? error.message : 'Could not add this product to your cart.',
       } }));
@@ -132,11 +127,6 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
           {added ? '✓' : '🛒'}
         </button>
       </div>
-      {feedback && (
-        <p role={feedback.tone === 'error' ? 'alert' : 'status'} className={`mt-2 text-xs ${feedback.tone === 'error' ? 'text-red-600' : 'text-emerald-600'}`}>
-          {feedback.message}
-        </p>
-      )}
     </div>
   );
 };
