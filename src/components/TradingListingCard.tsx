@@ -84,37 +84,37 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
   };
 
   const soldOut = itemCount === 0;
+  const isOfficial = source === 'OFFICIAL';
+  const theme = isOfficial
+    ? { border: 'border-blue-200 hover:border-blue-400 focus:ring-blue-500', image: 'from-blue-100 via-sky-50 to-indigo-50', accent: 'text-blue-600', action: 'bg-blue-50 text-blue-600 hover:bg-blue-600' }
+    : { border: 'border-orange-200 hover:border-orange-400 focus:ring-orange-500', image: 'from-orange-100 via-amber-50 to-orange-50', accent: 'text-orange-600', action: 'bg-orange-50 text-orange-600 hover:bg-orange-500' };
 
   return (
     <div
-      className={`flex h-full flex-col justify-between rounded-lg border bg-white p-4 shadow-sm transition-shadow ${productId ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500' : ''}`}
+      className={`group flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition ${theme.border} ${productId ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2' : ''}`}
       onClick={handleOpenDetails}
       onKeyDown={handleCardKeyDown}
       role={productId ? 'button' : undefined}
       tabIndex={productId ? 0 : undefined}
       aria-label={productId ? `View details for ${cardName}` : undefined}
     >
-      <div className="flex gap-4">
-        <div className="relative flex h-28 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-100">
+      <div className={`relative flex h-52 w-full items-center justify-center overflow-hidden bg-gradient-to-br ${theme.image}`}>
           {imageUrl && !imageFailed ? (
-            <img src={imageUrl} alt={cardName} className="h-full w-full object-cover transition-transform duration-200 hover:scale-105" onError={() => setImageFailed(true)} />
+            <img src={imageUrl} alt={cardName} className="h-full w-full object-contain transition duration-300 group-hover:scale-105" onError={() => setImageFailed(true)} />
           ) : (
             <div className="px-2 text-center text-xs text-gray-500"><div className="text-2xl" aria-hidden="true">🃏</div><span className="line-clamp-3">{cardName}</span></div>
           )}
           {source && (
-            <span className={`absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${sourceStyle[source]}`}>
+            <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider ${sourceStyle[source]}`}>
               {source === 'MARKETPLACE' ? 'Marketplace' : 'Official'}
             </span>
           )}
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col justify-start">
-          <p className="line-clamp-2 text-base font-semibold text-gray-900">{cardName}</p>
-          <p className="mt-0.5 text-sm text-gray-500">{gameName}</p>
-          {storeName && <p className="mt-0.5 truncate text-xs text-slate-400">{storeName}</p>}
-          <p className={soldOut ? 'mt-1 text-sm text-red-600' : 'mt-1 text-sm text-gray-500'}>{soldOut ? 'Out of stock' : `${itemCount} items`}</p>
-          <p className="mt-2 text-sm text-gray-500">Starting at <span className="block text-lg font-bold text-gray-900">{formatPrice(startingPrice)}</span></p>
-        </div>
+      </div>
+      <div className="flex flex-grow flex-col p-4">
+        {storeName && <p className={`text-xs font-semibold ${theme.accent}`}>{storeName}</p>}
+        <p className="mt-1 line-clamp-2 font-bold text-slate-900">{cardName}</p>
+        <p className="mt-1 text-xs text-slate-500">{gameName} · {itemCount} item{itemCount === 1 ? '' : 's'}</p>
+        <div className="mt-4 flex items-end justify-between"><div><p className="text-xs text-slate-500">Starting at</p><p className={`font-extrabold ${theme.accent}`}>{formatPrice(startingPrice)}</p></div><span className={soldOut ? 'text-xs text-red-600' : 'text-xs text-emerald-600'}>{soldOut ? 'Out of stock' : 'Available'}</span></div>
       </div>
 
       <button
@@ -125,7 +125,7 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
           void handleAddToCart();
         }}
         title={soldOut ? 'This product is out of stock' : 'Add to cart'}
-        className="mt-5 w-full rounded-md bg-blue-50 py-2.5 text-sm font-semibold text-blue-600 transition-all duration-150 hover:bg-blue-600 hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-50 disabled:hover:text-blue-600 disabled:hover:scale-100"
+        className={`mx-4 mb-4 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 ${theme.action}`}
       >
         {added ? '✓ Added to Cart' : '🛒 Add to Cart'}
       </button>

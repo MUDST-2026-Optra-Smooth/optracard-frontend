@@ -108,19 +108,23 @@ export const ProductCard = ({
   };
 
   const soldOut = stock === 0;
+  const isMarketplace = source === 'MARKETPLACE';
+  const theme = isMarketplace
+    ? { border: 'border-orange-200 hover:border-orange-400 focus:ring-orange-500', image: 'from-orange-100 via-amber-50 to-orange-50', price: 'text-orange-700', action: 'bg-orange-50 text-orange-600 hover:bg-orange-500' }
+    : { border: 'border-blue-200 hover:border-blue-400 focus:ring-blue-500', image: 'from-blue-100 via-sky-50 to-indigo-50', price: 'text-blue-700', action: 'bg-blue-50 text-blue-600 hover:bg-blue-600' };
 
   return (
     <div
-      className={`flex h-full flex-col justify-between rounded-lg border bg-white p-4 shadow-sm transition-shadow ${productId ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500' : ''}`}
+      className={`group flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition ${theme.border} ${productId ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2' : ''}`}
       onClick={handleOpenDetails}
       onKeyDown={handleCardKeyDown}
       role={productId ? 'button' : undefined}
       tabIndex={productId ? 0 : undefined}
       aria-label={productId ? `View details for ${title}` : undefined}
     >
-      <div className="relative mb-4 flex h-48 w-full items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
+      <div className={`relative flex h-52 w-full items-center justify-center overflow-hidden bg-gradient-to-br ${theme.image}`}>
         {imageUrl && !imageFailed ? (
-          <img src={imageUrl} alt={title} className="max-h-full object-contain transition-transform duration-200 hover:scale-105" onError={() => setImageFailed(true)} />
+          <img src={imageUrl} alt={title} className="h-full w-full object-contain transition duration-300 group-hover:scale-105" onError={() => setImageFailed(true)} />
         ) : (
           <div className="px-4 text-center">
             <div className="text-3xl" aria-hidden="true">🃏</div>
@@ -129,27 +133,23 @@ export const ProductCard = ({
           </div>
         )}
         {source && (
-          <span className={`absolute left-2 top-2 rounded-full px-2 py-1 text-[10px] font-bold ${sourceStyle[source]}`}>
+          <span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider ${sourceStyle[source]}`}>
             {source === 'OFFICIAL' ? 'Official' : 'Marketplace'}
           </span>
         )}
       </div>
 
-      <div className="flex flex-grow flex-col">
-        <h4 className="line-clamp-2 text-base font-semibold text-gray-900">{title}</h4>
-        <p className="mt-2 text-lg font-bold text-gray-900">{formatPrice(price)}</p>
+      <div className="flex flex-grow flex-col p-4">
+        {storeName && <p className={`text-xs font-semibold ${isMarketplace ? 'text-orange-600' : 'text-blue-600'}`}>{storeName}</p>}
+        <h4 className="mt-1 line-clamp-2 font-bold text-slate-900">{title}</h4>
+        <p className="mt-1 text-xs text-slate-500">{game}{type ? ` · ${type}` : ''}</p>
+        <div className="mt-4 flex items-end justify-between">
+          <div><p className="text-xs text-slate-500">Price</p><p className={`font-extrabold ${theme.price}`}>{formatPrice(price)}</p></div>
+          {typeof stock === 'number' && <span className={soldOut ? 'text-xs text-red-600' : 'text-xs text-emerald-600'}>{soldOut ? 'Out of stock' : `${stock} in stock`}</span>}
+        </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-gray-50 pt-3">
-        <div className="min-w-0">
-          <span className="block truncate text-sm text-gray-500">{game}</span>
-          {storeName && <span className="block truncate text-xs text-slate-400">{storeName}</span>}
-          {typeof stock === 'number' && (
-            <span className={soldOut ? 'text-xs text-red-600' : 'text-xs text-emerald-600'}>
-              {soldOut ? 'Out of stock' : `${stock} in stock`}
-            </span>
-          )}
-        </div>
+      <div className="flex items-center justify-end border-t border-slate-100 px-4 py-3">
         <button
           type="button"
           onClick={(event) => {
@@ -159,7 +159,7 @@ export const ProductCard = ({
           disabled={isAdding || soldOut}
           title={soldOut ? 'This product is out of stock' : 'Add to cart'}
           aria-label="Add to cart"
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-transparent bg-blue-50 text-blue-600 transition-all duration-150 hover:bg-blue-600 hover:text-white hover:scale-110 hover:shadow-md active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-blue-50 disabled:hover:text-blue-600 disabled:hover:scale-100"
+          className={`flex h-9 w-9 items-center justify-center rounded-md border border-transparent transition-all duration-150 hover:text-white hover:scale-110 hover:shadow-md active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 ${theme.action}`}
         >
           {added ? '✓' : '🛒'}
         </button>
