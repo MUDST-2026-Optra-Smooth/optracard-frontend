@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Clock3, Gavel } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { TradingListingCard } from '../components/TradingListingCard';
 import { loadCatalogPage } from '../api/catalog';
 import type { CatalogProduct, CatalogSource, CatalogQuery } from '../types/catalog';
 import { loadAuctions } from '../api/auctions';
@@ -134,7 +133,7 @@ export const Home = () => {
             View All →
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {catalogProducts.map((product) => (
             <ProductCard
               key={product.id}
@@ -172,18 +171,19 @@ export const Home = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {marketplaceProducts.map((product) => (
-            <TradingListingCard
+            <ProductCard
               key={product.id}
               productId={product.id}
-              cardName={product.name}
-              gameName={product.game}
-              itemCount={product.stock}
-              startingPrice={product.price}
+              title={product.name}
+              price={product.price}
+              game={product.game}
               imageUrl={product.imageUrl ?? undefined}
+              type={product.type}
+              source={product.source}
               storeName={product.store.name}
-              source="MARKETPLACE"
+              stock={product.stock}
             />
           ))}
         </div>
@@ -223,7 +223,7 @@ export const Home = () => {
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <section className="mb-16">
-          <div className="mb-6 flex flex-col gap-3 border-b border-purple-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-6 flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-purple-600">Live competitive listings</p>
               <h2 className="mt-1 text-3xl font-black text-slate-900">Auctions</h2>
