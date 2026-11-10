@@ -378,7 +378,7 @@ export const Navbar = () => {
           {user ? (
             <>
               <Link to="/profile" aria-label="Profile" className="w-10 h-10 rounded-full overflow-hidden border-2 border-transparent hover:border-[#2f65ff] transition cursor-pointer bg-gray-300">
-                <img src={avatarIcon} alt="Profile" className="w-full h-full object-cover" />
+                <img src={user.profileImage || avatarIcon} alt="Profile" className="w-full h-full object-cover" />
               </Link>
               <button type="button" onClick={() => { logout(); navigate('/'); }} className="text-xs text-gray-300 hover:text-white cursor-pointer">
                 Logout

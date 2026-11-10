@@ -11,6 +11,7 @@ interface ProfileData {
   email: string;
   phone?: string | null;
   address?: string | null;
+  profileImage?: string | null;
 }
 
 interface ProfileUpdateResponse {
@@ -46,7 +47,6 @@ export const EditProfile = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
-  const [logoutCountdown, setLogoutCountdown] = useState<number | null>(null);
 
   const redirectToLogin = (message?: string) => {
     logout();
@@ -58,30 +58,6 @@ export const EditProfile = () => {
       },
     });
   };
-
-  useEffect(() => {
-    if (logoutCountdown === null) {
-      return;
-    }
-
-    if (logoutCountdown === 0) {
-      logout();
-      navigate('/login', {
-        replace: true,
-        state: {
-          from: '/profile',
-          message: 'บันทึกข้อมูลลงฐานข้อมูลแล้ว กรุณาล็อกอินใหม่อีกครั้ง',
-        },
-      });
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setLogoutCountdown((current) => (current === null ? null : current - 1));
-    }, 1000);
-
-    return () => window.clearTimeout(timer);
-  }, [logout, logoutCountdown, navigate]);
 
   const loadProfile = async (signal?: AbortSignal) => {
     const token = localStorage.getItem('token');
@@ -116,6 +92,7 @@ export const EditProfile = () => {
         phoneNumber: data.phone ?? '',
         address: data.address ?? '',
       });
+      setAvatarPreview(data.profileImage || defaultAvatar);
     } catch (requestError) {
       if ((requestError as Error).name !== 'AbortError') {
         setLoadError('Unable to load your profile. Please try again.');
@@ -145,17 +122,24 @@ export const EditProfile = () => {
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setAvatarPreview(URL.createObjectURL(file));
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setSaveError('Please choose an image file.');
+      return;
     }
+    if (file.size > 2 * 1024 * 1024) {
+      setSaveError('Profile image must be 2 MB or smaller.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setAvatarPreview(typeof reader.result === 'string' ? reader.result : defaultAvatar);
+    reader.onerror = () => setSaveError('Could not read the selected image. Please try again.');
+    reader.readAsDataURL(file);
+    setSaveError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (logoutCountdown !== null) {
-      return;
-    }
-
     setSaveError(null);
     setSaveSuccess(null);
 
@@ -183,6 +167,7 @@ export const EditProfile = () => {
           email: formData.email.trim(),
           phone: formData.phoneNumber.trim(),
           address: formData.address.trim(),
+          profileImage: avatarPreview === defaultAvatar ? null : avatarPreview,
           ...(formData.password.trim() ? { password: formData.password } : {}),
         }),
       });
@@ -207,11 +192,13 @@ export const EditProfile = () => {
           username: data.profile.username,
           email: data.profile.email,
           role: user?.role ?? 'USER',
+          userId: user?.userId,
+          profileImage: data.profile.profileImage ?? null,
         },
         data.token,
       );
-      setSaveSuccess('บันทึกข้อมูลลงฐานข้อมูลเรียบร้อยแล้ว');
-      setLogoutCountdown(5);
+      setAvatarPreview(data.profile.profileImage || defaultAvatar);
+      setSaveSuccess('Profile and picture saved successfully.');
     } catch (requestError) {
       const message = requestError instanceof Error ? requestError.message : 'ไม่ทราบสาเหตุ';
       setSaveError(`ยังไม่ได้บันทึกข้อมูลลงฐานข้อมูล: ${message}`);
@@ -282,11 +269,6 @@ export const EditProfile = () => {
                 className="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
               >
                 <p className="font-semibold">{saveSuccess}</p>
-                {logoutCountdown !== null && (
-                  <p className="mt-1">
-                    กำลังล็อกเอาต์ใน {logoutCountdown} วินาที กรุณาล็อกอินใหม่
-                  </p>
-                )}
               </div>
             )}
 
@@ -358,7 +340,7 @@ export const EditProfile = () => {
 
               <button
                 type="submit"
-                disabled={isSaving || logoutCountdown !== null}
+                disabled={isSaving}
                 className="w-full bg-[#2f65ff] text-white font-medium py-2.5 rounded-full hover:bg-blue-700 transition duration-200 text-sm mb-3 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
