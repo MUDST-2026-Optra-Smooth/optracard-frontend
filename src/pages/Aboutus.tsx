@@ -1,44 +1,20 @@
-import React from 'react';
+import { Gavel, ShieldCheck, X } from 'lucide-react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import bannerImg from '../assets/Aboutus.jpg';
 
-import bannerImg from '../assets/Aboutus.jpg'; 
-
-export const AboutUs: React.FC = () => {
+export const AboutUs = () => {
   const navigate = useNavigate();
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, []);
 
-  return (
-    <div className="min-h-screen bg-[#f8faff] pb-16 pt-6 px-4 sm:px-6 md:pt-10 md:pb-24 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Back Button */}
-        <button 
-          onClick={() => navigate(-1)} 
-          className="text-sm md:text-base font-semibold text-gray-700 hover:text-black mb-6 md:mb-8 flex items-center gap-1 transition cursor-pointer duration-200"
-        >
-          ← Back
-        </button>
-
-        <div className="text-center mb-8 md:mb-12">
-          {/* Title */}
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#2f65ff] mb-4 md:mb-6">
-            About Us
-          </h1>
-          {/* Description */}
-          <p className="text-gray-800 font-medium max-w-4xl mx-auto leading-relaxed text-sm sm:text-base md:text-lg px-2 sm:px-0">
-            Optracard จะช่วยให้ทุกคนสามารถซื้อ-ขายประมูลการ์ดเกมได้อย่างเป็นระบบ และสร้างราคากลางให้กับตลาดการ์ดเกมในประเทศไทยจากการรวบรวมประวัติการซื้อ-ขายที่เกิดขึ้นจริง เพื่อประโยชน์ของผู้เล่นและนักสะสมทุกระดับ
-          </p>
-        </div>
-
-        {/* Banner Image */}
-        <div className="w-full aspect-video md:aspect-[21/9] bg-gray-200 rounded-lg md:rounded-xl flex items-center justify-center overflow-hidden border border-gray-300 shadow-md">
-          <img 
-            src={bannerImg} 
-            alt="Optracard TCG Banner" 
-            className="w-full h-full object-cover"
-          />
-        </div>
-        
-      </div>
+  return <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-slate-950/45 p-4 backdrop-blur-md sm:p-8">
+    <div className="relative max-h-full w-full max-w-5xl overflow-hidden rounded-3xl bg-slate-50 text-slate-800 shadow-2xl">
+      <section className="bg-gradient-to-r from-[#07173b] via-[#123d91] to-[#2f65ff] px-5 py-6 text-white sm:px-9 sm:py-8"><div className="flex justify-end"><button type="button" onClick={() => navigate(-1)} aria-label="Close About Us" className="rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20"><X className="h-5 w-5" /></button></div><p className="mt-3 text-xs font-bold uppercase tracking-[0.2em] text-blue-200">About Optracard</p><h1 className="mt-2 text-3xl font-black leading-tight sm:text-4xl">A better home for Thailand&apos;s TCG community.</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">Discover cards, trade with other collectors and build a more transparent market together.</p></section>
+      <main className="grid gap-6 p-5 sm:grid-cols-[1.05fr_0.95fr] sm:p-8"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">Our purpose</p><h2 className="mt-2 text-2xl font-black leading-tight text-slate-900">Collecting should feel exciting, fair and connected.</h2><p className="mt-3 text-sm leading-6 text-slate-600">Optracard brings buying, selling and bidding together in one place, with clearer marketplace information for players and collectors across Thailand.</p><div className="mt-5 flex gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><ShieldCheck className="h-4 w-4" /></div><p className="text-xs leading-5 text-slate-600"><strong className="text-slate-900">Trade with confidence.</strong><br />Clear listings help collectors make informed choices.</p></div><div className="mt-3 flex gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600"><Gavel className="h-4 w-4" /></div><p className="text-xs leading-5 text-slate-600"><strong className="text-slate-900">Discover rare finds.</strong><br />Special cards and sealed products are closer to the community.</p></div></div><div className="hidden overflow-hidden rounded-2xl bg-slate-100 sm:block"><img src={bannerImg} alt="Optracard community" className="h-full min-h-52 w-full object-cover" /></div></main>
     </div>
-  );
+  </div>;
 };

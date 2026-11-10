@@ -302,8 +302,6 @@ export const Navbar = () => {
         <div className="flex items-center gap-5 text-sm font-medium">
           <div className="hidden lg:flex gap-5 text-gray-300 items-center">
             <Link to="/order-history" className="hover:text-white transition">Order history</Link>
-            <Link to="/about" className="hover:text-white transition">About Us</Link>
-            <Link to="/team" className="hover:text-white transition">Our Team</Link>
           </div>
           <Link to={dashboardPath} className="text-gray-300 transition hover:text-white">Back to Dashboard</Link>
           <Link to="/cart" aria-label="Shopping Cart" className="relative flex items-center justify-center w-10 h-10 bg-[#1a1f2b] rounded-full hover:bg-gray-800 transition cursor-pointer">
@@ -321,9 +319,8 @@ export const Navbar = () => {
       <div className="flex items-center gap-6 text-sm font-medium">
         <div className="hidden lg:flex gap-5 text-gray-300 items-center">
           <Link to={shopPath} onClick={handleProtectedNavigation(shopPath)} className="hover:text-white transition">My Shop</Link>
+          <Link to="/auctions" className="hover:text-white transition">Auctions</Link>
           <Link to="/order-history" onClick={handleProtectedNavigation('/order-history')} className="hover:text-white transition">Order history</Link>
-          <Link to="/about" className="hover:text-white transition">About Us</Link>
-          <Link to="/team" className="hover:text-white transition">Our Team</Link>
         </div>
 
         <div className="flex items-center gap-5 pl-2">
