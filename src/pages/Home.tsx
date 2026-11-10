@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Clock3, Gavel } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
+import { AuctionCard } from '../components/AuctionCard';
 import { loadCatalogPage } from '../api/catalog';
 import type { CatalogProduct, CatalogSource, CatalogQuery } from '../types/catalog';
 import { loadAuctions } from '../api/auctions';
@@ -192,14 +192,6 @@ export const Home = () => {
   };
 
   const currentBanner = banners[bannerIndex];
-  const auctionTime = (endsAt: string) => {
-    const seconds = Math.max(0, Math.floor((new Date(endsAt).getTime() - Date.now()) / 1000));
-    if (!seconds) return 'Ending now';
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m left`;
-  };
-
   return (
     <div className="bg-slate-50">
       {showIntro && <div className="fixed inset-0 z-[90] flex items-center justify-center overflow-hidden bg-[#050a18] px-6 text-white">
@@ -232,10 +224,7 @@ export const Home = () => {
             <Link to="/auctions" className="shrink-0 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700">View All Auctions →</Link>
           </div>
           {auctions.length === 0 ? <div className="rounded-xl border border-dashed border-purple-200 bg-purple-50/50 p-7 text-sm text-purple-900">There are no live auctions right now. Check back soon for the next rare find.</div> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {auctions.slice(0, 3).map((auction) => <Link key={auction.id} to={`/auctions/${auction.id}`} className="group overflow-hidden rounded-xl border border-purple-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-purple-400 hover:shadow-md">
-              <div className="relative flex h-52 items-center justify-center overflow-hidden bg-gradient-to-br from-violet-100 via-purple-50 to-fuchsia-100">{auction.imageUrl ? <img src={auction.imageUrl} alt={auction.title} className="h-full w-full object-contain transition duration-300 group-hover:scale-105" /> : <Gavel className="h-10 w-10 text-purple-400" />}<span className="absolute left-3 top-3 rounded-full bg-purple-600 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white">Auction</span><span className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-slate-950/85 px-2.5 py-1 text-xs font-bold text-white"><Clock3 className="h-3.5 w-3.5 text-purple-300" />{auctionTime(auction.endsAt)}</span></div>
-              <div className="p-4"><p className="text-xs font-semibold text-purple-600">{auction.storeName}</p><h3 className="mt-1 line-clamp-2 font-bold text-slate-900">{auction.title}</h3><p className="mt-1 text-xs text-slate-500">{auction.game} · {auction.bidCount} bids</p><div className="mt-4 flex items-end justify-between"><div><p className="text-xs text-slate-500">Current bid</p><p className="font-extrabold text-purple-700">฿{auction.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p></div><span className="text-sm font-bold text-purple-600">Bid now →</span></div></div>
-            </Link>)}
+            {auctions.slice(0, 3).map((auction) => <AuctionCard key={auction.id} auction={auction} />)}
           </div>}
         </section>
         {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading catalog...</p>}

@@ -91,7 +91,7 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
 
   return (
     <div
-      className={`group flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition ${theme.border} ${productId ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2' : ''}`}
+      className={`group flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition duration-200 ${theme.border} ${productId ? 'cursor-pointer hover:-translate-y-0.5 hover:scale-[1.015] hover:shadow-md focus:outline-none focus:ring-2' : ''}`}
       onClick={handleOpenDetails}
       onKeyDown={handleCardKeyDown}
       role={productId ? 'button' : undefined}
@@ -100,7 +100,7 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
     >
       <div className={`relative flex h-52 w-full items-center justify-center overflow-hidden bg-gradient-to-br ${theme.image}`}>
           {imageUrl && !imageFailed ? (
-            <img src={imageUrl} alt={cardName} className="h-full w-full object-contain transition duration-300 group-hover:scale-105" onError={() => setImageFailed(true)} />
+            <img src={imageUrl} alt={cardName} className="h-full w-full object-contain" onError={() => setImageFailed(true)} />
           ) : (
             <div className="px-2 text-center text-xs text-gray-500"><div className="text-2xl" aria-hidden="true">🃏</div><span className="line-clamp-3">{cardName}</span></div>
           )}
@@ -117,18 +117,21 @@ export const TradingListingCard = ({ cardName, gameName, itemCount, startingPric
         <div className="mt-4 flex items-end justify-between"><div><p className="text-xs text-slate-500">Starting at</p><p className={`font-extrabold ${theme.accent}`}>{formatPrice(startingPrice)}</p></div><span className={soldOut ? 'text-xs text-red-600' : 'text-xs text-emerald-600'}>{soldOut ? 'Out of stock' : 'Available'}</span></div>
       </div>
 
-      <button
-        type="button"
-        disabled={isAdding || soldOut}
-        onClick={(event) => {
-          event.stopPropagation();
-          void handleAddToCart();
-        }}
-        title={soldOut ? 'This product is out of stock' : 'Add to cart'}
-        className={`mx-4 mb-4 rounded-md py-2.5 text-sm font-semibold transition-all duration-150 hover:text-white hover:shadow-md hover:scale-[1.02] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 ${theme.action}`}
-      >
-        {added ? '✓ Added to Cart' : '🛒 Add to Cart'}
-      </button>
+      <div className="flex items-center justify-end border-t border-slate-100 px-4 py-3">
+        <button
+          type="button"
+          disabled={isAdding || soldOut}
+          onClick={(event) => {
+            event.stopPropagation();
+            void handleAddToCart();
+          }}
+          title={soldOut ? 'This product is out of stock' : 'Add to cart'}
+          aria-label="Add to cart"
+          className={`flex h-9 w-9 items-center justify-center rounded-md border border-transparent transition-all duration-150 hover:text-white hover:scale-110 hover:shadow-md active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 ${theme.action}`}
+        >
+          {added ? '✓' : '🛒'}
+        </button>
+      </div>
       {feedback && (
         <p role={feedback.tone === 'error' ? 'alert' : 'status'} className={`mt-2 text-xs ${feedback.tone === 'error' ? 'text-red-600' : 'text-emerald-600'}`}>
           {feedback.message}

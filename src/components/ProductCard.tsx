@@ -115,7 +115,7 @@ export const ProductCard = ({
 
   return (
     <div
-      className={`group flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition ${theme.border} ${productId ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2' : ''}`}
+      className={`group flex h-full flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition duration-200 ${theme.border} ${productId ? 'cursor-pointer hover:-translate-y-0.5 hover:scale-[1.015] hover:shadow-md focus:outline-none focus:ring-2' : ''}`}
       onClick={handleOpenDetails}
       onKeyDown={handleCardKeyDown}
       role={productId ? 'button' : undefined}
@@ -124,7 +124,7 @@ export const ProductCard = ({
     >
       <div className={`relative flex h-52 w-full items-center justify-center overflow-hidden bg-gradient-to-br ${theme.image}`}>
         {imageUrl && !imageFailed ? (
-          <img src={imageUrl} alt={title} className="h-full w-full object-contain transition duration-300 group-hover:scale-105" onError={() => setImageFailed(true)} />
+          <img src={imageUrl} alt={title} className="h-full w-full object-contain" onError={() => setImageFailed(true)} />
         ) : (
           <div className="px-4 text-center">
             <div className="text-3xl" aria-hidden="true">🃏</div>
