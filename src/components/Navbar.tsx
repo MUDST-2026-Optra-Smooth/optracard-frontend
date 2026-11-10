@@ -10,6 +10,13 @@ import logoIcon from '../assets/logo-icon.png';
 import searchIcon from '../assets/search.png';
 import avatarIcon from '../assets/Generic avatar.png';
 
+const SAFE_PROFILE_IMAGE = /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\r\n]+$/i;
+
+function profileImageSource(profileImage?: string | null) {
+  if (!profileImage || !SAFE_PROFILE_IMAGE.test(profileImage)) return avatarIcon;
+  return encodeURI(profileImage);
+}
+
 export const Navbar = () => {
   const [query, setQuery] = useState('');
   const [searchParams] = useSearchParams();
@@ -36,6 +43,7 @@ export const Navbar = () => {
     routerNavigate(to, options);
   };
   const { user, logout } = useAuth();
+  const profileImageSrc = profileImageSource(user?.profileImage);
   const cartCount = useCartCount();
   const isAdminUser = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
   const dashboardPath = user?.role === 'SUPER_ADMIN' ? '/superadmin/overview' : '/admin/dashboard';
@@ -378,7 +386,7 @@ export const Navbar = () => {
           {user ? (
             <>
               <Link to="/profile" aria-label="Profile" className="w-10 h-10 rounded-full overflow-hidden border-2 border-transparent hover:border-[#2f65ff] transition cursor-pointer bg-gray-300">
-                <img src={avatarIcon} alt="Profile" className="w-full h-full object-cover" />
+                <img src={profileImageSrc} alt="Profile" className="w-full h-full object-cover" />
               </Link>
               <button type="button" onClick={() => { logout(); navigate('/'); }} className="text-xs text-gray-300 hover:text-white cursor-pointer">
                 Logout

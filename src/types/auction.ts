@@ -21,6 +21,7 @@ export interface Auction {
   storeName: string;
   sellerUserId: number;
   winningUserId: number | null;
+  leadingUserId: number | null;
   reviewNote: string | null;
   createdAt: string;
 }

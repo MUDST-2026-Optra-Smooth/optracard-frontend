@@ -1,19 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Clock3, Gavel, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import { loadAuctions } from '../api/auctions';
 import type { Auction } from '../types/auction';
-
-const money = (value: number) => `฿${Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-const remaining = (end: string) => {
-  const seconds = Math.max(0, Math.floor((new Date(end).getTime() - Date.now()) / 1000));
-  if (!seconds) return 'Ended';
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${minutes}m left`;
-};
+import { AuctionCard } from '../components/AuctionCard';
 
 export const AuctionHub = () => {
+  const navigate = useNavigate();
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [query, setQuery] = useState('');
   const [source, setSource] = useState('ALL');
@@ -40,6 +33,7 @@ export const AuctionHub = () => {
 
   return (
     <div className="mx-auto min-h-screen max-w-6xl px-5 py-10 text-slate-800">
+      <button type="button" onClick={() => navigate(-1)} className="mb-6 flex items-center gap-1 text-sm font-semibold text-slate-700 transition hover:text-slate-950">← Back</button>
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-purple-600">Live bidding</p>
@@ -55,14 +49,8 @@ export const AuctionHub = () => {
       </div>
       {error && <p role="alert" className="mt-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</p>}
       {loading ? <p className="py-16 text-center text-slate-500">Loading auctions…</p> : (
-        <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((auction) => <Link key={auction.id} to={`/auctions/${auction.id}`} className="overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-orange-300 hover:shadow-sm">
-            <div className="flex h-44 items-center justify-center bg-slate-100">{auction.imageUrl ? <img src={auction.imageUrl} alt="" className="h-full w-full object-cover" /> : <Gavel className="h-10 w-10 text-slate-400" />}</div>
-            <div className="p-4"><div className="flex items-center justify-between gap-2 text-xs"><span className="font-bold text-orange-600">{auction.source === 'OFFICIAL' ? 'OFFICIAL STORE' : 'MARKETPLACE'}</span><span className="inline-flex items-center gap-1 text-slate-500"><Clock3 className="h-3.5 w-3.5" />{remaining(auction.endsAt)}</span></div>
-              <h2 className="mt-2 line-clamp-2 font-bold text-slate-900">{auction.title}</h2><p className="mt-1 text-xs text-slate-500">{auction.game} · {auction.storeName}</p>
-              <div className="mt-4 flex items-end justify-between"><div><p className="text-xs text-slate-500">Current bid</p><p className="font-bold text-orange-700">{money(auction.currentPrice)}</p></div><span className="text-xs text-slate-500">{auction.bidCount} bid{auction.bidCount === 1 ? '' : 's'}</span></div>
-            </div>
-          </Link>)}
+        <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map((auction) => <AuctionCard key={auction.id} auction={auction} />)}
           {visible.length === 0 && <p className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">No published auctions match your search.</p>}
         </div>
       )}

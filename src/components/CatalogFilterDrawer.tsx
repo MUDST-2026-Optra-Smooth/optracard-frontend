@@ -19,17 +19,24 @@ const fallbackOptions: FilterOptions = {
 interface CatalogFilterDrawerProps {
   open: boolean;
   initialParams: URLSearchParams;
+  defaultSource?: 'OFFICIAL' | 'MARKETPLACE';
   onClose: () => void;
   onApply: (params: URLSearchParams) => void;
 }
 
-export function CatalogFilterDrawer({ open, initialParams, onClose, onApply }: CatalogFilterDrawerProps) {
-  const [draft, setDraft] = useState(() => new URLSearchParams(initialParams));
+const withDefaultSource = (params: URLSearchParams, defaultSource?: 'OFFICIAL' | 'MARKETPLACE') => {
+  const next = new URLSearchParams(params);
+  if (defaultSource && !next.has('source')) next.set('source', defaultSource);
+  return next;
+};
+
+export function CatalogFilterDrawer({ open, initialParams, defaultSource, onClose, onApply }: CatalogFilterDrawerProps) {
+  const [draft, setDraft] = useState(() => withDefaultSource(initialParams, defaultSource));
   const [options, setOptions] = useState<FilterOptions>(fallbackOptions);
 
   useEffect(() => {
     if (!open) return;
-    setDraft(new URLSearchParams(initialParams));
+    setDraft(withDefaultSource(initialParams, defaultSource));
     void loadCatalogFilterOptions()
       .then((loaded) => setOptions({
         types: loaded.types.length ? loaded.types : fallbackOptions.types,
@@ -38,7 +45,7 @@ export function CatalogFilterDrawer({ open, initialParams, onClose, onApply }: C
         sources: loaded.sources.length ? loaded.sources : fallbackOptions.sources,
       }))
       .catch(() => setOptions(fallbackOptions));
-  }, [open, initialParams.toString()]);
+  }, [open, initialParams.toString(), defaultSource]);
 
   useEffect(() => {
     if (!open) return;

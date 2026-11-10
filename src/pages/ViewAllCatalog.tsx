@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
-import { TradingListingCard } from '../components/TradingListingCard';
 import { CatalogFilterDrawer } from '../components/CatalogFilterDrawer';
 import { loadCatalogPage } from '../api/catalog';
 import type { CatalogProduct, CatalogQuery } from '../types/catalog';
@@ -59,7 +58,7 @@ export function ViewAllCatalog() {
           <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 text-xs font-medium text-[#9198a3]"><Link className="hover:text-[#2f65ff]" to="/">Home</Link><span>/</span><span className="text-[#59616d]">All Products</span></nav>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#2f65ff]">Complete catalog</p>
           <h1 className="mt-1 text-3xl font-black tracking-tight text-[#171a20] sm:text-4xl">All Products</h1>
-          <p className="mt-2 text-sm text-[#777f8b]">Official products first, followed by approved marketplace listings.</p>
+          <p className="mt-2 text-sm text-[#777f8b]">Browse Official Store products and approved marketplace listings in their own sections.</p>
         </div>
 
         <div className="flex items-center justify-between py-6">
@@ -70,12 +69,20 @@ export function ViewAllCatalog() {
         <CatalogFilterDrawer open={showFilters} initialParams={searchParams} onClose={() => setShowFilters(false)} onApply={applyFilters} />
         {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading catalog...</p>}
         {error && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-red-700">{error}</p>}
-        {!isLoading && !error && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {officialProducts.map((product) => <ProductCard key={`official-${product.id}`} productId={product.id} title={product.name} price={product.price} game={product.game} imageUrl={product.imageUrl ?? undefined} type={product.type} source={product.source} storeName={product.store.name} stock={product.stock} />)}
-            {marketplaceProducts.map((product) => <TradingListingCard key={`marketplace-${product.id}`} productId={product.id} cardName={product.name} gameName={product.game} itemCount={product.stock} startingPrice={product.price} imageUrl={product.imageUrl ?? undefined} storeName={product.store.name} source="MARKETPLACE" />)}
-          </div>
-        )}
+        {!isLoading && !error && products.length > 0 && <div className="space-y-12">
+          {officialProducts.length > 0 && <section>
+            <div className="mb-6 border-b border-slate-200 pb-4"><p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">Sold and fulfilled by Optracard</p><h2 className="mt-1 text-2xl font-black text-slate-900">Optracard Official Store</h2></div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {officialProducts.map((product) => <ProductCard key={`official-${product.id}`} productId={product.id} title={product.name} price={product.price} game={product.game} imageUrl={product.imageUrl ?? undefined} type={product.type} source={product.source} storeName={product.store.name} stock={product.stock} />)}
+            </div>
+          </section>}
+          {marketplaceProducts.length > 0 && <section>
+            <div className="mb-6 border-b border-slate-200 pb-4"><p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-500">Independent seller listings</p><h2 className="mt-1 text-2xl font-black text-slate-900">Marketplace &amp; Trading</h2></div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {marketplaceProducts.map((product) => <ProductCard key={`marketplace-${product.id}`} productId={product.id} title={product.name} price={product.price} game={product.game} imageUrl={product.imageUrl ?? undefined} type={product.type} source={product.source} storeName={product.store.name} stock={product.stock} />)}
+            </div>
+          </section>}
+        </div>}
         {!isLoading && !error && products.length === 0 && <p className="py-16 text-center text-base text-slate-500">No products found.</p>}
       </div>
     </section>
