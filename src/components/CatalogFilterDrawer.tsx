@@ -19,24 +19,24 @@ const fallbackOptions: FilterOptions = {
 interface CatalogFilterDrawerProps {
   open: boolean;
   initialParams: URLSearchParams;
-  lockedSource?: 'OFFICIAL' | 'MARKETPLACE';
+  defaultSource?: 'OFFICIAL' | 'MARKETPLACE';
   onClose: () => void;
   onApply: (params: URLSearchParams) => void;
 }
 
-const withLockedSource = (params: URLSearchParams, lockedSource?: 'OFFICIAL' | 'MARKETPLACE') => {
+const withDefaultSource = (params: URLSearchParams, defaultSource?: 'OFFICIAL' | 'MARKETPLACE') => {
   const next = new URLSearchParams(params);
-  if (lockedSource) next.set('source', lockedSource);
+  if (defaultSource && !next.has('source')) next.set('source', defaultSource);
   return next;
 };
 
-export function CatalogFilterDrawer({ open, initialParams, lockedSource, onClose, onApply }: CatalogFilterDrawerProps) {
-  const [draft, setDraft] = useState(() => withLockedSource(initialParams, lockedSource));
+export function CatalogFilterDrawer({ open, initialParams, defaultSource, onClose, onApply }: CatalogFilterDrawerProps) {
+  const [draft, setDraft] = useState(() => withDefaultSource(initialParams, defaultSource));
   const [options, setOptions] = useState<FilterOptions>(fallbackOptions);
 
   useEffect(() => {
     if (!open) return;
-    setDraft(withLockedSource(initialParams, lockedSource));
+    setDraft(withDefaultSource(initialParams, defaultSource));
     void loadCatalogFilterOptions()
       .then((loaded) => setOptions({
         types: loaded.types.length ? loaded.types : fallbackOptions.types,
@@ -45,7 +45,7 @@ export function CatalogFilterDrawer({ open, initialParams, lockedSource, onClose
         sources: loaded.sources.length ? loaded.sources : fallbackOptions.sources,
       }))
       .catch(() => setOptions(fallbackOptions));
-  }, [open, initialParams.toString(), lockedSource]);
+  }, [open, initialParams.toString(), defaultSource]);
 
   useEffect(() => {
     if (!open) return;
@@ -64,14 +64,14 @@ export function CatalogFilterDrawer({ open, initialParams, lockedSource, onClose
     });
   };
 
-  const clear = () => setDraft(withLockedSource(new URLSearchParams(), lockedSource));
+  const clear = () => setDraft(new URLSearchParams());
 
   const minPrice = parsePrice(draft.get('minPrice'));
   const maxPrice = parsePrice(draft.get('maxPrice'));
   const hasInvalidPriceRange = minPrice !== null && maxPrice !== null && minPrice > maxPrice;
 
   const apply = () => {
-    if (!hasInvalidPriceRange) onApply(withLockedSource(draft, lockedSource));
+    if (!hasInvalidPriceRange) onApply(draft);
   };
 
   return (
@@ -87,7 +87,7 @@ export function CatalogFilterDrawer({ open, initialParams, lockedSource, onClose
           <FilterSelect label="Product type" value={draft.get('type') ?? ''} onChange={(value) => setFilter('type', value)} options={options.types} />
           <FilterSelect label="Game" value={draft.get('game') ?? ''} onChange={(value) => setFilter('game', value)} options={options.games.map((game) => game.name)} />
           <FilterSelect label="Language" value={draft.get('language') ?? ''} onChange={(value) => setFilter('language', value)} options={options.languages} />
-          <FilterSelect label="Store source" value={draft.get('source') ?? ''} onChange={(value) => setFilter('source', value)} options={options.sources} disabled={Boolean(lockedSource)} />
+          <FilterSelect label="Store source" value={draft.get('source') ?? ''} onChange={(value) => setFilter('source', value)} options={options.sources} />
           <div>
             <p className="mb-2 text-sm font-semibold text-slate-600">Price range</p>
             <div className="grid grid-cols-2 gap-3">
@@ -107,8 +107,8 @@ export function CatalogFilterDrawer({ open, initialParams, lockedSource, onClose
   );
 }
 
-function FilterSelect({ label, value, options, onChange, disabled = false }: { label: string; value: string; options: string[]; onChange: (value: string) => void; disabled?: boolean }) {
-  return <label className="block text-sm font-semibold text-slate-600">{label}<select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">All</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select>{disabled && <span className="mt-1 block text-xs font-normal text-slate-500">Locked to this page's catalog.</span>}</label>;
+function FilterSelect({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+  return <label className="block text-sm font-semibold text-slate-600">{label}<select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2.5 font-normal outline-none focus:border-blue-500"><option value="">All</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>;
 }
 
 function parsePrice(value: string | null): number | null {

@@ -142,7 +142,7 @@ export function ViewAllTrading() {
           </div>
         </div>
 
-        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} lockedSource="MARKETPLACE" onClose={() => setShowFilters(false)} onApply={applyFilters} />
+        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} defaultSource="MARKETPLACE" onClose={() => setShowFilters(false)} onApply={applyFilters} />
 
         {/* ปรับ Grid เป็น lg:grid-cols-3 และลบ xl:grid-cols-4 ออก เพื่อให้การ์ดแนวนอนไม่แคบเกินไป */}
         {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading marketplace listings...</p>}

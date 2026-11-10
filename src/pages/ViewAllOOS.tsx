@@ -128,7 +128,7 @@ export function ViewAllOOS() {
           </div>
         </div>
 
-        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} lockedSource="OFFICIAL" onClose={() => setShowFilters(false)} onApply={applyFilters} />
+        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} defaultSource="OFFICIAL" onClose={() => setShowFilters(false)} onApply={applyFilters} />
 
         {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading official products...</p>}
         {error && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-red-700">{error}</p>}
