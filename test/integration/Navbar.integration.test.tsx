@@ -27,7 +27,7 @@ describe('Navbar Integration Tests', () => {
     vi.clearAllMocks();
   });
 
-  it('renders guest navigation with Login button and public links', () => {
+  it('renders guest navigation with Login button and storefront links', () => {
     vi.mocked(AuthContextModule.useAuth).mockReturnValue({
       user: null,
       token: null,
@@ -43,8 +43,9 @@ describe('Navbar Integration Tests', () => {
     );
 
     expect(screen.getByRole('link', { name: /login/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /about us/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /our team/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /my shop/i })).toHaveAttribute('href', '/start-selling');
+    expect(screen.getByRole('link', { name: /auctions/i })).toHaveAttribute('href', '/auctions');
+    expect(screen.getByRole('link', { name: /order history/i })).toHaveAttribute('href', '/order-history');
   });
 
   it('renders customer navigation with cart count badge and user profile', () => {
