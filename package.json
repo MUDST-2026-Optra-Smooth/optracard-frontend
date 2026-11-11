@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:test": "vite --port 3001 --strictPort",
+    "preview:test": "vite preview --port 3001 --strictPort",
     "build": "vite build",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
@@ -14,8 +15,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "test:e2e": "start-server-and-test dev:test http://localhost:3001 \"npm run cypress:run:critical\"",
-    "test:e2e:full": "start-server-and-test dev:test http://localhost:3001 \"npm run cypress:run\"",
+    "test:e2e": "npm run build && start-server-and-test preview:test http://localhost:3001 \"npm run cypress:run:critical\"",
+    "test:e2e:full": "npm run build && start-server-and-test preview:test http://localhost:3001 \"npm run cypress:run\"",
     "test:e2e:staging": "node scripts/cypress-run.js run --spec cypress/e2e-staging/**/*.cy.ts",
     "test:e2e:deployed": "node scripts/cypress-run.js run --spec cypress/e2e-deployed/**/*.cy.ts"
   },

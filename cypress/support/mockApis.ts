@@ -452,18 +452,18 @@ export function setupCommonMocks() {
       winningUserId: null, leadingUserId: null, reviewNote: null, createdAt: '2026-11-01T10:00:00',
     },
   ];
-  cy.intercept('GET', '**/api/auctions?*', (request) => {
+  cy.intercept({ method: 'GET', pathname: '/api/auctions' }, (request) => {
     const source = String(request.query.source ?? 'ALL');
     request.reply(source === 'ALL' ? auctions : auctions.filter((auction) => auction.source === source));
   }).as('getAuctions');
-  cy.intercept('GET', '**/api/auctions/101', auctions[0]).as('getAuctionDetail');
-  cy.intercept('GET', '**/api/auctions/101/bids', [{ id: 5, amount: 1200, bidderCode: 'SO***01', createdAt: '2026-11-01T12:00:00' }]).as('getAuctionBids');
-  cy.intercept('POST', '**/api/auctions/101/bids', (request) => request.reply({ id: 6, amount: request.body.amount, bidderCode: 'SO***01', createdAt: '2026-11-01T12:10:00' })).as('placeAuctionBid');
-  cy.intercept('POST', '**/api/auctions/101/checkout', { id: 101, status: 'COMPLETED' }).as('checkoutAuction');
+  cy.intercept({ method: 'GET', pathname: '/api/auctions/101' }, auctions[0]).as('getAuctionDetail');
+  cy.intercept({ method: 'GET', pathname: '/api/auctions/101/bids' }, [{ id: 5, amount: 1200, bidderCode: 'SO***01', createdAt: '2026-11-01T12:00:00' }]).as('getAuctionBids');
+  cy.intercept({ method: 'POST', pathname: '/api/auctions/101/bids' }, (request) => request.reply({ id: 6, amount: request.body.amount, bidderCode: 'SO***01', createdAt: '2026-11-01T12:10:00' })).as('placeAuctionBid');
+  cy.intercept({ method: 'POST', pathname: '/api/auctions/101/checkout' }, { id: 101, status: 'COMPLETED' }).as('checkoutAuction');
   cy.intercept('GET', '**/api/seller/auctions', [{ ...auctions[0], status: 'DRAFT', bidCount: 0, currentPrice: 1000 }]).as('getSellerAuctions');
   cy.intercept('POST', '**/api/seller/auctions/101/submit', { ...auctions[0], status: 'PENDING_REVIEW' }).as('submitSellerAuction');
   cy.intercept('DELETE', '**/api/seller/auctions/101', { ...auctions[0], status: 'CANCELLED' }).as('cancelSellerAuction');
-  cy.intercept('GET', '**/api/admin/auctions?*', [{ ...auctions[0], status: 'PENDING_REVIEW', bidCount: 0, currentPrice: 1000 }]).as('getAdminAuctions');
+  cy.intercept({ method: 'GET', pathname: '/api/admin/auctions' }, [{ ...auctions[0], status: 'PENDING_REVIEW', bidCount: 0, currentPrice: 1000 }]).as('getAdminAuctions');
   cy.intercept('PUT', '**/api/admin/auctions/101/review', (request) => request.reply({ ...auctions[0], status: request.body.approved ? 'LIVE' : 'REJECTED', reviewNote: request.body.note || null })).as('reviewAuction');
   const settlementReport = {
     summary: { grossAmount: 1200, feeAmount: 60, netAmount: 1140 },
