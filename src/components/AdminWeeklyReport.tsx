@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ADsidebar } from './ADsidebar';
-import { useAuth } from '../context/AuthContext';
+import { loadWeeklyReport, type WeeklyReportResponse } from '../api/admin';
 import { 
   Calendar, 
   Download, 
@@ -12,31 +12,11 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-interface TopProductDto {
-  productId: number;
-  name: string;
-  quantitySold: number;
-  totalRevenue: number;
-  currentStock: number;
-  daysUntilOut: number | null;
-  recommendedRestock: number | null;
-  status: string;
-}
-
-interface WeeklyReportResponse {
-  revenue: number;
-  cost: number;
-  profit: number;
-  totalOrders: number;
-  itemsSold: number;
-  topProducts: TopProductDto[];
-}
-
 type SortField = 'name' | 'quantitySold' | 'totalRevenue';
 type SortDirection = 'asc' | 'desc';
 
 export const AdminWeeklyReport: React.FC = () => {
-  const { user } = useAuth();
+
 
   const getInitialDates = () => {
     const today = new Date();
@@ -60,49 +40,26 @@ export const AdminWeeklyReport: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('quantitySold');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const authToken = 
-        localStorage.getItem('token') || 
-        localStorage.getItem('jwt_token') || 
-        localStorage.getItem('accessToken') || 
-        (user as any)?.token;
-
-      const response = await fetch(
-        `/api/admin/reports/weekly?startDate=${startDate}&endDate=${endDate}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authToken ? `Bearer ${authToken}` : ''
-          }
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error('Access denied (Status 403): Unauthorized request or expired session token.');
-        } else if (response.status === 400) {
-          throw new Error('Bad request (Status 400): Invalid date range parameters.');
-        } else {
-          throw new Error(`Failed to load report (Status: ${response.status})`);
-        }
+      if (!startDate || !endDate || startDate > endDate) {
+        throw new Error('Please select a valid date range.');
       }
-
-      const data: WeeklyReportResponse = await response.json();
+      const data = await loadWeeklyReport(startDate, endDate);
       setReport(data);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred while fetching the report.');
+    } catch (err: unknown) {
+      setReport(null);
+      setError(err instanceof Error ? err.message : 'Unable to load weekly report.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate]);
 
   useEffect(() => {
-    fetchReport();
-  }, [startDate, endDate]);
+    void fetchReport();
+  }, [fetchReport]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -269,9 +226,9 @@ export const AdminWeeklyReport: React.FC = () => {
 <table className="w-full text-left border-collapse">
   <thead>
     <tr className="border-b text-sm text-gray-500 uppercase">
-      <th className="py-3 px-4 font-semibold">Product Name</th>
-      <th className="py-3 px-4 font-semibold text-center">Quantity Sold</th>
-      <th className="py-3 px-4 font-semibold text-right">Total Revenue</th>
+      <th className="py-3 px-4 font-semibold"><button type="button" onClick={() => handleSort('name')}> Product Name {renderSortIcon('name')}</button></th>
+      <th className="py-3 px-4 font-semibold text-center"><button type="button" onClick={() => handleSort('quantitySold')}> Quantity Sold {renderSortIcon('quantitySold')}</button></th>
+      <th className="py-3 px-4 font-semibold text-right"><button type="button" onClick={() => handleSort('totalRevenue')}> Total Revenue {renderSortIcon('totalRevenue')}</button></th>
       <th className="py-3 px-4 font-semibold text-center">Current Stock</th>
       <th className="py-3 px-4 font-semibold text-center">Days Until Out</th>
       <th className="py-3 px-4 font-semibold text-center">Restock Qty</th>
@@ -281,7 +238,7 @@ export const AdminWeeklyReport: React.FC = () => {
   
   <tbody>
     {report?.topProducts && report.topProducts.length > 0 ? (
-      report.topProducts.map((product: TopProductDto, index: number) => (
+      sortedProducts.map((product, index) => (
         <tr key={product.productId || index} className="border-b hover:bg-gray-50">
           <td className="py-3 px-4 text-gray-800 font-medium">{product.name}</td>
           <td className="py-3 px-4 text-center text-blue-600 font-semibold">{product.quantitySold}</td>

@@ -81,17 +81,20 @@ export const rejectMarketplaceRequest = (id: number, note = '') => request<Admin
 export interface TopProductResponse {
   productId: number;
   name: string;
-  soldQuantity: number;
+  quantitySold: number;
+  totalRevenue: number;
+  currentStock: number;
+  daysUntilOut: number | null;
+  recommendedRestock: number | null;
+  status: string;
 }
 
 export interface WeeklyReportResponse {
-  totalRevenue: number;
-  totalCost: number;
-  totalProfit: number;
-  orderCount: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+  totalOrders: number;
   itemsSold: number;
-  lowStockCount: number;
-  outOfStockCount: number;
   topProducts: TopProductResponse[];
 }
 
