@@ -31,3 +31,7 @@ export interface MarketplaceStoreProfile {
   profileImage: string | null;
   products: CatalogProduct[];
 }
+
+export interface CatalogQuery { q?: string; type?: string; game?: string; minPrice?: string; maxPrice?: string; language?: string; source?: CatalogSource | ''; storeId?: string; sort?: string; page?: string; pageSize?: string; }
+export interface CatalogPage { items: CatalogProduct[]; page: number; pageSize: number; totalItems: number; totalPages: number; sort: string; }
+export interface CatalogFilterOptions { types: string[]; games: { id: number; name: string }[]; languages: string[]; sources: CatalogSource[]; stores: { id: number; name: string }[]; price: { min: number; max: number }; }

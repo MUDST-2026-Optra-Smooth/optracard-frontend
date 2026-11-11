@@ -16,8 +16,6 @@ type SortField = 'name' | 'quantitySold' | 'totalRevenue';
 type SortDirection = 'asc' | 'desc';
 
 export const AdminWeeklyReport: React.FC = () => {
-
-
   const getInitialDates = () => {
     const today = new Date();
     const lastWeek = new Date();
@@ -44,9 +42,7 @@ export const AdminWeeklyReport: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      if (!startDate || !endDate || startDate > endDate) {
-        throw new Error('Please select a valid date range.');
-      }
+      if (!startDate || !endDate || startDate > endDate) throw new Error('Please select a valid date range.');
       const data = await loadWeeklyReport(startDate, endDate);
       setReport(data);
     } catch (err: unknown) {
@@ -226,9 +222,21 @@ export const AdminWeeklyReport: React.FC = () => {
 <table className="w-full text-left border-collapse">
   <thead>
     <tr className="border-b text-sm text-gray-500 uppercase">
-      <th className="py-3 px-4 font-semibold"><button type="button" onClick={() => handleSort('name')}> Product Name {renderSortIcon('name')}</button></th>
-      <th className="py-3 px-4 font-semibold text-center"><button type="button" onClick={() => handleSort('quantitySold')}> Quantity Sold {renderSortIcon('quantitySold')}</button></th>
-      <th className="py-3 px-4 font-semibold text-right"><button type="button" onClick={() => handleSort('totalRevenue')}> Total Revenue {renderSortIcon('totalRevenue')}</button></th>
+      <th className="py-3 px-4 font-semibold">
+        <button type="button" onClick={() => handleSort('name')} className="cursor-pointer">
+          Product Name{renderSortIcon('name')}
+        </button>
+      </th>
+      <th className="py-3 px-4 font-semibold text-center">
+        <button type="button" onClick={() => handleSort('quantitySold')} className="cursor-pointer">
+          Quantity Sold{renderSortIcon('quantitySold')}
+        </button>
+      </th>
+      <th className="py-3 px-4 font-semibold text-right">
+        <button type="button" onClick={() => handleSort('totalRevenue')} className="cursor-pointer">
+          Total Revenue{renderSortIcon('totalRevenue')}
+        </button>
+      </th>
       <th className="py-3 px-4 font-semibold text-center">Current Stock</th>
       <th className="py-3 px-4 font-semibold text-center">Days Until Out</th>
       <th className="py-3 px-4 font-semibold text-center">Restock Qty</th>

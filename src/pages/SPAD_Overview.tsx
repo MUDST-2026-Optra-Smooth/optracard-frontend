@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { loadSuperAdminOverview } from '../api/superadmin';
 import { SPAD_Error, SPAD_Loading, formatCurrency, statusTone } from '../components/SPAD_DataState';
 import { SPAD_Shell } from '../components/SPAD_Shell';
 import { SPAD_ExportButton, SPAD_Panel, SPAD_SectionHeading, SPAD_StatCard, SPAD_StatusBadge } from '../components/SPAD_Widgets';
 import type { SuperAdminOverview } from '../types/superadmin';
+import { RevenueBarChart } from '../components/dashboard/RevenueBarChart';
+import { StockDistributionChart } from '../components/dashboard/StockDistributionChart';
 
 export function SPAD_Overview() {
   const [overview, setOverview] = useState<SuperAdminOverview | null>(null);
@@ -19,8 +21,6 @@ export function SPAD_Overview() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-
-  const maxRevenue = useMemo(() => Math.max(...(overview?.monthlyMetrics.map((metric) => metric.revenue) ?? [0]), 1), [overview]);
 
   return (
     <SPAD_Shell>
@@ -45,15 +45,11 @@ export function SPAD_Overview() {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.8fr)_minmax(310px,1fr)]">
-            <SPAD_Panel title="Marketplace performance" subtitle="Actual GMV and order count across the last 12 months.">
-              <div className="space-y-3 px-4 py-4">
-                {overview.monthlyMetrics.map((metric) => <div key={metric.month} className="grid grid-cols-[48px_minmax(0,1fr)_78px] items-center gap-3 text-[10px]">
-                  <span className="text-[#687486]">{metric.month}</span>
-                  <div className="h-3 overflow-hidden rounded-full bg-[#eef2f7]"><div className="h-full rounded-full bg-[#2f65ff]" style={{ width: `${(metric.revenue / maxRevenue) * 100}%` }} /></div>
-                  <span className="text-right font-semibold text-[#303844]">{formatCurrency(metric.revenue)}</span>
-                </div>)}
-              </div>
-            </SPAD_Panel>
+            <RevenueBarChart
+              metrics={overview.monthlyMetrics}
+              title="Marketplace Performance"
+              subtitle="Actual GMV, recorded catalog expenses, and platform profit across the last 12 months."
+            />
             <SPAD_Panel title="Top stores by GMV" subtitle="Based on recorded marketplace orders.">
               <div className="divide-y divide-[#edf0f4]">
                 {overview.topStores.length === 0 ? <p className="px-4 py-6 text-[10px] text-[#8e99aa]">There are no marketplace stores yet.</p> : overview.topStores.map((store) => <div key={store.storeId} className="flex items-center justify-between gap-3 px-4 py-3 text-[10px]">
@@ -64,19 +60,14 @@ export function SPAD_Overview() {
             </SPAD_Panel>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <SPAD_Panel title="Catalog health" subtitle="Availability across approved active listings.">
-              <div className="space-y-3 px-4 py-4 text-[10px]">
-                <div className="flex h-3 overflow-hidden rounded-full bg-[#edf0f4]"><span className="bg-[#39b98c]" style={{ flex: overview.inStockListings }} /><span className="bg-[#f0a01e]" style={{ flex: overview.lowStockListings }} /><span className="bg-[#e66a6a]" style={{ flex: overview.outOfStockListings }} /></div>
-                <div className="grid grid-cols-3 gap-3"><p><span className="block text-[#8e99aa]">In stock</span><strong>{overview.inStockListings}</strong></p><p><span className="block text-[#8e99aa]">Low stock</span><strong>{overview.lowStockListings}</strong></p><p><span className="block text-[#8e99aa]">Out of stock</span><strong>{overview.outOfStockListings}</strong></p></div>
-              </div>
-            </SPAD_Panel>
-            <SPAD_Panel title="Catalog by game" subtitle="Approved, active listings grouped by card game.">
-              <div className="divide-y divide-[#edf0f4]">
-                {overview.catalogByGame.length === 0 ? <p className="px-4 py-6 text-[10px] text-[#8e99aa]">No active listings are available.</p> : overview.catalogByGame.map((game) => <div key={game.game} className="flex justify-between px-4 py-2.5 text-[10px]"><span className="font-medium text-[#303844]">{game.game}</span><strong>{game.listings} listings</strong></div>)}
-              </div>
-            </SPAD_Panel>
-          </div>
+          <StockDistributionChart
+            inStockCount={overview.inStockListings}
+            lowStockCount={overview.lowStockListings}
+            outOfStockCount={overview.outOfStockListings}
+            catalogByGame={overview.catalogByGame}
+            title="Platform Catalog Health & Game Distribution"
+            subtitle="Live inventory availability and trading card game composition across approved active marketplace listings."
+          />
         </>}
       </div>
     </SPAD_Shell>

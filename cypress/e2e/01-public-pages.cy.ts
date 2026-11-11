@@ -20,10 +20,12 @@ describe('Public & Marketplace Pages', () => {
     cy.get('footer').should('exist');
   });
 
-  it('performs search and navigates to search results page', () => {
+  it('performs search and opens ranked results', () => {
     cy.visit('/');
     cy.get('input[placeholder*="Search" i]').first().type('Pokemon{enter}');
-    cy.url().should('include', '/search');
+    cy.location('pathname').should('eq', '/search');
+    cy.location('search').should('include', 'q=Pokemon');
+    cy.contains('Search Result : Pokemon').should('be.visible');
     cy.contains('Pikachu Illustrator Promo Card').should('be.visible');
   });
 

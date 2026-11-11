@@ -62,3 +62,24 @@ main.min-w-0.flex-1.p-8 {
 .admin-workspace p[class*="tracking-[0.2em]"] {
   display: none;
 }
+
+/* Printing an order shows only the .print-area block, so Save as PDF gives a clean summary. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: 0;
+    box-shadow: none;
+  }
+}

@@ -8,11 +8,13 @@ import { OurTeam } from './pages/OurTeam';
 import { AboutUs } from './pages/Aboutus';
 import { ViewAllOOS } from './pages/ViewAllOOS';
 import { ViewAllTrading } from './pages/ViewAllTrading'; 
+import { ViewAllCatalog } from './pages/ViewAllCatalog';
 import { SearchResult } from './pages/SearchResult'; 
 import { Profile } from './pages/Profile';
 import { StartSelling } from './pages/StartSelling';
 import { OrdersManagement } from './pages/OrdersManagement';
 import { Seller } from './pages/seller';
+import { SellerOrderDetail } from './pages/SellerOrderDetail';
 import { Dashboard } from './pages/Dashboard';
 import { OrderHistory } from './pages/OrderHistory';
 import { OrderHistoryDetail } from './pages/OrderHistoryDetail';
@@ -35,6 +37,7 @@ import { ADorderDetail } from './pages/AD_orderDetail';
 import { ADordersManagement } from './pages/AD_ordersManagement';
 import { ADpddetail } from './pages/AD_pddetail';
 import { ADstocks } from './pages/AD_stocksManagement';
+import { ADpromotions } from './pages/AD_promotions';
 import { ADstoreRequest } from './pages/AD_storeRequest';
 import { ADstoreRequestdetail } from './pages/AD_storeRequestdetail';
 import { SPAD_AddAdmin } from './pages/SPAD_AddAdmin';
@@ -47,6 +50,13 @@ import { SPAD_Transactions } from './pages/SPAD_Transactions';
 import { SPAD_Users } from './pages/SPAD_Users';
 import {SellerProfile} from './pages/SellerProfile';
 import { AdminWeeklyReport } from './components/AdminWeeklyReport'; 
+import { AuctionHub } from './pages/AuctionHub';
+import { AuctionDetail } from './pages/AuctionDetail';
+import { AuctionCheckout } from './pages/AuctionCheckout';
+import { SellerAuctions } from './pages/SellerAuctions';
+import { AuctionForm } from './pages/AuctionForm';
+import { ADAuctions } from './pages/ADAuctions';
+import { CartFeedbackToast } from './components/CartFeedbackToast';
 
 const LegacyAdminRedirect = ({ to }: { to: string }) => {
   const location = useLocation();
@@ -61,6 +71,7 @@ const LegacyAdminRedirect = ({ to }: { to: string }) => {
 
 export function App() {
   const location = useLocation();
+  const backgroundLocation = (location.state as { backgroundLocation?: typeof location } | null)?.backgroundLocation;
 
   // เพิ่ม '/add-product' เข้าไปในรายการที่ต้องซ่อน Navbar และ Footer
   const hideNavAndFooterPaths = ['/dashboard', '/orders-management', '/seller', '/add-product'];
@@ -68,6 +79,8 @@ export function App() {
   const shouldHideNavAndFooter = 
     hideNavAndFooterPaths.includes(location.pathname) || 
     location.pathname.startsWith('/edit-product') ||
+    location.pathname.startsWith('/seller/auctions') ||
+    location.pathname.startsWith('/orders-management/') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/AD') ||
     location.pathname.startsWith('/superadmin');
@@ -77,7 +90,7 @@ export function App() {
       {!shouldHideNavAndFooter && <Navbar />}
       
       <main className="flex-grow">
-        <Routes>
+        <Routes location={backgroundLocation ?? location}>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -87,9 +100,13 @@ export function App() {
           <Route path="/view-all-oos" element={<Navigate to="/ViewAllOOS" replace />} />
           <Route path="/viewalloos" element={<Navigate to="/ViewAllOOS" replace />} />
           <Route path="/ViewAllTrading" element={<ViewAllTrading />} />
+          <Route path="/ViewAll" element={<ViewAllCatalog />} />
           <Route path="/view-all-trading" element={<Navigate to="/ViewAllTrading" replace />} />
           <Route path="/viewalltrading" element={<Navigate to="/ViewAllTrading" replace />} />
           <Route path="/search" element={<SearchResult />} />
+          <Route path="/auctions" element={<AuctionHub />} />
+          <Route path="/auctions/:id" element={<AuctionDetail />} />
+          <Route path="/auctions/:id/checkout" element={<ProtectedRoute><AuctionCheckout /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/profile/edit" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
           <Route path="/start-selling" element={<ProtectedRoute><StartSelling /></ProtectedRoute>} />
@@ -103,6 +120,9 @@ export function App() {
           <Route path="/admin/products/:id" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADpddetail /></ProtectedRoute>} />
           <Route path="/admin/orders" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADordersManagement /></ProtectedRoute>} />
           <Route path="/admin/orders/:orderId" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADorderDetail /></ProtectedRoute>} />
+          <Route path="/admin/promotions" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADpromotions /></ProtectedRoute>} />
+          <Route path="/admin/auctions" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADAuctions /></ProtectedRoute>} />
+          <Route path="/admin/auctions/new" element={<ProtectedRoute allowedRoles={['ADMIN']}><AuctionForm official /></ProtectedRoute>} />
           <Route path="/admin/store-requests" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADstoreRequest /></ProtectedRoute>} />
           <Route path="/admin/store-requests/:id?" element={<ProtectedRoute allowedRoles={['ADMIN']}><ADstoreRequestdetail /></ProtectedRoute>} />
           <Route path="/admin/marketplace/products" element={<ProtectedRoute allowedRoles={['ADMIN']}><AD_MarketplaceProducts /></ProtectedRoute>} />
@@ -135,7 +155,11 @@ export function App() {
           <Route path="/superadmin/staff" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_Staff /></ProtectedRoute>} />
           <Route path="/superadmin/staff/add" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_AddAdmin /></ProtectedRoute>} />
           <Route path="/orders-management" element={<ProtectedRoute allowedRoles={['SELLER']}><OrdersManagement /></ProtectedRoute>} />
+          <Route path="/orders-management/:orderId" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerOrderDetail /></ProtectedRoute>} />
           <Route path="/seller" element={<ProtectedRoute allowedRoles={['SELLER']}><Seller /></ProtectedRoute>} />
+          <Route path="/seller/auctions" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerAuctions /></ProtectedRoute>} />
+          <Route path="/seller/auctions/new" element={<ProtectedRoute allowedRoles={['SELLER']}><AuctionForm /></ProtectedRoute>} />
+          <Route path="/seller/auctions/:id/edit" element={<ProtectedRoute allowedRoles={['SELLER']}><AuctionForm /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['SELLER']}><Dashboard /></ProtectedRoute>} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/edit-product/:id" element={<ProtectedRoute allowedRoles={['SELLER']}><EditProduct /></ProtectedRoute>} />
@@ -151,8 +175,15 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      {backgroundLocation && (
+        <Routes>
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/team" element={<OurTeam />} />
+        </Routes>
+      )}
       
       {!shouldHideNavAndFooter && <Footer />}
+      <CartFeedbackToast />
     </div>
   );
 }

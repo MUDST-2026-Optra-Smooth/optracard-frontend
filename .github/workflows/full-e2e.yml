@@ -1,0 +1,61 @@
+name: Frontend full E2E
+
+on:
+  schedule:
+    - cron: '0 18 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mocked-full-suite:
+    name: Full mocked Cypress suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:e2e:full
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cypress-full-artifacts
+          path: |
+            cypress/screenshots
+            cypress/videos
+          if-no-files-found: ignore
+          retention-days: 14
+
+  staging-readonly:
+    name: Staging unmocked read-only checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check staging configuration
+        id: staging
+        env:
+          STAGING_FRONTEND_URL: ${{ secrets.STAGING_FRONTEND_URL }}
+          STAGING_BACKEND_URL: ${{ secrets.STAGING_BACKEND_URL }}
+        run: |
+          if [ -n "$STAGING_FRONTEND_URL" ] && [ -n "$STAGING_BACKEND_URL" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Staging URLs are not configured; skipping unmocked staging checks."
+          fi
+      - run: npm run test:e2e:staging
+        if: steps.staging.outputs.enabled == 'true'
+        env:
+          CYPRESS_BASE_URL: ${{ secrets.STAGING_FRONTEND_URL }}
+          CYPRESS_API_BASE_URL: ${{ secrets.STAGING_BACKEND_URL }}
+          CYPRESS_E2E_EMAIL: ${{ secrets.STAGING_E2E_EMAIL }}
+          CYPRESS_E2E_PASSWORD: ${{ secrets.STAGING_E2E_PASSWORD }}

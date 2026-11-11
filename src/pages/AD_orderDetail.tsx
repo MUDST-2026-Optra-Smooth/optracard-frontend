@@ -10,6 +10,7 @@ import {
   formatDate,
   StatusBadge,
 } from '../components/AdminWorkspace';
+import { OrderSummary } from '../components/OrderSummary';
 import type { AdminOrder } from '../types/admin';
 
 const paymentMethodLabel = (method: string | null) => {
@@ -141,40 +142,21 @@ export const ADorderDetail = () => {
 
           <div className="grid gap-5 lg:grid-cols-3">
             <section className="space-y-5 lg:col-span-2">
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="border-b p-5">
-                  <h2 className="font-bold text-slate-900">Order items</h2>
-                </div>
-                {order.items.map((item) => (
-                  <div
-                    key={`${item.productId}-${item.name}`}
-                    className="flex items-center gap-4 border-b border-slate-100 p-5 last:border-0"
-                  >
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt=""
-                        className="h-16 w-14 rounded bg-slate-100 object-cover ring-1 ring-slate-200"
-                      />
-                    ) : (
-                      <div className="h-16 w-14 rounded bg-slate-100 ring-1 ring-slate-200" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-slate-900">{item.name}</p>
-                      <p className="text-sm text-slate-500">
-                        {item.game} · Product ID {item.productId}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-slate-900">{formatCurrency(item.price)}</p>
-                      <p className="text-sm text-slate-500">Qty {item.quantity}</p>
-                    </div>
-                  </div>
-                ))}
-                {order.items.length === 0 && (
-                  <p className="p-6 text-center text-sm text-slate-500">No line items found.</p>
-                )}
-              </div>
+              <OrderSummary order={{
+                orderNumber: order.orderNumber,
+                placedAt: formatDate(order.createdAt),
+                storeName: order.storeName ?? 'Optracard Official Store',
+                status: order.status,
+                paymentStatus: order.paymentStatus,
+                items: order.items.map((item) => ({ key: `${item.productId}-${item.name}`, name: item.name, game: item.game, price: item.price, quantity: item.quantity })),
+                subtotal: order.subtotal ?? order.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+                discountCode: order.discountCode,
+                discountName: order.discountName,
+                discountAmount: order.discountAmount ?? 0,
+                shippingFee: order.shippingFee ?? 0,
+                total: order.total,
+                address: [order.recipientName, order.shippingAddress, order.recipientPhone].filter((line): line is string => Boolean(line?.trim())),
+              }} />
 
               <div className="grid gap-5 md:grid-cols-2">
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

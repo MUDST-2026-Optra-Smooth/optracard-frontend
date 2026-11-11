@@ -9,7 +9,7 @@ import {
   type StockAlert,
 } from '../api/stockAlerts';
 
-const STAFF_ROLES = new Set(['SELLER', 'ADMIN', 'SUPER_ADMIN']);
+const STAFF_ROLES = new Set(['SELLER', 'ADMIN']);
 
 const formatAlertDate = (value: string | null) => value
   ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
@@ -72,7 +72,6 @@ export const StockAlertBell = () => {
 
   const targetPath = (alert: StockAlert) => {
     if (user?.role === 'SELLER') return `/edit-product/${alert.productId}`;
-    if (user?.role === 'SUPER_ADMIN') return '/superadmin/catalog';
     return alert.listingSource === 'MARKETPLACE'
       ? `/admin/marketplace/products/${alert.productId}`
       : `/admin/products/${alert.productId}/edit`;
