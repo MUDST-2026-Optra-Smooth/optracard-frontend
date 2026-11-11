@@ -42,7 +42,7 @@ export const Login = () => {
       
       if (response.ok) {
         login(
-          { userId: data.userId, username: data.username, email: data.email ?? formData.email, role: data.role },
+          { userId: data.userId, username: data.username, email: data.email ?? formData.email, role: data.role, profileImage: data.profileImage ?? null },
           data.token,
         );
         // Sellers always land on the customer storefront after a fresh login.

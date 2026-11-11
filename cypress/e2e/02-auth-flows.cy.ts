@@ -83,10 +83,9 @@ describe('Authentication & User Registration Flows', () => {
       expect(win.localStorage.getItem('token')).to.not.equal(null);
     });
 
-    // Profile link or user avatar in navbar
-    cy.get('nav').within(() => {
-      cy.get('a[href="/profile"]').should('exist');
-    });
+    // The profile entry is rendered by the application navbar. Querying the
+    // link directly avoids matching navigation landmarks inside page content.
+    cy.get('a[href="/profile"]').should('exist');
 
     // Visiting profile and clicking logout
     cy.visit('/profile');

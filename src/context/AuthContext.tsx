@@ -5,6 +5,7 @@ export interface User {
   username: string;
   email: string;
   role: 'USER' | 'SELLER' | 'ADMIN' | 'SUPER_ADMIN';
+  profileImage?: string | null;
 }
 
 interface AuthContextType {

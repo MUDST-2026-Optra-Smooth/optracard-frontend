@@ -58,6 +58,7 @@ describe('Login Page Integration Tests', () => {
           username: 'tester',
           email: 'tester@example.com',
           role: 'USER',
+          profileImage: null,
           token: 'jwt-auth-sample-token',
         }),
       })
@@ -84,6 +85,7 @@ describe('Login Page Integration Tests', () => {
           username: 'tester',
           email: 'tester@example.com',
           role: 'USER',
+          profileImage: null,
         },
         'jwt-auth-sample-token'
       );

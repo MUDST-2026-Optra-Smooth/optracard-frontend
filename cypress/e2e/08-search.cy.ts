@@ -4,7 +4,12 @@ describe('Catalog search', () => {
   beforeEach(() => setupCommonMocks());
 
   it('opens ranked results for a typo after showing matching suggestions', () => {
-    cy.visit('/');
+    cy.visit('/', {
+      onBeforeLoad(win) {
+        // This test exercises request ordering, not the one-time storefront intro.
+        win.sessionStorage.setItem('optracard-storefront-intro-seen', 'true');
+      },
+    });
     cy.get('nav input[placeholder*="Search"]').type('pokamon');
     cy.wait('@searchProducts').its('request.url').should('include', 'q=pokamon');
     cy.get('nav').contains('Pikachu Illustrator Promo Card').should('be.visible');
@@ -61,7 +66,12 @@ describe('Catalog search', () => {
         request.reply({ body: [{ id: 2, name: 'New result', game: 'New', type: 'Single' }] });
       }
     }).as('searchSuggestions');
-    cy.visit('/');
+    cy.visit('/', {
+      onBeforeLoad(win) {
+        // Avoid the visual intro masking the navbar while testing stale responses.
+        win.sessionStorage.setItem('optracard-storefront-intro-seen', 'true');
+      },
+    });
     cy.clock();
     cy.get('nav input[placeholder*="Search"]').type('old');
     cy.tick(300);
