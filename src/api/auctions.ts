@@ -1,6 +1,6 @@
 import type { Auction, AuctionBid, AuctionCheckoutInput, AuctionInput } from '../types/auction';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
 const request = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   const token = localStorage.getItem('token');
@@ -21,8 +21,8 @@ export const loadAuctions = (filters: Record<string, string> = {}) => {
   const params = new URLSearchParams(Object.entries(filters).filter(([, value]) => value && value !== 'ALL'));
   return request<Auction[]>(`/api/auctions${params.size ? `?${params.toString()}` : ''}`);
 };
-export const loadAuction = (id: number) => request<Auction>(`/api/auctions/${id}`);
-export const loadAuctionBids = (id: number) => request<AuctionBid[]>(`/api/auctions/${id}/bids`);
+export const loadAuction = (id: number, signal?: AbortSignal) => request<Auction>(`/api/auctions/${id}`, { signal });
+export const loadAuctionBids = (id: number, signal?: AbortSignal) => request<AuctionBid[]>(`/api/auctions/${id}/bids`, { signal });
 export const placeAuctionBid = (id: number, amount: number) => request<AuctionBid>(`/api/auctions/${id}/bids`, {
   method: 'POST', body: JSON.stringify({ amount }),
 });
@@ -53,3 +53,10 @@ export const reviewAuction = (id: number, approved: boolean, note = '') => reque
 export const cancelAuctionByAdmin = (id: number, note = '') => request<Auction>(`/api/admin/auctions/${id}/cancel`, {
   method: 'PUT', body: JSON.stringify({ note }),
 });
+
+export const loadMyAuctions = () => request<Auction[]>('/api/auctions/mine');
+export interface AuctionNotification { id: number; auctionId: number; action: string; details: string; createdAt: string; readAt: string | null }
+export const loadAuctionNotifications = () => request<AuctionNotification[]>('/api/auction-account/notifications');
+export const readAuctionNotification = (id: number) => request<void>(`/api/auction-account/notifications/${id}/read`, { method: 'PUT' });
+export { request as auctionRequest };
+export const openAuctionDispute=(id:number,reason:string)=>request('/api/auction-account/auctions/'+id+'/disputes',{method:'POST',body:JSON.stringify({reason})});
