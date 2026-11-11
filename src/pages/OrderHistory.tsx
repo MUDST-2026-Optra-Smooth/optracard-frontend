@@ -11,7 +11,7 @@ import { reorderOrder, type ReorderResult } from '../api/orders';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 type Order = { orderNumber: string; placedAt: string; store: string; status: OrderStatus; items: OrderItem[]; total: number; statusNote: string; actions: Array<{ label: string; variant: 'link' | 'outline' | 'primary'; to?: string }> };
 type RawOrderItem = { productId?: number; name?: string; game?: string; storeName?: string; price?: number; quantity?: number; imageUrl?: string };
-type RawOrder = { items?: RawOrderItem[]; status?: string; createdAt?: string; storeName?: string; source?: string; shippingMethod?: string; orderNumber?: string; orderId?: number; total?: number };
+type RawOrder = { auctionId?: number | null; items?: RawOrderItem[]; status?: string; createdAt?: string; storeName?: string; source?: string; shippingMethod?: string; orderNumber?: string; orderId?: number; total?: number };
 const sortOptions: DropdownOption[] = [{ label: 'Newest first', value: 'newest', shortLabel: 'Newest first' }, { label: 'Oldest first', value: 'oldest', shortLabel: 'Oldest first' }, { label: 'Total: High to Low', value: 'total-high', shortLabel: 'Total: High to Low' }, { label: 'Total: Low to High', value: 'total-low', shortLabel: 'Total: Low to High' }];
 const statuses: OrderStatus[] = ['Processing', 'Shipped', 'Delivered', 'Canceled'];
 
@@ -22,7 +22,7 @@ const mapOrder = (raw: RawOrder): Order => {
   const store = raw.storeName || items[0]?.detail?.split(' · ')[1] || 'Optracard Official Store';
   const sellerNote = raw.source === 'MARKETPLACE' ? 'Marketplace seller' : 'Official Store';
   const deliveryNote = raw.shippingMethod === 'standard' ? 'Standard delivery' : 'Store pickup';
-  return { orderNumber: raw.orderNumber ?? `ORD-${raw.orderId}`, placedAt, store, status, items, total: Number(raw.total ?? 0), statusNote: `${sellerNote} · ${deliveryNote}`, actions: [{ label: 'View order detail', variant: 'primary', to: `/order-history/${raw.orderNumber ?? raw.orderId}` }] };
+  return { orderNumber: raw.orderNumber ?? `ORD-${raw.orderId}`, placedAt, store, status, items, total: Number(raw.total ?? 0), statusNote: `${raw.auctionId ? 'Auction win #'+raw.auctionId+' · ' : ''}${sellerNote} · ${deliveryNote}`, actions: [{ label: 'View order detail', variant: 'primary', to: `/order-history/${raw.orderNumber ?? raw.orderId}` }] };
 };
 
 export function OrderHistory() {

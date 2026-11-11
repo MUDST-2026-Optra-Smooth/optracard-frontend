@@ -50,6 +50,9 @@ import { SPAD_Transactions } from './pages/SPAD_Transactions';
 import { SPAD_Users } from './pages/SPAD_Users';
 import {SellerProfile} from './pages/SellerProfile';
 import { AdminWeeklyReport } from './components/AdminWeeklyReport'; 
+import { MyAuctions } from './pages/MyAuctions';
+import { AuctionNotifications } from './pages/AuctionNotifications';
+import { SuperAdminAuctions } from './pages/SuperAdminAuctions';
 import { AuctionHub } from './pages/AuctionHub';
 import { AuctionDetail } from './pages/AuctionDetail';
 import { AuctionCheckout } from './pages/AuctionCheckout';
@@ -104,6 +107,9 @@ export function App() {
           <Route path="/view-all-trading" element={<Navigate to="/ViewAllTrading" replace />} />
           <Route path="/viewalltrading" element={<Navigate to="/ViewAllTrading" replace />} />
           <Route path="/search" element={<SearchResult />} />
+          <Route path="/my-auctions" element={<ProtectedRoute allowedRoles={['USER','SELLER']}><MyAuctions /></ProtectedRoute>} />
+          <Route path="/auction-notifications" element={<ProtectedRoute><AuctionNotifications /></ProtectedRoute>} />
+          <Route path="/superadmin/auctions" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SuperAdminAuctions /></ProtectedRoute>} />
           <Route path="/auctions" element={<AuctionHub />} />
           <Route path="/auctions/:id" element={<AuctionDetail />} />
           <Route path="/auctions/:id/checkout" element={<ProtectedRoute><AuctionCheckout /></ProtectedRoute>} />
