@@ -436,4 +436,42 @@ export function setupCommonMocks() {
     { id: 99, username: 'superadmin', email: 'superadmin@optracard.com', role: 'SUPER_ADMIN', phone: '0800000000', createdAt: '2026-08-01T00:00:00Z' },
     { id: 100, username: 'ops_admin', email: 'ops@optracard.com', role: 'ADMIN', phone: '0811111111', createdAt: '2026-08-15T00:00:00Z' }
   ]).as('getSuperAdminStaff');
+
+  // Auctions: use stable future dates so every mocked test behaves as a live sale.
+  const auctions = [
+    {
+      id: 101, title: 'Umbreon VMAX Alternate Art', game: 'Pokemon', type: 'Single', imageUrl: '', description: 'Near mint collector card.',
+      startingPrice: 1000, currentPrice: 1200, bidCount: 2, startsAt: '2026-11-01T10:00:00', endsAt: '2099-11-08T10:00:00',
+      checkoutDeadline: null, status: 'LIVE', source: 'MARKETPLACE', storeId: 2, storeName: 'PokeVault Central', sellerUserId: 2,
+      winningUserId: null, leadingUserId: 1, reviewNote: null, createdAt: '2026-11-01T10:00:00',
+    },
+    {
+      id: 102, title: 'Pikachu Trophy Promo', game: 'Pokemon', type: 'Single', imageUrl: '', description: 'Official Store rare.',
+      startingPrice: 5000, currentPrice: 5000, bidCount: 0, startsAt: '2026-11-01T10:00:00', endsAt: '2099-11-08T10:00:00',
+      checkoutDeadline: null, status: 'LIVE', source: 'OFFICIAL', storeId: 1, storeName: 'Optracard Official Store', sellerUserId: 99,
+      winningUserId: null, leadingUserId: null, reviewNote: null, createdAt: '2026-11-01T10:00:00',
+    },
+  ];
+  cy.intercept('GET', '**/api/auctions?*', (request) => {
+    const source = String(request.query.source ?? 'ALL');
+    request.reply(source === 'ALL' ? auctions : auctions.filter((auction) => auction.source === source));
+  }).as('getAuctions');
+  cy.intercept('GET', '**/api/auctions/101', auctions[0]).as('getAuctionDetail');
+  cy.intercept('GET', '**/api/auctions/101/bids', [{ id: 5, amount: 1200, bidderCode: 'SO***01', createdAt: '2026-11-01T12:00:00' }]).as('getAuctionBids');
+  cy.intercept('POST', '**/api/auctions/101/bids', (request) => request.reply({ id: 6, amount: request.body.amount, bidderCode: 'SO***01', createdAt: '2026-11-01T12:10:00' })).as('placeAuctionBid');
+  cy.intercept('POST', '**/api/auctions/101/checkout', { id: 101, status: 'COMPLETED' }).as('checkoutAuction');
+  cy.intercept('GET', '**/api/seller/auctions', [{ ...auctions[0], status: 'DRAFT', bidCount: 0, currentPrice: 1000 }]).as('getSellerAuctions');
+  cy.intercept('POST', '**/api/seller/auctions/101/submit', { ...auctions[0], status: 'PENDING_REVIEW' }).as('submitSellerAuction');
+  cy.intercept('DELETE', '**/api/seller/auctions/101', { ...auctions[0], status: 'CANCELLED' }).as('cancelSellerAuction');
+  cy.intercept('GET', '**/api/admin/auctions?*', [{ ...auctions[0], status: 'PENDING_REVIEW', bidCount: 0, currentPrice: 1000 }]).as('getAdminAuctions');
+  cy.intercept('PUT', '**/api/admin/auctions/101/review', (request) => request.reply({ ...auctions[0], status: request.body.approved ? 'LIVE' : 'REJECTED', reviewNote: request.body.note || null })).as('reviewAuction');
+  const settlementReport = {
+    summary: { grossAmount: 1200, feeAmount: 60, netAmount: 1140 },
+    entries: [{ id: 1, referenceNumber: 'AUC-101', storeName: 'PokeVault Central', sellerUserId: 2, storeId: 2, type: 'AUCTION_CHARGE', grossAmount: 1200, feeRate: 5, feeAmount: 60, netAmount: 1140, status: 'POSTED', createdAt: '2026-11-01T12:10:00' }],
+  };
+  cy.intercept('GET', '**/api/seller/settlements*', settlementReport).as('getSellerSettlements');
+  cy.intercept('GET', '**/api/superadmin/settlements*', settlementReport).as('getSuperAdminSettlements');
+  cy.intercept('GET', '**/api/superadmin/marketplace-fee/config', { id: 1, feeRate: 5, effectiveFrom: '2026-11-01T00:00:00', changedBy: 'root', createdAt: '2026-11-01T00:00:00' }).as('getMarketplaceFeeConfig');
+  cy.intercept('GET', '**/api/superadmin/marketplace-fee/config/history', [{ id: 1, feeRate: 5, effectiveFrom: '2026-11-01T00:00:00', changedBy: 'root', createdAt: '2026-11-01T00:00:00' }]).as('getMarketplaceFeeHistory');
+  cy.intercept('PUT', '**/api/superadmin/marketplace-fee/config', (request) => request.reply({ id: 2, feeRate: request.body.feeRate, effectiveFrom: '2026-11-02T00:00:00', changedBy: 'root', createdAt: '2026-11-02T00:00:00' })).as('updateMarketplaceFeeConfig');
 }

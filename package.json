@@ -10,7 +10,7 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "cypress:run": "node scripts/cypress-run.js run",
-    "cypress:run:critical": "node scripts/cypress-run.js run --spec cypress/e2e/01-public-pages.cy.ts,cypress/e2e/02-auth-flows.cy.ts,cypress/e2e/03-buyer-cart-checkout.cy.ts,cypress/e2e/08-search.cy.ts,cypress/e2e/09-buyer-promotion-and-reorder.cy.ts,cypress/e2e/12-accessibility-and-access.cy.ts",
+    "cypress:run:critical": "node scripts/cypress-run.js run --spec cypress/e2e/01-public-pages.cy.ts,cypress/e2e/02-auth-flows.cy.ts,cypress/e2e/03-buyer-cart-checkout.cy.ts,cypress/e2e/08-search.cy.ts,cypress/e2e/09-buyer-promotion-and-reorder.cy.ts,cypress/e2e/12-accessibility-and-access.cy.ts,cypress/e2e/13-auction-smoke.cy.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
