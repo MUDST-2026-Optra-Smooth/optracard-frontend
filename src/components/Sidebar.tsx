@@ -74,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
               <span>Dashboard</span>
             </NavLink>
 
-            <NavLink to="/seller" className={navItemClass}>
+            <NavLink to="/seller" end className={navItemClass}>
               <Package className="w-5 h-5" />
               <span>Stocks Management</span>
             </NavLink>
