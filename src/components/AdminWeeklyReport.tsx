@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ADsidebar } from './ADsidebar';
+import { loadWeeklyReport, type WeeklyReportResponse } from '../api/admin';
 import { 
   Calendar, 
   Download, 
@@ -11,25 +12,15 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-interface TopProductDto {
-  productId: number;
-  name: string;
-  quantitySold: number;
-  totalRevenue: number;
-  currentStock: number;
-  daysUntilOut: number | null;
-  recommendedRestock: number | null;
-  status: string;
-}
-
-interface WeeklyReportResponse {
-  revenue: number;
-  cost: number;
-  profit: number;
-  totalOrders: number;
-  itemsSold: number;
-  topProducts: TopProductDto[];
-}
+// Accept legacy API status values while keeping the report UI in English.
+const stockStatusLabels: Record<string, string> = {
+  'ยังมีข้อมูลไม่เพียงพอ': 'Insufficient data',
+  'ควรเติมด่วน': 'Restock now',
+  'ใกล้หมด': 'Low stock',
+  'ปกติ': 'In stock',
+  'Normal': 'In stock',
+};
+const stockStatus = (status: string) => stockStatusLabels[status] ?? (/^[\u0020-\u007E]+$/.test(status) ? status : 'Unknown status');
 
 type SortField = 'name' | 'quantitySold' | 'totalRevenue';
 type SortDirection = 'asc' | 'desc';
@@ -57,49 +48,25 @@ export const AdminWeeklyReport: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('quantitySold');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const authToken = 
-        localStorage.getItem('token') || 
-        localStorage.getItem('jwt_token') || 
-        localStorage.getItem('accessToken');
-
-      const response = await fetch(
-        `/api/admin/reports/weekly?startDate=${startDate}&endDate=${endDate}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authToken ? `Bearer ${authToken}` : ''
-          }
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error('Access denied (Status 403): Unauthorized request or expired session token.');
-        } else if (response.status === 400) {
-          throw new Error('Bad request (Status 400): Invalid date range parameters.');
-        } else {
-          throw new Error(`Failed to load report (Status: ${response.status})`);
-        }
-      }
-
-      const data: WeeklyReportResponse = await response.json();
+      if (!startDate || !endDate || startDate > endDate) throw new Error('Please select a valid date range.');
+      const data = await loadWeeklyReport(startDate, endDate);
       setReport(data);
     } catch (err: unknown) {
+      setReport(null);
       const message = err instanceof Error ? err.message : 'An unexpected error occurred while fetching the report.';
       setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate]);
 
   useEffect(() => {
-    fetchReport();
-  }, [startDate, endDate]);
+    void fetchReport();
+  }, [fetchReport]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -282,8 +249,8 @@ export const AdminWeeklyReport: React.FC = () => {
         </button>
       </th>
       <th className="py-3 px-4 font-semibold text-center">Current Stock</th>
-      <th className="py-3 px-4 font-semibold text-center">Days Until Out</th>
-      <th className="py-3 px-4 font-semibold text-center">Restock Qty</th>
+      <th className="py-3 px-4 font-semibold text-center">Estimated Days Remaining</th>
+      <th className="py-3 px-4 font-semibold text-center">Suggested Restock</th>
       <th className="py-3 px-4 font-semibold text-center">Status</th>
     </tr>
   </thead>
@@ -299,27 +266,27 @@ export const AdminWeeklyReport: React.FC = () => {
           </td>
           <td className="py-3 px-4 text-center text-gray-800">{product.currentStock}</td>
           
-          {product.status === "ยังมีข้อมูลไม่เพียงพอ" ? (
+          {stockStatus(product.status) === "Insufficient data" ? (
             <>
               <td className="py-3 px-4 text-center text-gray-400">-</td>
               <td className="py-3 px-4 text-center text-gray-400">-</td>
               <td className="py-3 px-4 text-center">
                 <span className="bg-gray-100 text-gray-600 text-xs py-1 px-2 rounded-full border border-gray-200 whitespace-nowrap">
-                  {product.status}
+                  {stockStatus(product.status)}
                 </span>
               </td>
             </>
           ) : (
             <>
-              <td className="py-3 px-4 text-center font-medium">{product.daysUntilOut} วัน</td>
+              <td className="py-3 px-4 text-center font-medium">{product.daysUntilOut} {product.daysUntilOut === 1 ? 'day' : 'days'}</td>
               <td className="py-3 px-4 text-center text-green-600 font-semibold">+{product.recommendedRestock}</td>
               <td className="py-3 px-4 text-center">
                 <span className={`text-xs py-1 px-2 rounded-full border whitespace-nowrap ${
-                  product.status === "ควรเติมด่วน" ? "bg-red-50 text-red-600 border-red-200" :
-                  product.status === "ใกล้หมด" ? "bg-yellow-50 text-yellow-600 border-yellow-200" :
+                  stockStatus(product.status) === "Restock now" ? "bg-red-50 text-red-600 border-red-200" :
+                  stockStatus(product.status) === "Low stock" ? "bg-yellow-50 text-yellow-600 border-yellow-200" :
                   "bg-green-50 text-green-600 border-green-200"
                 }`}>
-                  {product.status}
+                  {stockStatus(product.status)}
                 </span>
               </td>
             </>
