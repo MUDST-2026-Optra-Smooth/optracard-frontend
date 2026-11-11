@@ -53,6 +53,9 @@ export interface SellerOrder {
   discountCode?: string | null;
   discountName?: string | null;
   discountAmount?: number | null;
+  marketplaceFeeRate?: number | null;
+  marketplaceFeeAmount?: number | null;
+  sellerNetAmount?: number | null;
 }
 
 export interface SellerProductInput {
