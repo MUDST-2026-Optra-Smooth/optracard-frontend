@@ -1,13 +1,14 @@
 import { Clock3, Gavel } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { auctionTimestamp } from '../hooks/useAuctionLive';
 import type { Auction } from '../types/auction';
 
 const remaining = (end: string) => {
-  const seconds = Math.max(0, Math.floor((new Date(end).getTime() - Date.now()) / 1000));
+  const seconds = Math.max(0, Math.floor((auctionTimestamp(end) - Date.now()) / 1000));
   if (!seconds) return 'Ending now';
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${minutes}m left`;
+  return `${hours}h ${minutes}m ${seconds % 60}s left`;
 };
 
 /** Shared live-auction presentation for the storefront and Auction Hub. */
