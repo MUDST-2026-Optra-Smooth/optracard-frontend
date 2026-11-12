@@ -12,7 +12,7 @@ describe('Critical auction browse and bidding journeys', () => {
     cy.contains('Pikachu Trophy Promo').should('be.visible');
     cy.contains('Umbreon VMAX Alternate Art').should('not.exist');
     cy.get('input[placeholder="Search auctions"]').clear();
-    cy.get('select').select('MARKETPLACE');
+    cy.get('select[aria-label="Source"]').select('MARKETPLACE');
     cy.wait('@getAuctions');
     cy.contains('Umbreon VMAX Alternate Art').should('be.visible');
   });
