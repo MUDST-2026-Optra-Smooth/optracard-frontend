@@ -14,6 +14,10 @@ export const AuctionHub = () => {
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Keep the text field responsive while React Router replaces the query string.
+  // Without local state, rapid typing can repeatedly read a stale URL value and
+  // leave only the final character in the search query.
+  const [searchQuery, setSearchQuery] = useState(() => params.get('q') ?? '');
   const [, tick] = useState(0);
   const get = (key: string) => params.get(key) ?? '';
   const filter = (key: string, value: string) => {
@@ -56,7 +60,7 @@ export const AuctionHub = () => {
     <div className="flex justify-between"><h1 className="text-3xl font-bold">Auction Hub</h1><Link to="/my-auctions" className="text-blue-700 underline">My bids and wins</Link></div>
     <p className="mt-2 text-slate-500">Bid on one-of-a-kind cards. Listings refresh automatically.</p>
     <div className="mt-6 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-3 lg:grid-cols-4">
-      <input aria-label="Search auctions" placeholder="Search auctions" className={control} value={get('q')} onChange={e=>filter('q',e.target.value)} />
+      <input aria-label="Search auctions" placeholder="Search auctions" className={control} value={searchQuery} onChange={e=>{ setSearchQuery(e.target.value); filter('q', e.target.value); }} />
       <select aria-label="Source" className={control} value={get('source')} onChange={e=>filter('source',e.target.value)}><option value="">All sources</option><option>MARKETPLACE</option><option>OFFICIAL</option></select>
       <select aria-label="Game" className={control} value={get('game')} onChange={e=>filter('game',e.target.value)}><option value="">All games</option>{games.map(g=><option key={g}>{g}</option>)}</select>
       <select aria-label="Status" className={control} value={get('status')} onChange={e=>filter('status',e.target.value)}><option value="">All statuses</option>{['SCHEDULED','LIVE','AWAITING_CHECKOUT','COMPLETED','ENDED_NO_BIDS','CHECKOUT_EXPIRED'].map(s=><option key={s}>{s}</option>)}</select>
