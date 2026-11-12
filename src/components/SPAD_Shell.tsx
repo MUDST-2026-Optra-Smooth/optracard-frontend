@@ -10,6 +10,7 @@ interface SPAD_ShellProps {
 
 const mainLinks = [
   { label: 'Overview', to: '/superadmin/overview', icon: LayoutDashboard },
+  { label: 'Auctions', to: '/superadmin/auctions', icon: BarChart3 },
   { label: 'Stores', to: '/superadmin/stores', icon: Store },
   { label: 'Catalog', to: '/superadmin/catalog', icon: BookOpen },
   { label: 'Sales & Transactions', to: '/superadmin/transactions', icon: BarChart3 },

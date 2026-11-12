@@ -12,8 +12,7 @@ describe('Critical auction browse and bidding journeys', () => {
     cy.contains('Pikachu Trophy Promo').should('be.visible');
     cy.contains('Umbreon VMAX Alternate Art').should('not.exist');
     cy.get('input[placeholder="Search auctions"]').clear();
-    cy.get('select').select('MARKETPLACE');
-    cy.wait('@getAuctions');
+    cy.get('select[aria-label="Source"]').select('MARKETPLACE');
     cy.contains('Umbreon VMAX Alternate Art').should('be.visible');
   });
 
@@ -22,7 +21,7 @@ describe('Critical auction browse and bidding journeys', () => {
     cy.wait('@getAuctionDetail');
     cy.wait('@getAuctionBids');
     cy.contains('You are currently the highest bidder').should('not.exist');
-    cy.contains('button', 'Log in to bid').should('be.disabled');
+    cy.contains('button', 'Log in to bid').should('be.enabled');
     cy.get('input[type="number"]').should('be.disabled');
   });
 

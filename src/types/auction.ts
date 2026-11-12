@@ -1,9 +1,16 @@
 export type AuctionStatus =
-  | 'DRAFT' | 'PENDING_REVIEW' | 'SCHEDULED' | 'LIVE' | 'AWAITING_CHECKOUT'
+  | 'SUSPENDED' | 'DRAFT' | 'PENDING_REVIEW' | 'SCHEDULED' | 'LIVE' | 'AWAITING_CHECKOUT'
   | 'COMPLETED' | 'REJECTED' | 'CANCELLED' | 'ENDED_NO_BIDS' | 'CHECKOUT_EXPIRED' | 'CLOSED';
 
 export interface Auction {
+  bidIncrement?: number;
+  checkoutHours?: number;
+  antiSnipingMinutes?: number;
   id: number;
+  productId?: number | null;
+  cardCondition?: string | null;
+  grading?: string | null;
+  evidenceImages?: string[];
   title: string;
   game: string;
   type: string | null;
@@ -34,6 +41,10 @@ export interface AuctionBid {
 }
 
 export interface AuctionInput {
+  productId?: number | null;
+  cardCondition?: string | null;
+  grading?: string | null;
+  evidenceImages?: string[];
   title: string;
   gameId: number | null;
   type: string;
