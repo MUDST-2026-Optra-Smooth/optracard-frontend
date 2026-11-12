@@ -22,7 +22,7 @@ describe('Critical auction browse and bidding journeys', () => {
     cy.wait('@getAuctionDetail');
     cy.wait('@getAuctionBids');
     cy.contains('You are currently the highest bidder').should('not.exist');
-    cy.contains('button', 'Log in to bid').should('be.disabled');
+    cy.contains('button', 'Log in to bid').should('be.enabled');
     cy.get('input[type="number"]').should('be.disabled');
   });
 

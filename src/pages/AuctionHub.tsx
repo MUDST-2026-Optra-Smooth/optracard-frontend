@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadAuctions } from '../api/auctions';
 import type { Auction } from '../types/auction';
@@ -9,14 +9,22 @@ const PAGE_SIZE = 12;
 export const AuctionHub = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const paramsRef = useRef(params);
+  useEffect(() => { paramsRef.current = params; }, [params]);
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [, tick] = useState(0);
   const get = (key: string) => params.get(key) ?? '';
   const filter = (key: string, value: string) => {
-    const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key);
-    if (key !== 'page') next.delete('page'); setParams(next, { replace: true });
+    // Search events can arrive faster than React Router renders a new
+    // URLSearchParams object. Keep a current ref so typed queries retain every
+    // character rather than only the final key stroke.
+    const next = new URLSearchParams(paramsRef.current);
+    if (value) next.set(key, value); else next.delete(key);
+    if (key !== 'page') next.delete('page');
+    paramsRef.current = next;
+    setParams(next, { replace: true });
   };
   useEffect(() => {
     let active = true; let timer: ReturnType<typeof setTimeout>;
