@@ -47,12 +47,14 @@ import { SPAD_Staff } from './pages/SPAD_Staff';
 import { SPAD_StoreDetail } from './pages/SPAD_StoreDetail';
 import { SPAD_Stores } from './pages/SPAD_Stores';
 import { SPAD_Transactions } from './pages/SPAD_Transactions';
+import { SPAD_MarketplaceFee } from './pages/SPAD_MarketplaceFee';
 import { SPAD_Users } from './pages/SPAD_Users';
 import {SellerProfile} from './pages/SellerProfile';
 import { AdminWeeklyReport } from './components/AdminWeeklyReport'; 
 import { MyAuctions } from './pages/MyAuctions';
 import { AuctionNotifications } from './pages/AuctionNotifications';
 import { SuperAdminAuctions } from './pages/SuperAdminAuctions';
+import { SellerSettlements } from './pages/SellerSettlements';
 import { AuctionHub } from './pages/AuctionHub';
 import { AuctionDetail } from './pages/AuctionDetail';
 import { AuctionCheckout } from './pages/AuctionCheckout';
@@ -84,6 +86,7 @@ export function App() {
     location.pathname.startsWith('/edit-product') ||
     location.pathname.startsWith('/seller/auctions') ||
     location.pathname.startsWith('/orders-management/') ||
+    location.pathname.startsWith('/seller/settlements') ||
     location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/AD') ||
     location.pathname.startsWith('/superadmin');
@@ -157,6 +160,7 @@ export function App() {
           <Route path="/superadmin/stores/:storeId" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_StoreDetail /></ProtectedRoute>} />
           <Route path="/superadmin/catalog" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_Catalog /></ProtectedRoute>} />
           <Route path="/superadmin/transactions" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_Transactions /></ProtectedRoute>} />
+          <Route path="/superadmin/marketplace-fee" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_MarketplaceFee /></ProtectedRoute>} />
           <Route path="/superadmin/users" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_Users /></ProtectedRoute>} />
           <Route path="/superadmin/staff" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_Staff /></ProtectedRoute>} />
           <Route path="/superadmin/staff/add" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SPAD_AddAdmin /></ProtectedRoute>} />
@@ -167,6 +171,7 @@ export function App() {
           <Route path="/seller/auctions/new" element={<ProtectedRoute allowedRoles={['SELLER']}><AuctionForm /></ProtectedRoute>} />
           <Route path="/seller/auctions/:id/edit" element={<ProtectedRoute allowedRoles={['SELLER']}><AuctionForm /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['SELLER']}><Dashboard /></ProtectedRoute>} />
+          <Route path="/seller/settlements" element={<ProtectedRoute allowedRoles={['SELLER']}><SellerSettlements /></ProtectedRoute>} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/edit-product/:id" element={<ProtectedRoute allowedRoles={['SELLER']}><EditProduct /></ProtectedRoute>} />
           <Route path="/add-product" element={<ProtectedRoute allowedRoles={['SELLER']}><AddProduct /></ProtectedRoute>} />

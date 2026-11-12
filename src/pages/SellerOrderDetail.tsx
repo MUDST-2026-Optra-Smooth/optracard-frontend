@@ -82,6 +82,18 @@ export const SellerOrderDetail = () => {
                   }}
                 />
 
+                {order.marketplaceFeeRate != null && order.marketplaceFeeAmount != null && order.sellerNetAmount != null && (
+                  <section className="print:hidden rounded-xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
+                    <h2 className="font-bold text-emerald-900">Marketplace settlement snapshot</h2>
+                    <p className="mt-1 text-sm text-emerald-700">Fee is calculated after the order discount and excludes shipping.</p>
+                    <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                      <div><dt className="text-emerald-700/70">Fee rate</dt><dd className="font-bold text-emerald-900">{order.marketplaceFeeRate.toFixed(2)}%</dd></div>
+                      <div><dt className="text-emerald-700/70">Marketplace fee</dt><dd className="font-bold text-emerald-900">฿{order.marketplaceFeeAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</dd></div>
+                      <div><dt className="text-emerald-700/70">Seller net earnings</dt><dd className="font-bold text-emerald-900">฿{order.sellerNetAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</dd></div>
+                    </dl>
+                  </section>
+                )}
+
                 <section className="print:hidden rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h2 className="font-bold text-slate-900">Customer and delivery</h2>
                   <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BarChart3, BookOpen, LayoutDashboard, Store, UsersRound } from 'lucide-react';
+import { BarChart3, BookOpen, LayoutDashboard, Store, UsersRound, WalletCards } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AdminHeader } from './AdminHeader';
 
@@ -14,6 +14,7 @@ const mainLinks = [
   { label: 'Stores', to: '/superadmin/stores', icon: Store },
   { label: 'Catalog', to: '/superadmin/catalog', icon: BookOpen },
   { label: 'Sales & Transactions', to: '/superadmin/transactions', icon: BarChart3 },
+  { label: 'Fee & Settlements', to: '/superadmin/marketplace-fee', icon: WalletCards },
 ];
 
 const linkClass = (isActive: boolean) =>

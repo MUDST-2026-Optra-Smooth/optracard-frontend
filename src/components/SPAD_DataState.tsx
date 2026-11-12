@@ -21,6 +21,6 @@ export const statusTone = (value: string | null | undefined): 'blue' | 'green' |
   const normalized = value?.toUpperCase();
   if (normalized === 'APPROVED' || normalized === 'ACTIVE' || normalized === 'DELIVERED') return 'green';
   if (normalized === 'PENDING' || normalized === 'PROCESSING' || normalized === 'SHIPPED') return 'orange';
-  if (normalized === 'REJECTED' || normalized === 'CANCELED' || normalized === 'CANCELLED' || normalized === 'INACTIVE') return 'red';
+  if (normalized === 'REJECTED' || normalized === 'CANCELED' || normalized === 'CANCELLED' || normalized === 'REVERSED' || normalized === 'INACTIVE') return 'red';
   return 'neutral';
 };

@@ -21,7 +21,6 @@ const stockStatusLabels: Record<string, string> = {
   'Normal': 'In stock',
 };
 const stockStatus = (status: string) => stockStatusLabels[status] ?? (/^[\u0020-\u007E]+$/.test(status) ? status : 'Unknown status');
-
 type SortField = 'name' | 'quantitySold' | 'totalRevenue';
 type SortDirection = 'asc' | 'desc';
 
