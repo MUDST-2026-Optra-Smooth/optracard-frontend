@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  loadMarketplaceFeeConfig,
+  loadMarketplaceFeeHistory,
   loadSellerSettlements,
   loadSuperAdminSettlements,
   updateMarketplaceFeeConfig,
@@ -51,5 +53,25 @@ describe('settlement API client', () => {
     expect(configUrl).toMatch(/\/api\/superadmin\/marketplace-fee\/config$/);
     expect(configInit.method).toBe('PUT');
     expect(configInit.body).toBe(JSON.stringify({ feeRate: 7 }));
+  });
+
+  it('loads the current fee configuration and its version history with a bearer token', async () => {
+    localStorage.setItem('token', 'super-admin-token');
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response({ id: 2, feeRate: 7 }))
+      .mockResolvedValueOnce(response([{ id: 1, feeRate: 5 }, { id: 2, feeRate: 7 }]));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(loadMarketplaceFeeConfig()).resolves.toMatchObject({ feeRate: 7 });
+    await expect(loadMarketplaceFeeHistory()).resolves.toHaveLength(2);
+
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/config$/);
+    expect(fetchMock.mock.calls[1][0]).toMatch(/\/config\/history$/);
+    expect((fetchMock.mock.calls[1][1].headers as Record<string, string>).Authorization).toBe('Bearer super-admin-token');
+  });
+
+  it('surfaces a safe fallback when a settlement endpoint returns no JSON error body', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 500 })));
+    await expect(loadSellerSettlements()).rejects.toThrow('Request failed with status 500');
   });
 });
