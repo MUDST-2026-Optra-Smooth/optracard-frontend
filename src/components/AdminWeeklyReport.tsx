@@ -12,6 +12,15 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+// Accept legacy API status values while keeping the report UI in English.
+const stockStatusLabels: Record<string, string> = {
+  'ยังมีข้อมูลไม่เพียงพอ': 'Insufficient data',
+  'ควรเติมด่วน': 'Restock now',
+  'ใกล้หมด': 'Low stock',
+  'ปกติ': 'In stock',
+  'Normal': 'In stock',
+};
+const stockStatus = (status: string) => stockStatusLabels[status] ?? (/^[\u0020-\u007E]+$/.test(status) ? status : 'Unknown status');
 type SortField = 'name' | 'quantitySold' | 'totalRevenue';
 type SortDirection = 'asc' | 'desc';
 
@@ -47,7 +56,8 @@ export const AdminWeeklyReport: React.FC = () => {
       setReport(data);
     } catch (err: unknown) {
       setReport(null);
-      setError(err instanceof Error ? err.message : 'Unable to load weekly report.');
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred while fetching the report.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -238,8 +248,8 @@ export const AdminWeeklyReport: React.FC = () => {
         </button>
       </th>
       <th className="py-3 px-4 font-semibold text-center">Current Stock</th>
-      <th className="py-3 px-4 font-semibold text-center">Days Until Out</th>
-      <th className="py-3 px-4 font-semibold text-center">Restock Qty</th>
+      <th className="py-3 px-4 font-semibold text-center">Estimated Days Remaining</th>
+      <th className="py-3 px-4 font-semibold text-center">Suggested Restock</th>
       <th className="py-3 px-4 font-semibold text-center">Status</th>
     </tr>
   </thead>
@@ -255,27 +265,27 @@ export const AdminWeeklyReport: React.FC = () => {
           </td>
           <td className="py-3 px-4 text-center text-gray-800">{product.currentStock}</td>
           
-          {product.status === "ยังมีข้อมูลไม่เพียงพอ" ? (
+          {stockStatus(product.status) === "Insufficient data" ? (
             <>
               <td className="py-3 px-4 text-center text-gray-400">-</td>
               <td className="py-3 px-4 text-center text-gray-400">-</td>
               <td className="py-3 px-4 text-center">
                 <span className="bg-gray-100 text-gray-600 text-xs py-1 px-2 rounded-full border border-gray-200 whitespace-nowrap">
-                  {product.status}
+                  {stockStatus(product.status)}
                 </span>
               </td>
             </>
           ) : (
             <>
-              <td className="py-3 px-4 text-center font-medium">{product.daysUntilOut} วัน</td>
+              <td className="py-3 px-4 text-center font-medium">{product.daysUntilOut} {product.daysUntilOut === 1 ? 'day' : 'days'}</td>
               <td className="py-3 px-4 text-center text-green-600 font-semibold">+{product.recommendedRestock}</td>
               <td className="py-3 px-4 text-center">
                 <span className={`text-xs py-1 px-2 rounded-full border whitespace-nowrap ${
-                  product.status === "ควรเติมด่วน" ? "bg-red-50 text-red-600 border-red-200" :
-                  product.status === "ใกล้หมด" ? "bg-yellow-50 text-yellow-600 border-yellow-200" :
+                  stockStatus(product.status) === "Restock now" ? "bg-red-50 text-red-600 border-red-200" :
+                  stockStatus(product.status) === "Low stock" ? "bg-yellow-50 text-yellow-600 border-yellow-200" :
                   "bg-green-50 text-green-600 border-green-200"
                 }`}>
-                  {product.status}
+                  {stockStatus(product.status)}
                 </span>
               </td>
             </>

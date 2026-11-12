@@ -1,0 +1,18 @@
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as api from '../../src/api/superadminAuctions';
+import { SuperAdminAuctions } from '../../src/pages/SuperAdminAuctions';
+import type { Auction } from '../../src/types/auction';
+vi.mock('../../src/components/SPAD_Shell',()=>({SPAD_Shell:({children}:{children:React.ReactNode})=><div>{children}</div>}));
+vi.mock('../../src/api/superadminAuctions',()=>({loadSuperAuctions:vi.fn(),loadAuctionSettings:vi.fn(),saveAuctionSettings:vi.fn(),loadAuctionAudit:vi.fn(),moderateAuction:vi.fn(),restrictAuctionBidder:vi.fn(),loadAuctionDisputes:vi.fn(),resolveAuctionDispute:vi.fn()}));
+const settings={bidIncrement:50,checkoutHours:24,antiSnipingMinutes:5,minDurationHours:1,maxDurationHours:168};
+const lot={id:1,title:'Review card',storeName:'Test shop',status:'LIVE',bidCount:1} as Auction;
+beforeEach(()=>{vi.clearAllMocks();vi.mocked(api.loadSuperAuctions).mockResolvedValue({items:[lot],total:21,page:0,bidCount:10,bidValue:1200,gmv:800,sellThroughRate:0.5,sellThroughDenominator:2,expiredCount:1,sellerIncidents:{'9':2}});vi.mocked(api.loadAuctionSettings).mockResolvedValue(settings);vi.mocked(api.loadAuctionAudit).mockResolvedValue([]);vi.mocked(api.loadAuctionDisputes).mockResolvedValue([]);});
+const show=()=>render(<MemoryRouter><SuperAdminAuctions/></MemoryRouter>);
+describe('Superadmin auction oversight',()=>{
+ it('loads metrics and server filters with pagination',async()=>{show();await screen.findByText('Review card');expect(screen.getByText('50%')).toBeInTheDocument();fireEvent.change(screen.getByLabelText('Auction status'),{target:{value:'LIVE'}});await waitFor(()=>expect(api.loadSuperAuctions).toHaveBeenLastCalledWith(expect.objectContaining({status:'LIVE',page:'0'})));fireEvent.click(screen.getByRole('button',{name:'Next'}));await waitFor(()=>expect(api.loadSuperAuctions).toHaveBeenLastCalledWith(expect.objectContaining({page:'1'})));});
+ it('requires a reason before force close and records moderation',async()=>{vi.mocked(api.moderateAuction).mockResolvedValue(lot);show();await screen.findByText('Review card');fireEvent.click(screen.getByRole('button',{name:'Audit and moderate'}));expect(screen.getByRole('button',{name:'Force close'})).toBeDisabled();fireEvent.change(screen.getByLabelText('Reason'),{target:{value:'Authenticity issue'}});fireEvent.click(screen.getByRole('button',{name:'Force close'}));await waitFor(()=>expect(api.moderateAuction).toHaveBeenCalledWith(1,'CLOSE','Authenticity issue'));});
+ it('saves validated default terms for new auctions',async()=>{vi.mocked(api.saveAuctionSettings).mockResolvedValue({...settings,bidIncrement:75});show();await screen.findByLabelText('Minimum bid increment (THB)');fireEvent.change(screen.getByLabelText('Minimum bid increment (THB)'),{target:{value:'75'}});fireEvent.click(screen.getByRole('button',{name:'Save auction settings'}));await waitFor(()=>expect(api.saveAuctionSettings).toHaveBeenCalledWith(expect.objectContaining({bidIncrement:75})));expect(await screen.findByText('Settings saved. Existing auction terms are unchanged.')).toBeInTheDocument();});
+ it('shows access failures without a successful dashboard',async()=>{vi.mocked(api.loadSuperAuctions).mockRejectedValue(new Error('Access denied'));show();expect(await screen.findByRole('alert')).toHaveTextContent('Access denied');expect(screen.queryByText('Review card')).not.toBeInTheDocument();});
+});
