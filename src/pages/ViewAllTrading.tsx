@@ -121,7 +121,7 @@ export function ViewAllTrading() {
               <span>/</span>
               <span className="text-[#59616d]">Marketplace</span>
             </nav>
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#2f65ff]">Shop everything</p>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-500">Shop everything</p>
             <h1 className="mt-1 text-3xl font-black tracking-tight text-[#171a20] sm:text-4xl">Marketplace &amp; Trading</h1>
             <p className="mt-2 text-sm text-[#777f8b]">Browse cards, sealed products and accessories for your next game.</p>
           </div>
@@ -142,7 +142,7 @@ export function ViewAllTrading() {
           </div>
         </div>
 
-        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} onClose={() => setShowFilters(false)} onApply={applyFilters} />
+        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} defaultSource="MARKETPLACE" onClose={() => setShowFilters(false)} onApply={applyFilters} />
 
         {/* ปรับ Grid เป็น lg:grid-cols-3 และลบ xl:grid-cols-4 ออก เพื่อให้การ์ดแนวนอนไม่แคบเกินไป */}
         {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading marketplace listings...</p>}

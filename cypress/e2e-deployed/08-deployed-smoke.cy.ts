@@ -24,7 +24,7 @@ describe('Deployed full-stack smoke journeys', () => {
     cy.get('nav').should('contain.text', 'Optracard');
   });
 
-  it('returns public catalog, search, and a product response from the deployed backend', () => {
+  it('returns public catalog, search, product, and published auction responses from the deployed backend', () => {
     cy.then(() => {
       cy.request(`${apiBaseUrl}/api/products/home`).then((catalog) => {
         expect(catalog.status).to.eq(200);
@@ -39,6 +39,19 @@ describe('Deployed full-stack smoke journeys', () => {
         if (productId !== undefined) {
           cy.request(`${apiBaseUrl}/api/products/${productId}`).its('status').should('eq', 200);
         }
+
+        cy.request(`${apiBaseUrl}/api/auctions?status=LIVE`).then((auctions) => {
+          expect(auctions.status).to.eq(200);
+          expect(auctions.body).to.be.an('array');
+          const auctionId = auctions.body[0]?.id;
+          if (auctionId !== undefined) {
+            cy.request(`${apiBaseUrl}/api/auctions/${auctionId}`).then((auction) => {
+              expect(auction.status).to.eq(200);
+              expect(auction.body).to.have.property('status');
+              expect(auction.body).to.have.property('currentPrice');
+            });
+          }
+        });
       });
     });
   });

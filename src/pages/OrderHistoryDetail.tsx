@@ -6,6 +6,7 @@ import { type OrderStatus } from '../components/OrderHistoryCard';
 import { OrderSummary } from '../components/OrderSummary';
 import { ReorderResultPanel } from '../components/ReorderResultPanel';
 import { ReorderSuccessToast } from '../components/ReorderSuccessToast';
+import { ReorderErrorToast } from '../components/ReorderErrorToast';
 import { reorderOrder, type ReorderResult } from '../api/orders';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
@@ -194,6 +195,7 @@ export function OrderHistoryDetail() {
   const [reorderResult, setReorderResult] = useState<ReorderResult | null>(null);
   const [reorderToast, setReorderToast] = useState<ReorderResult | null>(null);
   const [reorderError, setReorderError] = useState<string | null>(null);
+  const [reorderErrorToast, setReorderErrorToast] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -238,13 +240,14 @@ export function OrderHistoryDetail() {
   const timeline = useMemo(() => order ? timelineFor(order) : [], [order]);
   const handleReorder = async () => {
     if (!order) return;
-    setIsReordering(true); setReorderResult(null); setReorderToast(null); setReorderError(null);
+    setIsReordering(true); setReorderResult(null); setReorderToast(null); setReorderError(null); setReorderErrorToast(null);
     try {
       const result = await reorderOrder(order.orderNumber);
       setReorderResult(result);
       if (result.addedCount > 0) setReorderToast(result);
+      else setReorderErrorToast(result.skipped[0]?.message ?? `Nothing from order #${result.orderNumber} can be added to your cart right now.`);
     }
-    catch (reorderFailure) { setReorderError(reorderFailure instanceof Error ? reorderFailure.message : 'Could not add this order to your cart.'); }
+    catch (reorderFailure) { const message = reorderFailure instanceof Error ? reorderFailure.message : 'Could not add this order to your cart.'; setReorderError(message); setReorderErrorToast(message); }
     finally { setIsReordering(false); }
   };
 
@@ -350,6 +353,7 @@ export function OrderHistoryDetail() {
         </div>
       </div>
       {reorderToast && <ReorderSuccessToast result={reorderToast} onDismiss={() => setReorderToast(null)} />}
+      {reorderErrorToast && <ReorderErrorToast message={reorderErrorToast} onDismiss={() => setReorderErrorToast(null)} />}
     </section>
   );
 }

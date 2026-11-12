@@ -23,6 +23,7 @@ export function ViewAllOOS() {
   useEffect(() => { if (!searchParams.has('pending')) setAppliedParams(new URLSearchParams(searchParams)); }, [searchParams.toString()]);
   const activeParams = searchParams.has('pending') ? appliedParams : searchParams;
   const productType = activeParams.get('type') || 'All';
+  const pageTitle = productType === 'All' ? 'Optracard Official Store' : productType;
 
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [selectedSort, setSelectedSort] = useState<DropdownOption>(sortOptions[0]);
@@ -104,11 +105,11 @@ export function ViewAllOOS() {
             <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 text-xs font-medium text-[#9198a3]">
               <Link className="transition hover:text-[#2f65ff]" to="/">Home</Link>
               <span>/</span>
-              <span className="text-[#59616d]">{productType}</span>
+              <span className="text-[#59616d]">{pageTitle}</span>
             </nav>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#2f65ff]">Card collection</p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-[#171a20] sm:text-4xl">{productType}</h1>
-            <p className="mt-2 text-sm text-[#777f8b]">Find the perfect {productType.toLowerCase()} to complete your collection.</p>
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-[#171a20] sm:text-4xl">{pageTitle}</h1>
+            <p className="mt-2 text-sm text-[#777f8b]">{productType === 'All' ? 'Browse cards, sealed products and TCG essentials from Optracard.' : `Find the perfect ${productType.toLowerCase()} to complete your collection.`}</p>
           </div>
         </div>
 
@@ -127,7 +128,7 @@ export function ViewAllOOS() {
           </div>
         </div>
 
-        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} onClose={() => setShowFilters(false)} onApply={applyFilters} />
+        <CatalogFilterDrawer open={showFilters} initialParams={searchParams} defaultSource="OFFICIAL" onClose={() => setShowFilters(false)} onApply={applyFilters} />
 
         {isLoading && <p className="py-16 text-center text-base text-slate-500">Loading official products...</p>}
         {error && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-center text-red-700">{error}</p>}

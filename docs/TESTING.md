@@ -8,9 +8,9 @@ The frontend keeps fast, deterministic rules close to the component and reserves
 | --- | --- | --- | --- |
 | Unit | formatters, API clients, context state, component validation | mocked / isolated | every PR |
 | Integration | component plus router/context/API contract | mocked `fetch` | every PR |
-| Critical Cypress | public, authentication, cart/checkout, search and promotion/reorder journeys | Cypress intercepts | every PR |
+| Critical Cypress | public, authentication, cart/checkout, search, promotion/reorder and public auction bid access | Cypress intercepts | every PR |
 | Full Cypress | every local role workflow and regression spec | Cypress intercepts | nightly/manual |
-| Staging | unmocked public and resettable-account verification | real staging API | nightly/manual, before promotion |
+| Staging | unmocked read-only checks plus opt-in resettable auction write/cleanup journey | real staging API | nightly/manual, before promotion |
 | Production smoke | availability and read-only public/authenticated checks | real production API | after rollout |
 
 Coverage reports are baselined and retained as CI artifacts; this phase deliberately has no global percentage threshold. A meaningful assertion over behaviour is more useful than a high line-count target.
@@ -36,6 +36,7 @@ npm run test:e2e:deployed  # real deployed smoke; requires CYPRESS_BASE_URL/API_
 - Mocked Cypress data lives in `cypress/fixtures` and `cypress/support/mockApis.ts`; keep it deterministic and role-neutral.
 - Staging writes must use names/codes prefixed `E2E-{runId}-`, where `runId` comes from the workflow. Cleanup must use the normal authenticated API in `after`/`afterEach`; no production-only test endpoint is permitted.
 - Set separate resettable staging users for buyer, seller, admin and super-admin. Supply only dedicated test credentials through CI secrets.
+- `02-staging-auction-write.cy.ts` runs only when `CYPRESS_ENABLE_WRITES=true` and all three dedicated buyer/seller/admin credential pairs are present. It creates `E2E-{runId}-auction`, submits it, has admin approve it, places a buyer bid, then cancels it through the normal API.
 - Production smoke is strictly read-only: health/UI/catalog/search/product/OpenAPI plus a dedicated buyer's login, profile and order-history reads. It must not add to cart, change profile data, create listings, order, apply a promotion, or approve anything.
 - Avoid selectors based on Tailwind classes, order-dependent cards, real dates, or copied production data.
 
@@ -53,12 +54,15 @@ npm run test:e2e:deployed  # real deployed smoke; requires CYPRESS_BASE_URL/API_
 | Seller | stock threshold, product active state, destructive confirmation, tracking/status validation and rollback | seller dashboard/listing/stock-alert/order journey |
 | Admin | promotion cap/minimum/per-user normalization; errors; listing/store approval/rejection; reports empty/populated | official catalog/store/marketplace/promotion lifecycle |
 | Super-admin | users/staff/stores/catalog/transactions populated and empty states; role denial | workspace navigation and forbidden buyer/cart controls |
+| Auctions | public filter/query/card; bid minimum and leading state; guest protection; winner checkout payload/error; seller draft/submit; admin review/reject/cancel | PR `13-auction-smoke.cy.ts`; full `14-auction-settlement-workflows.cy.ts`; staging resettable seller → admin → buyer flow; deployed public list/detail only |
+| Marketplace fee & settlements | fee version/current/history clients; fee rounding/error fallback; seller report filters; auction charge ledger rendering | full seller and admin role contract checks; staging optional prepared-winner checkout; production remains read-only |
+| Profile/avatar | refreshed token/profile image persistence, invalid response and error fallback | integration refresh checks; deployed smoke reads profile only |
 | Accessibility | label associations, alerts/status, keyboard search, focusable confirmations | `12-accessibility-and-access.cy.ts` plus role/name selectors in critical specs |
 
 ## CI ownership
 
-- **PR fast path** (`ci.yml`): lint, Vitest, build, and `test:e2e` critical Cypress specs. It uploads build and failure artifacts.
-- **Nightly/manual** (`full-e2e.yml`): runs `test:e2e:full` and, when staging URLs are configured, the unmocked read-only suite. Add the write journey only alongside documented setup/cleanup helpers and resettable credentials.
+- **PR fast path** (`ci.yml`): lint, Vitest, build, and `test:e2e` critical Cypress specs, including public auction browse/guest/bid checks. It uploads build and failure artifacts.
+- **Nightly/manual** (`full-e2e.yml`): runs `test:e2e:full` and, when staging URLs are configured, unmocked staging checks. The auction mutation is opt-in and requires `STAGING_E2E_ENABLE_WRITES=true` plus resettable credentials.
 - **Deploy** (`ci.yml`): runs every file in `cypress/e2e-deployed`; public tests always run and the credential-dependent read-only test is skipped only when credentials are absent.
 
 Reviewers should require a matching test whenever a business rule, role permission, outbound payload, or customer-visible error changes.

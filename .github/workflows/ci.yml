@@ -39,7 +39,9 @@ jobs:
         with:
           name: vitest-coverage-report
           path: coverage/
-          if-no-files-found: error
+          # If Vitest itself fails it may not produce coverage. Keep that test
+          # failure as the actionable CI error instead of adding an upload error.
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Build frontend

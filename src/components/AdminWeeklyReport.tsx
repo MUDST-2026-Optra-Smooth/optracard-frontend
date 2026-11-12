@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ADsidebar } from './ADsidebar';
+import { loadWeeklyReport, type WeeklyReportResponse } from '../api/admin';
 import { 
   Calendar, 
   Download, 
@@ -10,26 +11,6 @@ import {
   ArrowDown,
   AlertCircle
 } from 'lucide-react';
-
-interface TopProductDto {
-  productId: number;
-  name: string;
-  quantitySold: number;
-  totalRevenue: number;
-  currentStock: number;
-  daysUntilOut: number | null;
-  recommendedRestock: number | null;
-  status: string;
-}
-
-interface WeeklyReportResponse {
-  revenue: number;
-  cost: number;
-  profit: number;
-  totalOrders: number;
-  itemsSold: number;
-  topProducts: TopProductDto[];
-}
 
 type SortField = 'name' | 'quantitySold' | 'totalRevenue';
 type SortDirection = 'asc' | 'desc';
@@ -57,49 +38,24 @@ export const AdminWeeklyReport: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('quantitySold');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const authToken = 
-        localStorage.getItem('token') || 
-        localStorage.getItem('jwt_token') || 
-        localStorage.getItem('accessToken');
-
-      const response = await fetch(
-        `/api/admin/reports/weekly?startDate=${startDate}&endDate=${endDate}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': authToken ? `Bearer ${authToken}` : ''
-          }
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error('Access denied (Status 403): Unauthorized request or expired session token.');
-        } else if (response.status === 400) {
-          throw new Error('Bad request (Status 400): Invalid date range parameters.');
-        } else {
-          throw new Error(`Failed to load report (Status: ${response.status})`);
-        }
-      }
-
-      const data: WeeklyReportResponse = await response.json();
+      if (!startDate || !endDate || startDate > endDate) throw new Error('Please select a valid date range.');
+      const data = await loadWeeklyReport(startDate, endDate);
       setReport(data);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'An unexpected error occurred while fetching the report.';
-      setError(message);
+      setReport(null);
+      setError(err instanceof Error ? err.message : 'Unable to load weekly report.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [startDate, endDate]);
 
   useEffect(() => {
-    fetchReport();
-  }, [startDate, endDate]);
+    void fetchReport();
+  }, [fetchReport]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {

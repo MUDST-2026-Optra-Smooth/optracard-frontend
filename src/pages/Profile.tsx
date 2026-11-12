@@ -20,6 +20,7 @@ interface ProfileResponse {
   email: string;
   phone?: string | null;
   address?: string | null;
+  profileImage?: string | null;
   collection: CollectionItemResponse[];
 }
 
@@ -144,7 +145,7 @@ export const Profile = () => {
             <div className="relative bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col sm:flex-row gap-12 items-center sm:items-start">
               <div className="relative shrink-0">
                 <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-md">
-                  <img src={defaultAvatar} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={profile.profileImage || defaultAvatar} alt="Profile" className="w-full h-full object-cover" />
                 </div>
               </div>
 
