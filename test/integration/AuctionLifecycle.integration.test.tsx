@@ -12,6 +12,7 @@ import type { Auction } from '../../src/types/auction';
 
 vi.mock('../../src/api/auctions', () => ({
   loadAuction: vi.fn(), loadAuctionBids: vi.fn(), placeAuctionBid: vi.fn(),
+  loadMyAuctions: vi.fn(),
   loadSellerAuctions: vi.fn(), submitSellerAuction: vi.fn(), cancelSellerAuction: vi.fn(),
   loadAdminAuctions: vi.fn(), reviewAuction: vi.fn(), cancelAuctionByAdmin: vi.fn(),
 }));
@@ -39,6 +40,7 @@ describe('auction role workflows', () => {
       login: vi.fn(), logout: vi.fn(),
     });
     vi.mocked(auctionApi.loadAuction).mockResolvedValue(liveAuction);
+    vi.mocked(auctionApi.loadMyAuctions).mockResolvedValue([]);
     vi.mocked(auctionApi.loadAuctionBids).mockResolvedValue([{ id: 1, amount: 1200, bidderCode: 'BU***44', createdAt: '2026-11-01T11:00:00' }]);
     vi.mocked(auctionApi.placeAuctionBid).mockResolvedValue({ id: 2, amount: 1300, bidderCode: 'BU***44', createdAt: '2026-11-01T12:00:00' });
   });
@@ -61,7 +63,7 @@ describe('auction role workflows', () => {
   it('keeps a guest from submitting a bid while making the login path obvious', async () => {
     vi.mocked(auth.useAuth).mockReturnValue({ user: null, login: vi.fn(), logout: vi.fn() });
     renderRoute(<AuctionDetail />, '/auctions/4');
-    expect(await screen.findByRole('button', { name: 'Log in to bid' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Log in to bid' })).toBeEnabled();
   });
 
   it('lets a seller submit a draft auction and refreshes the listing state', async () => {
