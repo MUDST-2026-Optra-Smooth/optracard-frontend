@@ -62,7 +62,7 @@ describe('admin API client', () => {
       if (tagName === 'a') Object.defineProperty(element, 'click', { value: click });
       return element;
     });
-    vi.mocked(fetch).mockResolvedValueOnce(response(new Blob(['csv']), 200, { 'Content-Type': 'text/csv' }));
+    vi.mocked(fetch).mockResolvedValueOnce(response('csv', 200, { 'Content-Type': 'text/csv' }));
     await admin.exportWeeklyReportCsv('2026-01-01', '2026-01-07');
     expect(click).toHaveBeenCalledOnce();
   });
