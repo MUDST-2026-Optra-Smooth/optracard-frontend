@@ -6,6 +6,7 @@ import {
   loadStockAlerts,
   markAllStockAlertsRead,
   markStockAlertRead,
+  STOCK_ALERT_THRESHOLD_UPDATED,
   type StockAlert,
 } from '../api/stockAlerts';
 
@@ -59,8 +60,11 @@ export const StockAlertBell = () => {
     if (!canView) return;
     void load();
     const interval = window.setInterval(() => void load(), 30_000);
+    const refreshAfterThresholdUpdate = () => void load();
+    window.addEventListener(STOCK_ALERT_THRESHOLD_UPDATED, refreshAfterThresholdUpdate);
     return () => {
       window.clearInterval(interval);
+      window.removeEventListener(STOCK_ALERT_THRESHOLD_UPDATED, refreshAfterThresholdUpdate);
       requestRef.current?.abort();
     };
   }, [canView, load, pathname, user?.email, user?.role]);

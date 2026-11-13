@@ -8,8 +8,7 @@ import type {
   AdminProductInput,
   AdminStore,
 } from '../types/admin';
-import type { StockAlertSettings } from './stockAlerts';
-
+export { loadStockAlertSettings, updateStockAlertSettings } from './stockAlerts';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
@@ -29,10 +28,6 @@ const request = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
 };
 
 export const loadAdminDashboard = () => request<AdminDashboard>('/api/admin/dashboard');
-export const loadStockAlertSettings = () => request<StockAlertSettings>('/api/stock-alerts/settings');
-export const updateStockAlertSettings = (defaultThreshold: number) => request<StockAlertSettings>('/api/stock-alerts/settings', {
-  method: 'PUT', body: JSON.stringify({ defaultThreshold }),
-});
 export const loadAdminCardGames = () => request<AdminCardGame[]>('/api/admin/card-games');
 export const loadAdminProducts = () => request<AdminProduct[]>('/api/admin/products');
 export const loadAdminProduct = (id: number) => request<AdminProduct>(`/api/admin/products/${id}`);

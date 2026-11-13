@@ -1,4 +1,5 @@
 export type StockAlertType = 'LOW_STOCK' | 'OUT_OF_STOCK';
+export const STOCK_ALERT_THRESHOLD_UPDATED = 'stock-alert-threshold-updated';
 
 export interface StockAlert {
   id: number;
@@ -42,7 +43,11 @@ export const markStockAlertRead = (id: number) => request<void>(`/api/stock-aler
 export const markStockAlertUnread = (id: number) => request<void>(`/api/stock-alerts/${id}/unread`, { method: 'PUT' });
 export const markAllStockAlertsRead = () => request<void>('/api/stock-alerts/read-all', { method: 'PUT' });
 export const loadStockAlertSettings = () => request<StockAlertSettings>('/api/stock-alerts/settings');
-export const updateStockAlertSettings = (defaultThreshold: number) => request<StockAlertSettings>('/api/stock-alerts/settings', {
-  method: 'PUT',
-  body: JSON.stringify({ defaultThreshold }),
-});
+export const updateStockAlertSettings = async (defaultThreshold: number) => {
+  const settings = await request<StockAlertSettings>('/api/stock-alerts/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ defaultThreshold }),
+  });
+  window.dispatchEvent(new Event(STOCK_ALERT_THRESHOLD_UPDATED));
+  return settings;
+};
