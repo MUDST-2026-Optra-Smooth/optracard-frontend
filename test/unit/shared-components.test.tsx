@@ -174,6 +174,20 @@ describe('forms, dialogs and data-state components', () => {
     expect(await screen.findByText('Games unavailable')).toBeInTheDocument();
   });
 
+  it('covers admin product form optional fields, cancellation and submitting state', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(<AdminProductForm initialValue={{ ...emptyAdminProduct, name: 'Existing', game: 'Pokemon', type: 'Single Card', imageUrl: 'https://img', productSet: 'Set', language: 'EN', description: 'Desc', cost: 1, price: 2, stock: 3 }} submitLabel="Saving" isSubmitting onCancel={onCancel} onSubmit={onSubmit} />);
+    expect(screen.getByRole('button', { name: 'Saving' })).toBeDisabled();
+    await user.clear(screen.getByLabelText('Image URL')); await user.type(screen.getByLabelText('Image URL'), 'https://new');
+    await user.clear(screen.getByLabelText('Set')); await user.type(screen.getByLabelText('Set'), 'New Set');
+    await user.clear(screen.getByLabelText('Language')); await user.type(screen.getByLabelText('Language'), 'JP');
+    await user.clear(screen.getByLabelText('Description')); await user.type(screen.getByLabelText('Description'), 'Details');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onCancel).toHaveBeenCalled();
+  });
+
   it('covers deletion confirmation and error handling', async () => {
     const user = userEvent.setup();
     const onConfirm = vi.fn().mockRejectedValue(new Error('Cannot delete'));

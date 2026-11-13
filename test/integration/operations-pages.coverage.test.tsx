@@ -1,4 +1,5 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Seller } from '../../src/pages/seller';
@@ -44,7 +45,7 @@ vi.mock('../../src/api/stockAlerts', async () => {
 });
 vi.mock('../../src/api/admin', async () => {
   const actual = await vi.importActual<typeof import('../../src/api/admin')>('../../src/api/admin');
-  return { ...actual, loadAdminDashboard: vi.fn(), loadAdminProducts: vi.fn(), loadAdminStores: vi.fn(), loadStockAlertSettings: vi.fn(), updateStockAlertSettings: vi.fn() };
+  return { ...actual, loadAdminDashboard: vi.fn(), loadAdminProducts: vi.fn(), loadAdminStores: vi.fn(), loadStockAlertSettings: vi.fn(), updateStockAlertSettings: vi.fn(), deleteAdminProduct: vi.fn() };
 });
 vi.mock('../../src/api/superadmin', async () => {
   const actual = await vi.importActual<typeof import('../../src/api/superadmin')>('../../src/api/superadmin');
@@ -65,18 +66,21 @@ describe('seller, admin and superadmin page coverage', () => {
     vi.mocked(sellerApi.loadMyStore).mockResolvedValue(store);
     vi.mocked(sellerApi.loadSellerProducts).mockResolvedValue([sellerProduct]);
     vi.mocked(sellerApi.loadSellerOrders).mockResolvedValue([sellerOrder]);
+    vi.mocked(sellerApi.updateSellerOrderStatus).mockResolvedValue({ ...sellerOrder, status: 'Shipped', trackingNumber: 'TRK-1' });
     vi.mocked(stockApi.loadStockAlerts).mockResolvedValue([]);
     vi.mocked(stockApi.loadStockAlertSettings).mockResolvedValue({ defaultThreshold: 5 });
     vi.mocked(adminApi.loadAdminDashboard).mockResolvedValue(adminDashboard);
     vi.mocked(adminApi.loadAdminProducts).mockResolvedValue([adminProduct]);
     vi.mocked(adminApi.loadAdminStores).mockResolvedValue([store]);
     vi.mocked(adminApi.loadStockAlertSettings).mockResolvedValue({ defaultThreshold: 5 });
+    vi.mocked(adminApi.deleteAdminProduct).mockResolvedValue(undefined);
     vi.mocked(superadminApi.loadSuperAdminOverview).mockResolvedValue(overview);
     vi.mocked(superadminApi.loadSuperAdminUsers).mockResolvedValue([user]);
   });
   afterEach(() => cleanup());
 
   it('renders seller inventory, dashboard and order management data', async () => {
+    const user = userEvent.setup();
     render(<MemoryRouter><Seller /></MemoryRouter>);
     expect(await screen.findByText('AAA Trading')).toBeInTheDocument();
     expect(screen.getByText('Pikachu')).toBeInTheDocument();
@@ -86,6 +90,14 @@ describe('seller, admin and superadmin page coverage', () => {
     cleanup();
     render(<MemoryRouter><OrdersManagement /></MemoryRouter>);
     expect(await screen.findByText('ORD-1')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Processing/ }));
+    await user.type(screen.getByPlaceholderText(/Search Order/), 'ORD-1');
+    await user.click(screen.getByText('ORD-1'));
+    expect(screen.getByText(/Customer Information/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await user.type(screen.getByLabelText(/Tracking number for ORD-1/), 'TRK-1');
+    await user.selectOptions(screen.getByDisplayValue('Processing'), 'Shipped');
+    await waitFor(() => expect(sellerApi.updateSellerOrderStatus).toHaveBeenCalled());
   });
 
   it('renders admin dashboard and stock/store screens', async () => {
@@ -95,6 +107,13 @@ describe('seller, admin and superadmin page coverage', () => {
     cleanup();
     render(<MemoryRouter><ADstocks /></MemoryRouter>);
     expect(await screen.findByText('Official card')).toBeInTheDocument();
+    await userEvent.setup().selectOptions(screen.getByDisplayValue('Visibility: All'), 'ACTIVE');
+    await userEvent.setup().type(screen.getByPlaceholderText(/Search product ID/), 'Official');
+    const threshold = screen.getByLabelText('Default threshold');
+    fireEvent.change(threshold, { target: { value: '8' } });
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Save threshold' }));
+    await waitFor(() => expect(adminApi.updateStockAlertSettings).toHaveBeenCalledWith(8));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Add product' }));
     cleanup();
     render(<MemoryRouter><AD_MarketplaceProducts /></MemoryRouter>);
     expect(await screen.findByText('AAA Trading')).toBeInTheDocument();

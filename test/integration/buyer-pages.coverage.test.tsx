@@ -75,6 +75,8 @@ describe('buyer storefront pages', () => {
     if (option) await user.click(option);
     await user.click(screen.getByRole('button', { name: /Filters/ }));
     expect(screen.getByRole('complementary', { name: 'Catalog filters' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Apply filters' }));
+    expect(navigate).toHaveBeenCalledWith(expect.stringContaining('/search?'));
 
     vi.mocked(catalogApi.searchCatalog).mockResolvedValue([]);
     cleanup();
@@ -84,6 +86,16 @@ describe('buyer storefront pages', () => {
     cleanup();
     render(<MemoryRouter initialEntries={['/search?q=error']}><SearchResult /></MemoryRouter>);
     expect(await screen.findByText(/ไม่สามารถโหลดข้อมูล/)).toBeInTheDocument();
+  });
+
+  it('honours catalog query filters and sort ordering', async () => {
+    vi.mocked(catalogApi.searchCatalog).mockResolvedValue([
+      product({ id: 1, price: 100, type: 'Single', language: 'English' }),
+      product({ id: 2, price: 20, type: 'Booster', language: 'Japanese' }),
+    ] as never);
+    render(<MemoryRouter initialEntries={['/search?q=pokemon&type=Single&language=English&minPrice=50&maxPrice=150']}><SearchResult /></MemoryRouter>);
+    expect(await screen.findByTestId('product-card')).toHaveTextContent('Pikachu ex');
+    expect(screen.queryByText('Gengar')).not.toBeInTheDocument();
   });
 
   it('registers successfully, validates mismatched passwords and handles backend errors', async () => {
