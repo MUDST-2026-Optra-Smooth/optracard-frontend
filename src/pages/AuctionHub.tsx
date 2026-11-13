@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadAuctions } from '../api/auctions';
 import type { Auction } from '../types/auction';
@@ -54,7 +55,14 @@ export const AuctionHub = () => {
   const page = Math.min(pages,Math.max(1,Number(get('page')) || 1));
   const control = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm';
   return <div className="mx-auto min-h-screen max-w-6xl px-5 py-10 text-slate-800">
-    <button type="button" onClick={() => navigate(-1)} className="mb-6 text-sm font-semibold">Back</button>
+    <button
+      type="button"
+      onClick={() => navigate(-1)}
+      className="mb-6 inline-flex cursor-pointer items-center gap-2 text-xl font-bold text-slate-900 transition-colors hover:text-blue-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+    >
+      <ArrowLeft aria-hidden="true" className="h-5 w-5 stroke-[3]" />
+      Back
+    </button>
     <div className="flex justify-between"><h1 className="text-3xl font-bold">Auction Hub</h1><Link to="/my-auctions" className="text-blue-700 underline">My bids and wins</Link></div>
     <p className="mt-2 text-slate-500">Bid on one-of-a-kind cards. Listings refresh automatically.</p>
     <div className="mt-6 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-3 lg:grid-cols-4">
