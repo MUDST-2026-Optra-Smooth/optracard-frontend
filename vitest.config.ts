@@ -13,7 +13,18 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'lcov'],
       reportsDirectory: 'coverage',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/main.tsx'],
+      exclude: [
+        'src/main.tsx',
+        'src/**/*.test.{ts,tsx}',
+        'src/**/*.spec.{ts,tsx}',
+        'src/**/*.d.ts',
+      ],
+      thresholds: {
+        statements: 50,
+        lines: 50,
+        branches: 50,
+        functions: 50,
+      },
     },
   },
 });
