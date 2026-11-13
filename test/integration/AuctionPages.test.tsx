@@ -25,9 +25,49 @@ describe('Auction pages',()=>{
  it('Hub paginates and filters by game and price',async()=>{
   vi.mocked(api.loadAuctions).mockResolvedValue(Array.from({length:13},(_,i)=>lot({id:i+1,title:'Card '+i,game:i===12?'One Piece':'Pokemon',currentPrice:i===12?999:150})));
   show(<AuctionHub/>,'/auctions','/auctions');expect(await screen.findByText('Page 1 of 2')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button',{name:'Next'}));expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+  const previous = screen.getByRole('button', { name: 'Previous' });
+  const next = screen.getByRole('button', { name: 'Next' });
+  expect(previous).toBeDisabled();
+  fireEvent.click(next);
+  expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+  expect(next).toBeDisabled();
+  fireEvent.click(previous);
+  expect(screen.getByText('Page 1 of 2')).toBeInTheDocument();
+  fireEvent.click(next);
   fireEvent.change(screen.getByLabelText('Game'),{target:{value:'One Piece'}});expect(screen.getByText('1 auctions')).toBeInTheDocument();expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Maximum price'),{target:{value:'200'}});expect(screen.getByText('No published auctions match your search.')).toBeInTheDocument();
+ });
+ it('opens bids and wins from the hub and returns from auction detail to the storefront', async () => {
+  vi.mocked(api.loadAuctions).mockResolvedValue([]);
+  render(
+    <MemoryRouter initialEntries={['/auctions', '/auctions/1']}>
+      <Routes>
+        <Route path="/" element={<h1>Storefront</h1>} />
+        <Route path="/auctions" element={<AuctionHub />} />
+        <Route path="/auctions/:id" element={<AuctionDetail />} />
+        <Route path="/my-auctions" element={<h1>My bids</h1>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+  fireEvent.click(await screen.findByRole('link', { name: 'Back to Storefront' }));
+  expect(screen.getByRole('heading', { name: 'Storefront' })).toBeInTheDocument();
+  cleanup();
+  render(
+    <MemoryRouter initialEntries={['/', '/auctions']}>
+      <Routes>
+        <Route path="/" element={<h1>Storefront</h1>} />
+        <Route path="/auctions" element={<AuctionHub />} />
+        <Route path="/my-auctions" element={<h1>My bids</h1>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+  await screen.findByText('Page 1 of 1');
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByRole('heading', { name: 'Storefront' })).toBeInTheDocument();
+  cleanup();
+  show(<AuctionHub />, '/auctions', '/auctions');
+  expect(screen.getByRole('link', { name: 'My bids and wins' })).toHaveAttribute('href', '/my-auctions');
+  await screen.findByText('Page 1 of 1');
  });
  it('Detail submits a bid and refreshes the listing',async()=>{
   vi.mocked(api.placeAuctionBid).mockResolvedValue({id:1,amount:200,bidderCode:'Bidder X',createdAt:new Date().toISOString()});show(<AuctionDetail/>);

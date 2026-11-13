@@ -53,7 +53,11 @@ vi.mock('../../src/api/superadmin', async () => {
 });
 
 const store = { storeId: 7, storeName: 'AAA Trading', storeStatus: 'APPROVED', ownerName: 'Seller', ownerEmail: 'seller@test', productCount: 2 } as never;
-const sellerProduct = { id: 1, name: 'Pikachu', game: 'Pokemon', type: 'Single', stock: 2, price: 100, costPrice: 50, active: true, approvalStatus: 'APPROVED', imageUrl: null, description: '' } as never;
+const sellerProduct = {
+  id: 1, name: 'Pikachu', game: 'Pokemon', type: 'Single', stock: 2, price: 100, cost: 50,
+  active: true, approvalStatus: 'APPROVED', imageUrl: null, description: '', productSet: null,
+  language: null, storeId: 7, storeName: 'AAA Trading',
+} satisfies Awaited<ReturnType<typeof sellerApi.loadSellerProducts>>[number];
 const sellerOrder = { orderId: 1, orderNumber: 'ORD-1', buyerName: 'Buyer', status: 'Processing', total: 100, itemCount: 1, createdAt: '2026-01-01T00:00:00Z', trackingNumber: null, items: [] } as never;
 const adminProduct = { id: 1, name: 'Official card', game: 'Pokemon', type: 'Single', stock: 4, price: 100, costPrice: 50, active: true, imageUrl: null, approvalStatus: 'APPROVED' } as never;
 const adminDashboard = { totalRevenue: 1000, totalExpenses: 500, totalProfit: 500, totalOrders: 3, totalItems: 4, averageOrderValue: 333, activeOfficialProducts: 2, lowStockProducts: 1, activeMarketplaceProducts: 1, pendingStoreVerifications: 0, pendingMarketplaceRequests: 0, monthlyMetrics: [], recentOrders: [] } as never;
@@ -85,8 +89,11 @@ describe('seller, admin and superadmin page coverage', () => {
     expect(await screen.findByText('AAA Trading')).toBeInTheDocument();
     expect(screen.getByText('Pikachu')).toBeInTheDocument();
     cleanup();
+    vi.mocked(sellerApi.loadSellerProducts).mockResolvedValue([{ ...sellerProduct, stock: 100 }]);
+    vi.mocked(stockApi.loadStockAlertSettings).mockResolvedValue({ defaultThreshold: 102 });
     render(<MemoryRouter><Dashboard /></MemoryRouter>);
     expect(await screen.findByText(/Total Products/i)).toBeInTheDocument();
+    expect(screen.getByText('100 left')).toBeInTheDocument();
     cleanup();
     render(<MemoryRouter><OrdersManagement /></MemoryRouter>);
     expect(await screen.findByText('ORD-1')).toBeInTheDocument();
