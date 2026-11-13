@@ -1,6 +1,6 @@
 import { AlertTriangle, Bell, CheckCheck, LoaderCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   loadStockAlerts,
@@ -20,32 +20,50 @@ const alertLabel = (alert: StockAlert) => alert.alertType === 'OUT_OF_STOCK' ? '
 export const StockAlertBell = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [alerts, setAlerts] = useState<StockAlert[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const requestRef = useRef<AbortController | null>(null);
 
   const canView = Boolean(user && STAFF_ROLES.has(user.role));
   const unreadCount = alerts.filter((alert) => !alert.read).length;
 
-  const load = useCallback(() => {
-    if (!canView) {
-      setAlerts([]);
-      return Promise.resolve();
-    }
+  const load = useCallback(async () => {
+    requestRef.current?.abort();
+    const request = new AbortController();
+    requestRef.current = request;
     setLoading(true);
-    return loadStockAlerts()
-      .then(setAlerts)
-      .catch(() => undefined)
-      .finally(() => setLoading(false));
-  }, [canView]);
+    try {
+      const currentAlerts = await loadStockAlerts(request.signal);
+      if (!request.signal.aborted) {
+        setAlerts(currentAlerts);
+        setLoadFailed(false);
+      }
+    } catch {
+      if (!request.signal.aborted) setLoadFailed(true);
+    } finally {
+      if (!request.signal.aborted) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
+    setAlerts([]);
+    setLoadFailed(false);
+    setOpen(false);
+  }, [user?.email, user?.role]);
+
+  useEffect(() => {
+    if (!canView) return;
     void load();
-    if (!canView) return undefined;
     const interval = window.setInterval(() => void load(), 30_000);
-    return () => window.clearInterval(interval);
-  }, [canView, load, user?.email]);
+    return () => {
+      window.clearInterval(interval);
+      requestRef.current?.abort();
+    };
+  }, [canView, load, pathname, user?.email, user?.role]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -124,11 +142,14 @@ export const StockAlertBell = () => {
             </button>
           </div>
 
+          {loadFailed && (
+            <p role="status" className="px-4 py-3 text-xs text-amber-200">Could not refresh stock alerts.</p>
+          )}
           {loading && alerts.length === 0 ? (
             <div className="flex items-center justify-center gap-2 px-4 py-8 text-xs text-slate-400">
               <LoaderCircle className="h-4 w-4 animate-spin" /> Loading alerts…
             </div>
-          ) : alerts.length === 0 ? (
+          ) : alerts.length === 0 ? !loadFailed && (
             <p className="px-4 py-8 text-center text-xs text-slate-400">No low-stock or out-of-stock products.</p>
           ) : (
             <div className="max-h-[min(28rem,70vh)] overflow-y-auto">

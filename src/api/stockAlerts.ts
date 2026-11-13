@@ -36,7 +36,8 @@ const request = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   return data as T;
 };
 
-export const loadStockAlerts = () => request<StockAlert[]>('/api/stock-alerts');
+export const loadStockAlerts = (signal?: AbortSignal) =>
+  request<StockAlert[]>('/api/stock-alerts', { signal, cache: 'no-store' });
 export const markStockAlertRead = (id: number) => request<void>(`/api/stock-alerts/${id}/read`, { method: 'PUT' });
 export const markStockAlertUnread = (id: number) => request<void>(`/api/stock-alerts/${id}/unread`, { method: 'PUT' });
 export const markAllStockAlertsRead = () => request<void>('/api/stock-alerts/read-all', { method: 'PUT' });
