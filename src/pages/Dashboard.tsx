@@ -18,6 +18,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { loadMyStore, loadSellerOrders, loadSellerProducts } from '../api/seller';
+import { loadStockAlertSettings } from '../api/stockAlerts';
 import type { SellerOrder, SellerProduct, SellerStoreInfo } from '../types/seller';
 import { formatPrice } from '../context/formatters';
 
@@ -35,19 +36,22 @@ export const Dashboard = () => {
   const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stockThreshold, setStockThreshold] = useState<number | null>(null);
 
   const load = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [loadedStore, loadedProducts, loadedOrders] = await Promise.all([
+      const [loadedStore, loadedProducts, loadedOrders, stockSettings] = await Promise.all([
         loadMyStore().catch(() => null),
         loadSellerProducts(),
         loadSellerOrders().catch(() => []),
+        loadStockAlertSettings().catch(() => null),
       ]);
       setStore(loadedStore);
       setProducts(loadedProducts);
       setOrders(loadedOrders);
+      setStockThreshold(stockSettings?.defaultThreshold ?? null);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not load dashboard.');
     } finally {
@@ -64,7 +68,9 @@ export const Dashboard = () => {
     .reduce((total, order) => total + Number(order.total ?? 0), 0);
   const liveCount = products.filter((p) => p.approvalStatus === 'APPROVED' && p.active).length;
   const pendingCount = products.filter((p) => p.approvalStatus === 'PENDING').length;
-  const lowStockProducts = products.filter((p) => p.active && p.stock <= 3);
+  const lowStockProducts = stockThreshold === null
+    ? []
+    : products.filter((product) => product.active && product.stock <= stockThreshold);
 
   const storeName = store?.storeName || 'My Shop';
 
@@ -333,11 +339,13 @@ export const Dashboard = () => {
                         </Link>
                       </div>
 
-                      {lowStockProducts.length === 0 ? (
+                      {stockThreshold === null ? (
+                        <p className="py-12 text-center text-sm text-slate-500">Could not load the store stock alert threshold.</p>
+                      ) : lowStockProducts.length === 0 ? (
                         <div className="py-12 text-center text-slate-400">
                           <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-400 mb-2" />
                           <p className="text-sm font-medium text-slate-700">All products have healthy stock levels.</p>
-                          <p className="text-xs text-slate-400 mt-1">No products currently with 3 or fewer items remaining.</p>
+                          <p className="text-xs text-slate-500 mt-1">No active products with {stockThreshold} or fewer items remaining.</p>
                         </div>
                       ) : (
                         <div className="mt-4 space-y-3">

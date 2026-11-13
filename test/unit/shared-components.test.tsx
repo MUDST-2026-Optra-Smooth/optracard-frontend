@@ -25,7 +25,8 @@ const auth = vi.hoisted(() => ({
 
 vi.mock('../../src/context/AuthContext', () => ({ useAuth: () => auth }));
 vi.mock('../../src/api/cart', () => ({ addProductToCart: vi.fn() }));
-vi.mock('../../src/api/stockAlerts', () => ({
+vi.mock('../../src/api/stockAlerts', async (importOriginal) => ({
+  ...await importOriginal<typeof import('../../src/api/stockAlerts')>(),
   loadStockAlerts: vi.fn(), markStockAlertRead: vi.fn(), markAllStockAlertsRead: vi.fn(),
 }));
 vi.mock('../../src/api/admin', async () => {

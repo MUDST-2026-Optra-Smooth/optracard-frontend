@@ -73,7 +73,7 @@ export const AuctionDetail = () => {
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-8 text-slate-800 sm:py-10">
-      <Link to="/auctions" className="text-sm font-semibold text-blue-600 hover:text-blue-700">← Back to Auction Hub</Link>
+      <Link to="/" className="text-sm font-semibold text-blue-600 hover:text-blue-700"><span aria-hidden="true">← </span>Back to Storefront</Link>
 
       <section className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(420px,1.15fr)] lg:items-start">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
