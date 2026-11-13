@@ -1,5 +1,5 @@
 import { AlertTriangle, Bell, CheckCheck, LoaderCircle } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -66,8 +66,6 @@ export const StockAlertBell = () => {
     };
   }, [open]);
 
-  const visibleAlerts = useMemo(() => alerts.slice(0, 8), [alerts]);
-
   if (!canView) return null;
 
   const targetPath = (alert: StockAlert) => {
@@ -114,7 +112,7 @@ export const StockAlertBell = () => {
           <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
             <div>
               <p className="text-sm font-bold">Stock alerts</p>
-              <p className="mt-0.5 text-[10px] text-slate-400">Live inventory warnings for your permitted scope</p>
+              <p className="mt-0.5 text-[10px] text-slate-400">{alerts.length} active · {unreadCount} unread</p>
             </div>
             <button
               type="button"
@@ -130,11 +128,11 @@ export const StockAlertBell = () => {
             <div className="flex items-center justify-center gap-2 px-4 py-8 text-xs text-slate-400">
               <LoaderCircle className="h-4 w-4 animate-spin" /> Loading alerts…
             </div>
-          ) : visibleAlerts.length === 0 ? (
+          ) : alerts.length === 0 ? (
             <p className="px-4 py-8 text-center text-xs text-slate-400">No low-stock or out-of-stock products.</p>
           ) : (
             <div className="max-h-[min(28rem,70vh)] overflow-y-auto">
-              {visibleAlerts.map((alert) => (
+              {alerts.map((alert) => (
                 <button
                   key={alert.id}
                   type="button"
