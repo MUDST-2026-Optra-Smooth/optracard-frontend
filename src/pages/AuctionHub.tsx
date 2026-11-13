@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Gavel } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadAuctions } from '../api/auctions';
 import type { Auction } from '../types/auction';
@@ -63,8 +63,19 @@ export const AuctionHub = () => {
       <ArrowLeft aria-hidden="true" className="h-5 w-5 stroke-[3]" />
       Back
     </button>
-    <div className="flex justify-between"><h1 className="text-3xl font-bold">Auction Hub</h1><Link to="/my-auctions" className="text-blue-700 underline">My bids and wins</Link></div>
-    <p className="mt-2 text-slate-500">Bid on one-of-a-kind cards. Listings refresh automatically.</p>
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 className="text-3xl font-bold">Auction Hub</h1>
+        <p className="mt-2 text-slate-500">Bid on one-of-a-kind cards. Listings refresh automatically.</p>
+      </div>
+      <Link
+        to="/my-auctions"
+        className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-bold text-violet-800 shadow-sm transition-colors hover:border-violet-400 hover:bg-violet-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600"
+      >
+        <Gavel aria-hidden="true" className="h-4 w-4" />
+        My bids and wins
+      </Link>
+    </div>
     <div className="mt-6 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-3 lg:grid-cols-4">
       <input aria-label="Search auctions" placeholder="Search auctions" className={control} value={searchQuery} onChange={e=>{ setSearchQuery(e.target.value); filter('q', e.target.value); }} />
       <select aria-label="Source" className={control} value={get('source')} onChange={e=>filter('source',e.target.value)}><option value="">All sources</option><option>MARKETPLACE</option><option>OFFICIAL</option></select>
