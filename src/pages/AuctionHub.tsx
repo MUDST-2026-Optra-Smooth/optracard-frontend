@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Gavel } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Gavel } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadAuctions } from '../api/auctions';
 import type { Auction } from '../types/auction';
@@ -54,6 +54,7 @@ export const AuctionHub = () => {
   const pages = Math.max(1,Math.ceil(visible.length/PAGE_SIZE));
   const page = Math.min(pages,Math.max(1,Number(get('page')) || 1));
   const control = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm';
+  const pageButton = 'group inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors enabled:cursor-pointer enabled:hover:border-violet-300 enabled:hover:bg-violet-50 enabled:hover:text-violet-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:cursor-not-allowed disabled:opacity-50';
   return <div className="mx-auto min-h-screen max-w-6xl px-5 py-10 text-slate-800">
     <button
       type="button"
@@ -87,6 +88,16 @@ export const AuctionHub = () => {
     </div>
     {error && <p role="alert" className="mt-4 text-red-700">{error}</p>}
     {loading ? <p className="py-16 text-center">Loading auctions...</p> : <><p role="status" className="mt-4">{visible.length} auctions</p><div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{visible.slice((page-1)*PAGE_SIZE,page*PAGE_SIZE).map(a=><AuctionCard key={a.id} auction={a} />)}{visible.length===0&&<p>No published auctions match your search.</p>}</div>
-    <nav aria-label="Auction pages" className="mt-6 flex items-center justify-center gap-4"><button disabled={page<=1} onClick={()=>filter('page',String(page-1))}>Previous</button><span>Page {page} of {pages}</span><button disabled={page>=pages} onClick={()=>filter('page',String(page+1))}>Next</button></nav></>}
+    <nav aria-label="Auction pages" className="mt-6 flex flex-wrap items-center justify-center gap-3">
+      <button type="button" disabled={page <= 1} onClick={() => filter('page', String(page - 1))} className={pageButton}>
+        <ChevronLeft aria-hidden="true" className="h-4 w-4 motion-safe:transition-transform motion-safe:group-enabled:group-hover:-translate-x-0.5" />
+        Previous
+      </button>
+      <span className="text-sm tabular-nums text-slate-600">Page {page} of {pages}</span>
+      <button type="button" disabled={page >= pages} onClick={() => filter('page', String(page + 1))} className={pageButton}>
+        Next
+        <ChevronRight aria-hidden="true" className="h-4 w-4 motion-safe:transition-transform motion-safe:group-enabled:group-hover:translate-x-0.5" />
+      </button>
+    </nav></>}
   </div>;
 };
