@@ -18,7 +18,6 @@ export const AuctionHub = () => {
   // Without local state, rapid typing can repeatedly read a stale URL value and
   // leave only the final character in the search query.
   const [searchQuery, setSearchQuery] = useState(() => params.get('q') ?? '');
-  const [, tick] = useState(0);
   const get = (key: string) => params.get(key) ?? '';
   const filter = (key: string, value: string) => {
     // Search events can arrive faster than React Router renders a new
@@ -39,7 +38,6 @@ export const AuctionHub = () => {
     };
     void refresh(); return () => { active = false; clearTimeout(timer); };
   }, []);
-  useEffect(() => { const timer = setInterval(() => tick(v => v + 1), 1000); return () => clearInterval(timer); }, []);
   const games = useMemo(() => [...new Set(auctions.map(a => a.game))].sort(), [auctions]);
   const visible = useMemo(() => {
     const term = (params.get('q') ?? '').trim().toLowerCase();

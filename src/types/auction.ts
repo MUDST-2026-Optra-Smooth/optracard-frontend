@@ -8,6 +8,8 @@ export interface Auction {
   antiSnipingMinutes?: number;
   id: number;
   productId?: number | null;
+  productSet?: string | null;
+  language?: string | null;
   cardCondition?: string | null;
   grading?: string | null;
   evidenceImages?: string[];
@@ -42,6 +44,8 @@ export interface AuctionBid {
 
 export interface AuctionInput {
   productId?: number | null;
+  productSet?: string | null;
+  language?: string | null;
   cardCondition?: string | null;
   grading?: string | null;
   evidenceImages?: string[];
@@ -51,6 +55,7 @@ export interface AuctionInput {
   imageUrl: string;
   description: string;
   startingPrice: number;
+  bidIncrement: number;
   startsAt: string;
   endsAt: string;
 }
