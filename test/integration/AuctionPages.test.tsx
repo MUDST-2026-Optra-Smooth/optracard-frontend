@@ -11,15 +11,20 @@ import { SellerAuctions } from '../../src/pages/SellerAuctions';
 import { ADAuctions } from '../../src/pages/ADAuctions';
 import { MyAuctions } from '../../src/pages/MyAuctions';
 import { AuctionNotifications } from '../../src/pages/AuctionNotifications';
+import type { User } from '../../src/context/AuthContext';
 vi.mock('../../src/api/auctions',()=>({loadAuctions:vi.fn(),loadAuction:vi.fn(),loadAuctionBids:vi.fn(),placeAuctionBid:vi.fn(),checkoutAuction:vi.fn(),loadSellerAuctions:vi.fn(),createSellerAuction:vi.fn(),updateSellerAuction:vi.fn(),createOfficialAuction:vi.fn(),submitSellerAuction:vi.fn(),cancelSellerAuction:vi.fn(),loadAdminAuctions:vi.fn(),reviewAuction:vi.fn(),cancelAuctionByAdmin:vi.fn(),openAuctionDispute:vi.fn(),loadMyAuctions:vi.fn(),loadAuctionNotifications:vi.fn(),readAuctionNotification:vi.fn()}));
 vi.mock('../../src/api/admin',()=>({loadAdminCardGames:vi.fn().mockResolvedValue([{id:1,name:'Pokemon'}])}));
 vi.mock('../../src/api/seller',()=>({loadSellerProducts:vi.fn().mockResolvedValue([{id:10,name:'Inventory card',game:'Pokemon',type:'Single',stock:1,price:500,imageUrl:null,description:'Inventory detail'}]),loadSellerGames:vi.fn().mockResolvedValue([{id:1,name:'Pokemon'}])}));
 vi.mock('../../src/components/Sidebar',()=>({default:()=>null}));vi.mock('../../src/components/ADsidebar',()=>({ADsidebar:()=>null}));
-const auth=vi.hoisted(()=>({user:{userId:2,username:'Buyer',email:'buyer@test',role:'USER'}}));
+const auth = vi.hoisted(() => ({
+  user: { userId: 2, username: 'Buyer', email: 'buyer@test', role: 'USER' } as User | null,
+}));
+const buyer: User = { userId: 2, username: 'Buyer', email: 'buyer@test', role: 'USER' };
 vi.mock('../../src/context/AuthContext',()=>({useAuth:()=>auth}));
 const lot=(overrides:Partial<Auction>={}):Auction=>({id:1,title:'Charizard auction',game:'Pokemon',type:'Single',imageUrl:null,description:'Mint card',startingPrice:100,currentPrice:150,bidCount:1,startsAt:new Date(Date.now()-3600000).toISOString(),endsAt:new Date(Date.now()+3600000).toISOString(),checkoutDeadline:new Date(Date.now()+86400000).toISOString(),status:'LIVE',source:'MARKETPLACE',storeId:1,storeName:'Card shop',sellerUserId:9,winningUserId:null,leadingUserId:2,reviewNote:null,createdAt:new Date().toISOString(),...overrides});
 const show=(page:React.ReactNode,path='/auctions/1',route='/auctions/:id')=>render(<MemoryRouter initialEntries={[path]}><Routes><Route path={route} element={page}/><Route path="/order-history" element={<h1>Order history reached</h1>}/><Route path="/seller/auctions" element={<h1>Seller auctions reached</h1>}/></Routes></MemoryRouter>);
 beforeEach(()=>{vi.clearAllMocks();vi.mocked(api.loadMyAuctions).mockResolvedValue([]);vi.mocked(api.loadAuction).mockResolvedValue(lot());vi.mocked(api.loadAuctionBids).mockResolvedValue([]);vi.mocked(api.loadSellerAuctions).mockResolvedValue([]);});
+beforeEach(() => { auth.user = buyer; });
 afterEach(()=>vi.restoreAllMocks());
 describe('Auction pages',()=>{
  it('Hub paginates and filters by game and price',async()=>{
@@ -37,7 +42,7 @@ describe('Auction pages',()=>{
   fireEvent.change(screen.getByLabelText('Game'),{target:{value:'One Piece'}});expect(screen.getByText('1 auctions')).toBeInTheDocument();expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Maximum price'),{target:{value:'200'}});expect(screen.getByText('No published auctions match your search.')).toBeInTheDocument();
  });
- it('opens bids and wins from the hub and returns from auction detail to the storefront', async () => {
+ it('returns from auction detail and the hub to the storefront', async () => {
   vi.mocked(api.loadAuctions).mockResolvedValue([]);
   render(
     <MemoryRouter initialEntries={['/auctions', '/auctions/1']}>
@@ -64,10 +69,33 @@ describe('Auction pages',()=>{
   await screen.findByText('Page 1 of 1');
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByRole('heading', { name: 'Storefront' })).toBeInTheDocument();
-  cleanup();
-  show(<AuctionHub />, '/auctions', '/auctions');
-  expect(screen.getByRole('link', { name: 'My bids and wins' })).toHaveAttribute('href', '/my-auctions');
+ });
+ it.each(['USER', 'SELLER'] as const)('opens My bids and wins for %s', async (role) => {
+  auth.user = { ...buyer, role };
+  vi.mocked(api.loadAuctions).mockResolvedValue([]);
+  render(
+    <MemoryRouter initialEntries={['/auctions']}>
+      <Routes>
+        <Route path="/auctions" element={<AuctionHub />} />
+        <Route path="/my-auctions" element={<h1>My auction history</h1>} />
+      </Routes>
+    </MemoryRouter>,
+  );
   await screen.findByText('Page 1 of 1');
+  fireEvent.click(screen.getByRole('link', { name: 'My bids and wins' }));
+  expect(screen.getByRole('heading', { name: 'My auction history' })).toBeInTheDocument();
+ });
+ it.each(['ADMIN', 'SUPER_ADMIN', 'guest'] as const)('disables My bids and wins for %s', async (role) => {
+  auth.user = role === 'guest' ? null : { ...buyer, role };
+  vi.mocked(api.loadAuctions).mockResolvedValue([]);
+  show(<AuctionHub />, '/auctions', '/auctions');
+  await screen.findByText('Page 1 of 1');
+  const action = screen.getByRole('button', { name: 'My bids and wins' });
+  expect(action).toBeDisabled();
+  expect(action).toHaveClass('cursor-not-allowed');
+  expect(screen.queryByRole('link', { name: 'My bids and wins' })).not.toBeInTheDocument();
+  fireEvent.click(action);
+  expect(screen.getByRole('heading', { name: 'Auction Hub' })).toBeInTheDocument();
  });
  it('Detail submits a bid and refreshes the listing',async()=>{
   vi.mocked(api.placeAuctionBid).mockResolvedValue({id:1,amount:200,bidderCode:'Bidder X',createdAt:new Date().toISOString()});show(<AuctionDetail/>);

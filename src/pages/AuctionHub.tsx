@@ -4,11 +4,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadAuctions } from '../api/auctions';
 import type { Auction } from '../types/auction';
 import { AuctionCard } from '../components/AuctionCard';
+import { useAuth } from '../context/AuthContext';
 import { auctionTimestamp } from '../hooks/useAuctionLive';
 
 const PAGE_SIZE = 12;
 export const AuctionHub = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canViewMyBids = user?.role === 'USER' || user?.role === 'SELLER';
   const [params, setParams] = useSearchParams();
   const paramsRef = useRef(params);
   useEffect(() => { paramsRef.current = params; }, [params]);
@@ -55,6 +58,8 @@ export const AuctionHub = () => {
   const page = Math.min(pages,Math.max(1,Number(get('page')) || 1));
   const control = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm';
   const pageButton = 'group inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors enabled:cursor-pointer enabled:hover:border-violet-300 enabled:hover:bg-violet-50 enabled:hover:text-violet-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 disabled:cursor-not-allowed disabled:opacity-50';
+  const bidsAction = 'inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold shadow-sm';
+  const bidsLabel = <><Gavel aria-hidden="true" className="h-4 w-4" />My bids and wins</>;
   return <div className="mx-auto min-h-screen max-w-6xl px-5 py-10 text-slate-800">
     <button
       type="button"
@@ -69,13 +74,18 @@ export const AuctionHub = () => {
         <h1 className="text-3xl font-bold">Auction Hub</h1>
         <p className="mt-2 text-slate-500">Bid on one-of-a-kind cards. Listings refresh automatically.</p>
       </div>
-      <Link
-        to="/my-auctions"
-        className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-bold text-violet-800 shadow-sm transition-colors hover:border-violet-400 hover:bg-violet-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600"
-      >
-        <Gavel aria-hidden="true" className="h-4 w-4" />
-        My bids and wins
-      </Link>
+      {canViewMyBids ? (
+        <Link
+          to="/my-auctions"
+          className={`${bidsAction} border-violet-200 bg-violet-50 text-violet-800 transition-colors hover:border-violet-400 hover:bg-violet-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600`}
+        >
+          {bidsLabel}
+        </Link>
+      ) : (
+        <button type="button" disabled className={`${bidsAction} cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500`}>
+          {bidsLabel}
+        </button>
+      )}
     </div>
     <div className="mt-6 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-3 lg:grid-cols-4">
       <input aria-label="Search auctions" placeholder="Search auctions" className={control} value={searchQuery} onChange={e=>{ setSearchQuery(e.target.value); filter('q', e.target.value); }} />
