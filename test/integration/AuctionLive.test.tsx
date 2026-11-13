@@ -1,7 +1,8 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAuctionClock, useAuctionLive } from '../../src/hooks/useAuctionLive';
 import { loadAuction, loadAuctionBids } from '../../src/api/auctions';
+import { AuctionCountdown } from '../../src/components/AuctionCountdown';
 vi.mock('../../src/api/auctions', () => ({ loadAuction: vi.fn(), loadAuctionBids: vi.fn() }));
 afterEach(() => { vi.useRealTimers(); vi.clearAllMocks(); });
 describe('Live auction', () => {
@@ -10,6 +11,13 @@ describe('Live auction', () => {
     const {result, unmount} = renderHook(()=>useAuctionClock('2026-11-11T12:00:03'));
     expect(result.current.remaining).toBe(3); act(()=>vi.advanceTimersByTime(1000));expect(result.current.remaining).toBe(2);
     act(()=>vi.advanceTimersByTime(5000));expect(result.current.remaining).toBe(0);unmount();expect(vi.getTimerCount()).toBe(0);
+  });
+  it('renders seconds and an ended status for auction countdowns', () => {
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-11-11T12:00:00+07:00'));
+    render(<AuctionCountdown endsAt="2026-11-11T12:00:02+07:00" />);
+    expect(screen.getByText('0d 0h 0m 2s left')).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(2000));
+    expect(screen.getByText('Bidding ended')).toBeInTheDocument();
   });
   it('refreshes auction and bid history after five seconds', async () => {
     vi.mocked(loadAuction).mockResolvedValue({id:1,currentPrice:100} as Awaited<ReturnType<typeof loadAuction>>);

@@ -1,15 +1,7 @@
-import { Clock3, Gavel } from 'lucide-react';
+import { Gavel } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { auctionTimestamp } from '../hooks/useAuctionLive';
+import { AuctionCountdown } from './AuctionCountdown';
 import type { Auction } from '../types/auction';
-
-const remaining = (end: string) => {
-  const seconds = Math.max(0, Math.floor((auctionTimestamp(end) - Date.now()) / 1000));
-  if (!seconds) return 'Ending now';
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return `${hours}h ${minutes}m ${seconds % 60}s left`;
-};
 
 /** Shared live-auction presentation for the storefront and Auction Hub. */
 export const AuctionCard = ({ auction }: { auction: Auction }) => (
@@ -20,7 +12,7 @@ export const AuctionCard = ({ auction }: { auction: Auction }) => (
     <div className="relative flex h-52 items-center justify-center overflow-hidden bg-gradient-to-br from-violet-100 via-purple-50 to-fuchsia-100">
       {auction.imageUrl ? <img src={auction.imageUrl} alt={auction.title} className="h-full w-full object-contain" /> : <Gavel className="h-10 w-10 text-purple-400" />}
       <span className="absolute left-3 top-3 rounded-full bg-purple-600 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white">Auction</span>
-      <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-slate-950/85 px-2.5 py-1 text-xs font-bold text-white"><Clock3 className="h-3.5 w-3.5 text-purple-300" />{remaining(auction.endsAt)}</span>
+      <AuctionCountdown endsAt={auction.endsAt} className="absolute bottom-3 right-3 rounded-full bg-slate-950/85 px-2.5 py-1 text-xs font-bold text-white [&>svg]:text-purple-300" />
     </div>
     <div className="flex flex-grow flex-col p-4">
       <p className="text-xs font-semibold text-purple-600">{auction.storeName}</p>

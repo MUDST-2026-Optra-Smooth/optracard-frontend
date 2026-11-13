@@ -3,7 +3,7 @@ export const SPAD_Loading = ({ label = 'Loading data from the database…' }: { 
 );
 
 export const SPAD_Error = ({ message, onRetry }: { message: string; onRetry?: () => void }) => (
-  <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-5 text-sm text-red-700">
+  <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-5 py-5 text-sm text-red-700">
     <p>{message}</p>
     {onRetry && <button type="button" onClick={onRetry} className="mt-3 rounded bg-red-600 px-3 py-2 text-xs font-semibold text-white">Try again</button>}
   </div>

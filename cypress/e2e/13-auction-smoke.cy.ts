@@ -16,6 +16,17 @@ describe('Critical auction browse and bidding journeys', () => {
     cy.contains('Umbreon VMAX Alternate Art').should('be.visible');
   });
 
+  it('shows a second-level countdown on both the auction card and detail page', () => {
+    cy.visit('/auctions');
+    cy.wait('@getAuctions');
+    cy.get('[aria-label^="Time remaining:"]').first().should('have.attr', 'aria-label').and('match', /^Time remaining: \d+d \d+h \d+m \d+s left$/);
+
+    cy.visit('/auctions/101');
+    cy.wait('@getAuctionDetail');
+    cy.wait('@getAuctionBids');
+    cy.get('[aria-label^="Time remaining:"]').should('have.attr', 'aria-label').and('match', /^Time remaining: \d+d \d+h \d+m \d+s left$/);
+  });
+
   it('keeps an unauthenticated visitor from bidding and exposes the action accessibly', () => {
     cy.visit('/auctions/101');
     cy.wait('@getAuctionDetail');
